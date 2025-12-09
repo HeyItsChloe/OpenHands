@@ -45,7 +45,7 @@ export function UserActions({ onLogout, user, isLoading }: UserActionsProps) {
   return (
     <div
       data-testid="user-actions"
-      className="w-full pt-[250px] pl-[15px] pr-[15px] relative cursor-pointer group"
+      className="pt-[250px] relative cursor-pointer group"
     >
       <UserAvatar
         avatarUrl={user?.avatar_url}
