@@ -34,6 +34,7 @@ export function Divider({
 }: DividerProps) {
   return (
     <div
+      key={`conversation-card-context-menu-divider-${testId}`}
       data-testid={testId}
       className={cn(dividerVariants({ orientation, color, size }), className)}
     />
