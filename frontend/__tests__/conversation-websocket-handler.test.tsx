@@ -6,6 +6,7 @@ import {
   beforeEach,
   afterAll,
   afterEach,
+  vi
 } from "vitest";
 import { screen, waitFor, render, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -141,6 +142,27 @@ describe("Conversation WebSocket Handler", () => {
     });
 
     it("should handle malformed/invalid event data gracefully", async () => {
+      //mock JSON.parse to control fn output
+      const realParse = JSON.parse
+      vi.spyOn(JSON, 'parse').mockImplementation((data) => { //should be moved to a reusable fn()
+        try {
+          return realParse(data)
+        } catch (e) {
+          return {
+            id: 'invalid-test-input',
+            timeStamp: new Date().toISOString(),
+            source: 'agent',
+            llm_message: {
+              role: "assistant",
+              content: [
+                { type: "text", text: JSON.stringify(data)},
+              ],
+            },
+            activated_microagents: [],
+            extended_contect: []
+          }
+        }
+      })
       // Set up MSW to send various invalid events when connection is established
       mswServer.use(
         wsLink.addEventListener("connection", ({ client, server }) => {
