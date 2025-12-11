@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { useSuggestedTasks } from "../src/hooks/query/use-suggested-tasks";
 import { useShouldShowUserFeatures } from "../src/hooks/use-should-show-user-features";
+import { SuggestionsService } from "#/api/suggestions-service/suggestions-service.api";
 
 // Mock the dependencies
 vi.mock("../src/hooks/use-should-show-user-features");
@@ -48,6 +49,8 @@ describe("useSuggestedTasks", () => {
 
   it("should be enabled when useShouldShowUserFeatures returns true", () => {
     mockUseShouldShowUserFeatures.mockReturnValue(true);
+    vi.spyOn(SuggestionsService, "getSuggestedTasks")
+      .mockResolvedValue([]);
 
     const { result } = renderHook(() => useSuggestedTasks(), {
       wrapper: createWrapper(),
