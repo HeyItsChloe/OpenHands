@@ -52,8 +52,6 @@ export function GenericDropdownMenu<T>({
   testId,
   numberOfRecentItems = 0,
 }: GenericDropdownMenuProps<T>) {
-  if (!isOpen) return null;
-
   const hasItems = filteredItems.length > 0;
   const showEmptyState = !hasItems && !stickyTopItem && !stickyFooterItem;
 
@@ -69,6 +67,7 @@ export function GenericDropdownMenu<T>({
         <ul
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...getMenuProps({
+            // To avoid DownShift warnings, getMenuProps() must be called on each render, even is menu is closed
             ref: menuRef,
             className: cn(
               "w-full overflow-auto p-1 custom-scrollbar-always",
@@ -80,27 +79,31 @@ export function GenericDropdownMenu<T>({
             "data-testid": testId,
           })}
         >
-          {showEmptyState ? (
-            renderEmptyState(inputValue)
-          ) : (
-            <>
-              {stickyTopItem}
-              {filteredItems.map((item, index) => (
+          {isOpen && (
+            <div>
+              {showEmptyState ? (
+                renderEmptyState(inputValue)
+              ) : (
                 <>
-                  {renderItem(
-                    item,
-                    index,
-                    highlightedIndex,
-                    selectedItem,
-                    getItemProps,
-                  )}
-                  {numberOfRecentItems > 0 &&
-                    index === numberOfRecentItems - 1 && (
-                      <div className="border-b border-[#727987] bg-[#454545] pb-1 mb-1 h-[1px]" />
-                    )}
+                  {stickyTopItem}
+                  {filteredItems.map((item, index) => (
+                    <>
+                      {renderItem(
+                        item,
+                        index,
+                        highlightedIndex,
+                        selectedItem,
+                        getItemProps,
+                      )}
+                      {numberOfRecentItems > 0 &&
+                        index === numberOfRecentItems - 1 && (
+                          <div className="border-b border-[#727987] bg-[#454545] pb-1 mb-1 h-[1px]" />
+                        )}
+                    </>
+                  ))}
                 </>
-              ))}
-            </>
+              )}
+            </div>
           )}
         </ul>
         {stickyFooterItem && (
