@@ -46,7 +46,9 @@ export function ConversationCardContextMenu({
 
   const generateSection = useCallback(
     (items: React.ReactNode[], isLast?: boolean) => {
-      const filteredItems = items.filter((i) => i != null);
+      const filteredItems = items
+        .filter((i) => i != null)
+        .map((i, index) => <React.Fragment key={index}>{i}</React.Fragment>);
 
       if (filteredItems.length > 0) {
         return !isLast
