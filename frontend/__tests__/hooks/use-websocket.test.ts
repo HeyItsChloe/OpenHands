@@ -8,7 +8,7 @@ import {
   afterEach,
   vi,
 } from "vitest";
-import { ws } from "msw";
+import { ws, http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { useWebSocket } from "#/hooks/use-websocket";
 
@@ -23,6 +23,11 @@ describe("useWebSocket", () => {
 
       // Send a welcome message to confirm connection
       client.send("Welcome to the WebSocket!");
+    }),
+
+    // HTTP GET handler to prevent MSW warning
+    http.get("http://acme.com/ws", async () => { //move to handler file?
+      return HttpResponse.json({ status: 200 });
     }),
   );
 
