@@ -51,6 +51,7 @@ describe("MaintenanceBanner", () => {
   // maintenance-banner
 
   it("handles invalid date gracefully", () => {
+    const warningSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const invalidTime = "invalid-date";
 
     render(
@@ -62,6 +63,7 @@ describe("MaintenanceBanner", () => {
     // Check if the banner is rendered
     const banner = screen.queryByTestId("maintenance-banner");
     expect(banner).not.toBeInTheDocument();
+    warningSpy.mockRestore();
   });
 
   it("click on dismiss button removes banner", () => {
