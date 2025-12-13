@@ -24,14 +24,13 @@ describe("useWebSocket", () => {
       // Send a welcome message to confirm connection
       client.send("Welcome to the WebSocket!");
     }),
-
-    // HTTP GET handler to prevent MSW warning logs
-    http.get("http://acme.com/ws", async () => {
-      return HttpResponse.json({ status: 200 });
-    }),
   );
 
-  beforeAll(() => mswServer.listen());
+  beforeAll(() => {
+    // The global MSW server from vitest.setup.ts is already running
+    // We just need to start our WebSocket-specific server
+    mswServer.listen({ onUnhandledRequest: "bypass" });
+  });
   afterEach(() => mswServer.resetHandlers());
   afterAll(() => mswServer.close());
 
