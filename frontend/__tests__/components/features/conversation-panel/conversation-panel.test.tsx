@@ -7,6 +7,7 @@ import { renderWithProviders } from "test-utils";
 import { ConversationPanel } from "#/components/features/conversation-panel/conversation-panel";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
 import { Conversation } from "#/api/open-hands.types";
+import { ConversationCard } from "#/components/features/conversation-panel/conversation-card/conversation-card";
 
 // Mock the unified stop conversation hook
 const mockStopConversationMutate = vi.fn();
@@ -22,6 +23,10 @@ describe("ConversationPanel", () => {
     {
       Component: () => <ConversationPanel onClose={onCloseMock} />,
       path: "/",
+    },
+    {
+      path: "/conversations/:conversationId",
+      Component: () => <ConversationCard selectedRepository={null} title={'mockTitle'} lastUpdatedAt={''} />
     },
   ]);
 
