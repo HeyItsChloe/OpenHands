@@ -142,27 +142,8 @@ describe("Conversation WebSocket Handler", () => {
     });
 
     it("should handle malformed/invalid event data gracefully", async () => {
-      //mock JSON.parse to control fn output
-      const realParse = JSON.parse
-      vi.spyOn(JSON, 'parse').mockImplementation((data) => { //should be moved to a reusable fn()
-        try {
-          return realParse(data)
-        } catch (e) {
-          return {
-            id: 'invalid-test-input',
-            timeStamp: new Date().toISOString(),
-            source: 'agent',
-            llm_message: {
-              role: "assistant",
-              content: [
-                { type: "text", text: JSON.stringify(data)},
-              ],
-            },
-            activated_microagents: [],
-            extended_contect: []
-          }
-        }
-      })
+      const warningSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
       // Set up MSW to send various invalid events when connection is established
       mswServer.use(
         wsLink.addEventListener("connection", ({ client, server }) => {
@@ -225,6 +206,7 @@ describe("Conversation WebSocket Handler", () => {
         "valid-event-123",
       );
       expect(screen.getByTestId("ui-events-count")).toHaveTextContent("1");
+      warningSpy.mockRestore();
     });
   });
 

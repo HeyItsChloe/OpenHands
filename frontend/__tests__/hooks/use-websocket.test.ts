@@ -25,8 +25,8 @@ describe("useWebSocket", () => {
       client.send("Welcome to the WebSocket!");
     }),
 
-    // HTTP GET handler to prevent MSW warning
-    http.get("http://acme.com/ws", async () => { //move to handler file?
+    // HTTP GET handler to prevent MSW warning logs
+    http.get("http://acme.com/ws", async () => {
       return HttpResponse.json({ status: 200 });
     }),
   );
