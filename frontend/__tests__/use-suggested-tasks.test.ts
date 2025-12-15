@@ -49,7 +49,7 @@ describe("useSuggestedTasks", () => {
 
   it("should be enabled when useShouldShowUserFeatures returns true", () => {
     mockUseShouldShowUserFeatures.mockReturnValue(true);
-    vi.spyOn(SuggestionsService, "getSuggestedTasks")
+    const suggestionSpy = vi.spyOn(SuggestionsService, "getSuggestedTasks")
       .mockResolvedValue([]);
 
     const { result } = renderHook(() => useSuggestedTasks(), {
@@ -58,5 +58,6 @@ describe("useSuggestedTasks", () => {
 
     // When enabled, the query should be loading/fetching
     expect(result.current.isLoading).toBe(true);
+    suggestionSpy.mockRestore()
   });
 });
