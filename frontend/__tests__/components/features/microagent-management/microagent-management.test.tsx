@@ -360,10 +360,13 @@ describe("MicroagentManagement", () => {
   });
 
   it("should render the microagent management page", async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     renderMicroagentManagement();
 
     // Check that the main title is rendered
     await screen.findByText("MICROAGENT_MANAGEMENT$DESCRIPTION");
+    consoleErrorSpy.mockRestore();
   });
 
   it("should display loading state when fetching repositories", async () => {

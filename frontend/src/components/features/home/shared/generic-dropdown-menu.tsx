@@ -61,6 +61,7 @@ export function GenericDropdownMenu<T>({
         className={cn(
           "absolute z-10 w-full bg-[#454545] border border-[#727987] rounded-lg shadow-none",
           "focus:outline-none mt-1 z-[9999]",
+          !isOpen && "hidden",
           stickyTopItem || stickyFooterItem ? "max-h-60" : "max-h-60",
         )}
       >

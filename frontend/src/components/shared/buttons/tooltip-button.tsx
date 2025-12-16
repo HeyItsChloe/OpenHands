@@ -40,7 +40,8 @@ export function TooltipButton({
   };
 
   const buttonContent = (
-    <span
+    <button
+      type="button"
       aria-label={ariaLabel}
       data-testid={testId}
       onClick={handleClick}
@@ -49,9 +50,10 @@ export function TooltipButton({
         disabled && "opacity-50 cursor-not-allowed",
         className,
       )}
+      disabled={disabled}
     >
       {children}
-    </span>
+    </button>
   );
 
   let content;
@@ -77,7 +79,8 @@ export function TooltipButton({
   } else if (navLinkTo && disabled) {
     // If disabled and has navLinkTo, render a button that looks like a NavLink but doesn't navigate
     content = (
-      <span
+      <button
+        type="button"
         aria-label={ariaLabel}
         data-testid={testId}
         className={cn(
@@ -85,9 +88,10 @@ export function TooltipButton({
           "opacity-50 cursor-not-allowed",
           className,
         )}
+        disabled
       >
         {children}
-      </span>
+      </button>
     );
   } else if (href && !disabled) {
     content = (
@@ -105,13 +109,15 @@ export function TooltipButton({
   } else if (href && disabled) {
     // If disabled and has href, render a button that looks like a link but doesn't navigate
     content = (
-      <span
+      <button
+        type="button"
         aria-label={ariaLabel}
         data-testid={testId}
         className={cn("opacity-50 cursor-not-allowed", className)}
+        disabled
       >
         {children}
-      </span>
+      </button>
     );
   } else {
     content = buttonContent;

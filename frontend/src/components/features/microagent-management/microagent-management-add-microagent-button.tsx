@@ -25,7 +25,8 @@ export function MicroagentManagementAddMicroagentButton({
   };
 
   return (
-    <span
+    <button
+      type="button"
       onClick={handleClick}
       className="translate-y-[-1px]"
       data-testid="add-microagent-button"
@@ -33,6 +34,6 @@ export function MicroagentManagementAddMicroagentButton({
       <span className="text-sm font-normal leading-5 text-[#8480FF] cursor-pointer hover:text-[#6C63FF] transition-colors duration-200">
         {t(I18nKey.COMMON$ADD_MICROAGENT)}
       </span>
-    </span>
+    </button>
   );
 }
