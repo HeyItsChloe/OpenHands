@@ -54,7 +54,16 @@ export function GenericDropdownMenu<T>({
 }: GenericDropdownMenuProps<T>) {
   const hasItems = filteredItems.length > 0;
   const showEmptyState = !hasItems && !stickyTopItem && !stickyFooterItem;
-
+  const getUniqueItemKey = (item: T): string => {
+    if (typeof item === "string") return item;
+    if (typeof item === "object" && item !== null && "id" in item) {
+      return String(item.id);
+    }
+    if (typeof item === "object" && item !== null) {
+      return String(Object.values(item)[0]);
+    }
+    return String(`${item}-${crypto.randomUUID()}`);
+  };
   return (
     <div className="relative">
       <div
@@ -88,7 +97,9 @@ export function GenericDropdownMenu<T>({
                 <>
                   {stickyTopItem}
                   {filteredItems.map((item, index) => (
-                    <React.Fragment key={index}>
+                    <React.Fragment
+                      key={`dropdown-item-${getUniqueItemKey(item)}`}
+                    >
                       {renderItem(
                         item,
                         index,
