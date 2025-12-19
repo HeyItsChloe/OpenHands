@@ -9,7 +9,8 @@ import { useConversationStore } from "#/state/conversation-store";
 import { useAgentState } from "#/hooks/use-agent-state";
 import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
-import { isTaskPolling } from "#/utils/utils";
+import { getStatusColor, isTaskPolling } from "#/utils/utils";
+import ChatStatusIndicator from "./chat-status-indicator";
 
 interface InteractiveChatBoxProps {
   onSubmit: (message: string, images: File[], files: File[]) => void;
@@ -147,8 +148,23 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
     isTaskPolling(subConversationTaskStatus);
 
+  const statusColor = getStatusColor({
+    isPausing: false,
+    isTask: isDisabled,
+    taskStatus: null,
+    isStartingStatus: conversation?.status === "STARTING",
+    isStopStatus: conversation?.status === "STOPPED",
+    curAgentState,
+  });
+
   return (
     <div data-testid="interactive-chat-box">
+      {conversation?.status && isDisabled && (
+        <ChatStatusIndicator
+          statusColor={statusColor}
+          status={conversation.status}
+        />
+      )}
       <CustomChatInput
         disabled={isDisabled}
         onSubmit={handleSubmit}

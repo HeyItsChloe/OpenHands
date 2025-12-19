@@ -7,6 +7,10 @@ import { renderWithProviders } from "../../test-utils";
 import { AgentState } from "#/types/agent-state";
 import { useAgentState } from "#/hooks/use-agent-state";
 import { useConversationStore } from "#/state/conversation-store";
+import { useActiveConversation } from "#/hooks/query/use-active-conversation";
+import { UseQueryResult } from "@tanstack/react-query";
+import { Conversation } from "#/api/open-hands.types";
+import { AxiosError } from "axios";
 
 // Mock the agent state hook
 vi.mock("#/hooks/use-agent-state", () => ({
@@ -30,11 +34,15 @@ vi.mock("react-router", async () => {
 
 // Mock the useActiveConversation hook
 vi.mock("#/hooks/query/use-active-conversation", () => ({
-  useActiveConversation: () => ({
+  useActiveConversation: vi.fn(() => ({
     data: { status: null },
     isFetched: true,
+    isSuccess: true,
+    isLoading: false,
+    isError: false,
+    error: null,
     refetch: vi.fn(),
-  }),
+  })),
 }));
 
 // Mock other hooks that might be used by the component
@@ -44,6 +52,7 @@ vi.mock("#/hooks/use-user-providers", () => ({
   }),
 }));
 
+// Mock the conversation context menu hook
 vi.mock("#/hooks/use-conversation-name-context-menu", () => ({
   useConversationNameContextMenu: () => ({
     isOpen: false,
@@ -273,5 +282,104 @@ describe("InteractiveChatBox", () => {
 
     // Verify the text input was cleared
     expect(screen.getByTestId("chat-input")).toHaveTextContent("");
+  });
+
+  it("should render ChatStatusIndicator when conversation has status and agent is disabled", () => {
+    vi.mocked(useAgentState).mockReturnValue({
+      curAgentState: AgentState.LOADING,
+    });
+
+    vi.mocked(useActiveConversation).mockReturnValue({
+      data: {
+        status: "STARTING",
+        conversation_id: "test-conversation-id",
+      },
+      isFetched: true,
+      isSuccess: true,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as UseQueryResult<Conversation | null, AxiosError>);
+
+    vi.mocked(useConversationStore).mockReturnValue({
+      // UploadedFiles
+      images: [],
+      files: [],
+      loadingFiles: [],
+      loadingImages: [],
+
+      // AgentStatus
+      setShouldShownAgentLoading: vi.fn(),
+
+      // useChatInputLogic
+      setMessageToSend: vi.fn(),
+      setIsRightPanelShown: vi.fn(),
+      hasRightPanelToggled: false,
+
+      // CustomChatInput cleanup
+      setShouldHideSuggestions: vi.fn(),
+      clearAllFiles: vi.fn(),
+    });
+
+    renderInteractiveChatBox({
+      onSubmit: onSubmitMock,
+    });
+
+    expect(screen.getByText("Starting")).toBeInTheDocument();
+    expect(
+      document.getElementById("chat-status-indicator")
+    ).toBeInTheDocument();
+  });
+
+  it("should NOT render ChatStatusIndicator when conversation status is RUNNING", () => {
+    vi.mocked(useAgentState).mockReturnValue({
+      curAgentState: AgentState.LOADING,
+    });
+
+    vi.mocked(useActiveConversation).mockReturnValue({
+      data: {
+        status: "RUNNING",
+        conversation_id: "test-conversation-id",
+      },
+      isFetched: true,
+      isSuccess: true,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as UseQueryResult<Conversation | null, AxiosError>);
+
+    vi.mocked(useConversationStore).mockReturnValue({
+      // UploadedFiles
+      images: [],
+      files: [],
+      loadingFiles: [],
+      loadingImages: [],
+
+      // AgentStatus
+      setShouldShownAgentLoading: vi.fn(),
+
+      // useChatInputLogic
+      setMessageToSend: vi.fn(),
+      setIsRightPanelShown: vi.fn(),
+      hasRightPanelToggled: false,
+
+      // CustomChatInput cleanup
+      setShouldHideSuggestions: vi.fn(),
+      clearAllFiles: vi.fn(),
+    });
+
+    renderInteractiveChatBox({
+      onSubmit: onSubmitMock,
+    });
+
+    // Indicator text should NOT be rendered
+    expect(screen.queryByText("Running")).not.toBeInTheDocument();
+
+    // Indicator container should NOT exist
+    expect(
+      document.getElementById("chat-status-indicator")
+    ).not.toBeInTheDocument();
   });
 });
