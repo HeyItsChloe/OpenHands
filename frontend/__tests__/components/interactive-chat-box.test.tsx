@@ -6,20 +6,14 @@ import { InteractiveChatBox } from "#/components/features/chat/interactive-chat-
 import { renderWithProviders } from "../../test-utils";
 import { AgentState } from "#/types/agent-state";
 import { useAgentState } from "#/hooks/use-agent-state";
-import { useConversationStore } from "#/state/conversation-store";
+import { useConversationStore } from "#/stores/conversation-store";
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Conversation } from "#/api/open-hands.types";
 import { AxiosError } from "axios";
 
-// Mock the agent state hook
 vi.mock("#/hooks/use-agent-state", () => ({
   useAgentState: vi.fn(),
-}));
-
-// Mock the conversation store
-vi.mock("#/state/conversation-store", () => ({
-  useConversationStore: vi.fn(),
 }));
 
 // Mock React Router hooks
@@ -67,44 +61,23 @@ vi.mock("#/hooks/use-conversation-name-context-menu", () => ({
 describe("InteractiveChatBox", () => {
   const onSubmitMock = vi.fn();
 
-  // Helper function to mock stores
   const mockStores = (agentState: AgentState = AgentState.INIT) => {
     vi.mocked(useAgentState).mockReturnValue({
       curAgentState: agentState,
     });
 
-    vi.mocked(useConversationStore).mockReturnValue({
+    useConversationStore.setState({
       images: [],
       files: [],
-      addImages: vi.fn(),
-      addFiles: vi.fn(),
-      clearAllFiles: vi.fn(),
-      addFileLoading: vi.fn(),
-      removeFileLoading: vi.fn(),
-      addImageLoading: vi.fn(),
-      removeImageLoading: vi.fn(),
-      submittedMessage: null,
-      setShouldHideSuggestions: vi.fn(),
-      setSubmittedMessage: vi.fn(),
-      isRightPanelShown: true,
-      selectedTab: "editor" as const,
       loadingFiles: [],
       loadingImages: [],
+      submittedMessage: null,
       messageToSend: null,
       shouldShownAgentLoading: false,
       shouldHideSuggestions: false,
+      isRightPanelShown: true,
+      selectedTab: "editor" as const,
       hasRightPanelToggled: true,
-      setIsRightPanelShown: vi.fn(),
-      setSelectedTab: vi.fn(),
-      setShouldShownAgentLoading: vi.fn(),
-      removeImage: vi.fn(),
-      removeFile: vi.fn(),
-      clearImages: vi.fn(),
-      clearFiles: vi.fn(),
-      clearAllLoading: vi.fn(),
-      setMessageToSend: vi.fn(),
-      resetConversationState: vi.fn(),
-      setHasRightPanelToggled: vi.fn(),
     });
   };
 
@@ -302,24 +275,14 @@ describe("InteractiveChatBox", () => {
       refetch: vi.fn(),
     } as unknown as UseQueryResult<Conversation | null, AxiosError>);
 
-    vi.mocked(useConversationStore).mockReturnValue({
-      // UploadedFiles
+    useConversationStore.setState({
       images: [],
       files: [],
       loadingFiles: [],
       loadingImages: [],
-
-      // AgentStatus
-      setShouldShownAgentLoading: vi.fn(),
-
-      // useChatInputLogic
-      setMessageToSend: vi.fn(),
-      setIsRightPanelShown: vi.fn(),
+      shouldShownAgentLoading: false,
+      shouldHideSuggestions: false,
       hasRightPanelToggled: false,
-
-      // CustomChatInput cleanup
-      setShouldHideSuggestions: vi.fn(),
-      clearAllFiles: vi.fn(),
     });
 
     renderInteractiveChatBox({
@@ -350,24 +313,14 @@ describe("InteractiveChatBox", () => {
       refetch: vi.fn(),
     } as unknown as UseQueryResult<Conversation | null, AxiosError>);
 
-    vi.mocked(useConversationStore).mockReturnValue({
-      // UploadedFiles
+    useConversationStore.setState({
       images: [],
       files: [],
       loadingFiles: [],
       loadingImages: [],
-
-      // AgentStatus
-      setShouldShownAgentLoading: vi.fn(),
-
-      // useChatInputLogic
-      setMessageToSend: vi.fn(),
-      setIsRightPanelShown: vi.fn(),
+      shouldShownAgentLoading: false,
+      shouldHideSuggestions: false,
       hasRightPanelToggled: false,
-
-      // CustomChatInput cleanup
-      setShouldHideSuggestions: vi.fn(),
-      clearAllFiles: vi.fn(),
     });
 
     renderInteractiveChatBox({
