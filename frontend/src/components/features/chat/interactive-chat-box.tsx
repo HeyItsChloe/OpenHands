@@ -161,7 +161,7 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
   const isPausing = curAgentState === AgentState.PAUSED;
   const showStatusIndicator = curAgentState !== AgentState.AWAITING_USER_INPUT;
   const serverStatusColor = getStatusColor({
-    isPausing: curAgentState === AgentState.PAUSED,
+    isPausing,
     isTask,
     taskStatus,
     isStartingStatus,
