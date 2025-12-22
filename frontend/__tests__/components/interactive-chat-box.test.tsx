@@ -332,9 +332,9 @@ describe("InteractiveChatBox", () => {
     ).toBeInTheDocument();
   });
 
-  it("should NOT render ChatStatusIndicator when conversation status is RUNNING", () => {
+  it("should NOT render ChatStatusIndicator when isDisabled is false (status RUNNING)", () => {
     vi.mocked(useAgentState).mockReturnValue({
-      curAgentState: AgentState.LOADING,
+      curAgentState: AgentState.INIT,
     });
 
     vi.mocked(useActiveConversation).mockReturnValue({
