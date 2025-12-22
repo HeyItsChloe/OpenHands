@@ -257,82 +257,27 @@ describe("InteractiveChatBox", () => {
     expect(screen.getByTestId("chat-input")).toHaveTextContent("");
   });
 
-  it("should render ChatStatusIndicator when conversation has status and agent is disabled", () => {
+  it("should render ChatStatusIndicator when agent is not awaiting user input / conversation is NOT ready", () => {
     vi.mocked(useAgentState).mockReturnValue({
       curAgentState: AgentState.LOADING,
     });
 
-    vi.mocked(useActiveConversation).mockReturnValue({
-      data: {
-        status: "STARTING",
-        conversation_id: "test-conversation-id",
-      },
-      isFetched: true,
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
-    } as unknown as UseQueryResult<Conversation | null, AxiosError>);
+    renderInteractiveChatBox({ onSubmit: onSubmitMock });
 
-    useConversationStore.setState({
-      images: [],
-      files: [],
-      loadingFiles: [],
-      loadingImages: [],
-      shouldShownAgentLoading: false,
-      shouldHideSuggestions: false,
-      hasRightPanelToggled: false,
-    });
-
-    renderInteractiveChatBox({
-      onSubmit: onSubmitMock,
-    });
-
-    expect(screen.getByText("Starting")).toBeInTheDocument();
     expect(
-      document.getElementById("chat-status-indicator")
+      screen.getByTestId("chat-status-indicator")
     ).toBeInTheDocument();
   });
 
-  it("should NOT render ChatStatusIndicator when isDisabled is false (status RUNNING)", () => {
+  it("should NOT render ChatStatusIndicator when agent is awaiting user input / conversation is ready", () => {
     vi.mocked(useAgentState).mockReturnValue({
-      curAgentState: AgentState.INIT,
+      curAgentState: AgentState.AWAITING_USER_INPUT,
     });
 
-    vi.mocked(useActiveConversation).mockReturnValue({
-      data: {
-        status: "RUNNING",
-        conversation_id: "test-conversation-id",
-      },
-      isFetched: true,
-      isSuccess: true,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
-    } as unknown as UseQueryResult<Conversation | null, AxiosError>);
+    renderInteractiveChatBox({ onSubmit: onSubmitMock });
 
-    useConversationStore.setState({
-      images: [],
-      files: [],
-      loadingFiles: [],
-      loadingImages: [],
-      shouldShownAgentLoading: false,
-      shouldHideSuggestions: false,
-      hasRightPanelToggled: false,
-    });
-
-    renderInteractiveChatBox({
-      onSubmit: onSubmitMock,
-    });
-
-    // Indicator text should NOT be rendered
-    expect(screen.queryByText("Running")).not.toBeInTheDocument();
-
-    // Indicator container should NOT exist
     expect(
-      document.getElementById("chat-status-indicator")
+      screen.queryByTestId("chat-status-indicator")
     ).not.toBeInTheDocument();
   });
 });

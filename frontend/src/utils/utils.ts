@@ -7,6 +7,7 @@ import { GitRepository } from "#/types/git";
 import { sanitizeQuery } from "#/utils/sanitize-query";
 import { PRODUCT_URL } from "#/utils/constants";
 import { AgentState } from "#/types/agent-state";
+import { I18nKey } from "#/i18n/declaration";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -513,10 +514,10 @@ export const getRepoMdCreatePrompt = (
               query
                 ? `- ${query}`
                 : `- A description of the project
-            - An overview of the file structure
-            - Any information on how to run tests or other relevant commands
-            - Any other information that would be helpful to a brand new developer
-        Keep it short--just a few paragraphs will do.`
+                    - An overview of the file structure
+                    - Any information on how to run tests or other relevant commands
+                    - Any other information that would be helpful to a brand new developer
+                      Keep it short--just a few paragraphs will do.`
             }
 
 Please push the changes to your branch on ${providerName} and create a ${pr}. Please create a meaningful branch name that describes the changes. If a ${pr} template exists in the repository, please follow it when creating the ${prShort} description.`;
@@ -721,3 +722,91 @@ export const getStatusColor = (options: {
   }
   return "#BCFF8C";
 };
+
+interface GetStatusTextArgs {
+  isPausing: boolean;
+  isTask: boolean;
+  taskStatus?: string | null;
+  taskDetail?: string | null;
+  isStartingStatus: boolean;
+  isStopStatus: boolean;
+  curAgentState: AgentState;
+  errorMessage?: string | null;
+  t: (t: string) => string;
+}
+
+/**
+ * Get the server status text based on agent and task state
+ *
+ * @param options Configuration object for status text calculation
+ * @param options.isPausing Whether the agent is currently pausing
+ * @param options.isTask Whether we're polling a task
+ * @param options.taskStatus The task status string (e.g., "ERROR", "READY")
+ * @param options.taskDetail Optional task-specific detail text
+ * @param options.isStartingStatus Whether the conversation is in STARTING state
+ * @param options.isStopStatus Whether the conversation is STOPPED
+ * @param options.curAgentState The current agent state
+ * @param options.errorMessage Optional agent error message
+ * @returns Localized human-readable status text
+ *
+ * @example
+ * getStatusText({
+ *   isPausing: false,
+ *   isTask: true,
+ *   taskStatus: "WAITING_FOR_SANDBOX",
+ *   taskDetail: null,
+ *   isStartingStatus: false,
+ *   isStopStatus: false,
+ *   curAgentState: AgentState.RUNNING
+ * }) // Returns "Waiting For Sandbox"
+ */
+export function getStatusText({
+  isPausing = false,
+  isTask,
+  taskStatus,
+  taskDetail,
+  isStartingStatus,
+  isStopStatus,
+  curAgentState,
+  errorMessage,
+  t,
+}: GetStatusTextArgs): string {
+  // Show pausing status
+  if (isPausing) {
+    return t(I18nKey.COMMON$STOPPING);
+  }
+
+  // Show task status if we're polling a task
+  if (isTask && taskStatus) {
+    if (taskStatus === "ERROR") {
+      return taskDetail || t(I18nKey.CONVERSATION$ERROR_STARTING_CONVERSATION);
+    }
+
+    if (taskStatus === "READY") {
+      return t(I18nKey.CONVERSATION$READY);
+    }
+
+    // Format status text: "WAITING_FOR_SANDBOX" -> "Waiting for sandbox"
+    return (
+      taskDetail ||
+      taskStatus
+        .toLowerCase()
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    );
+  }
+
+  if (isStartingStatus) {
+    return t(I18nKey.COMMON$STARTING);
+  }
+
+  if (isStopStatus) {
+    return t(I18nKey.COMMON$SERVER_STOPPED);
+  }
+
+  if (curAgentState === AgentState.ERROR) {
+    return errorMessage || t(I18nKey.COMMON$ERROR);
+  }
+
+  return t(I18nKey.COMMON$RUNNING);
+}
