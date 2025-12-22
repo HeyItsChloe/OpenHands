@@ -7,10 +7,6 @@ import { renderWithProviders } from "../../test-utils";
 import { AgentState } from "#/types/agent-state";
 import { useAgentState } from "#/hooks/use-agent-state";
 import { useConversationStore } from "#/stores/conversation-store";
-import { useActiveConversation } from "#/hooks/query/use-active-conversation";
-import { UseQueryResult } from "@tanstack/react-query";
-import { Conversation } from "#/api/open-hands.types";
-import { AxiosError } from "axios";
 
 vi.mock("#/hooks/use-agent-state", () => ({
   useAgentState: vi.fn(),
@@ -28,15 +24,11 @@ vi.mock("react-router", async () => {
 
 // Mock the useActiveConversation hook
 vi.mock("#/hooks/query/use-active-conversation", () => ({
-  useActiveConversation: vi.fn(() => ({
+  useActiveConversation: () => ({
     data: { status: null },
     isFetched: true,
-    isSuccess: true,
-    isLoading: false,
-    isError: false,
-    error: null,
     refetch: vi.fn(),
-  })),
+  }),
 }));
 
 // Mock other hooks that might be used by the component
