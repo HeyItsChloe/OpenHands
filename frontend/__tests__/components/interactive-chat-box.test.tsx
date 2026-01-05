@@ -247,5 +247,4 @@ describe("InteractiveChatBox", () => {
     // Verify the text input was cleared
     expect(screen.getByTestId("chat-input")).toHaveTextContent("");
   });
-
 });
