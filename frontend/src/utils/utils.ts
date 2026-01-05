@@ -514,10 +514,10 @@ export const getRepoMdCreatePrompt = (
               query
                 ? `- ${query}`
                 : `- A description of the project
-                    - An overview of the file structure
-                    - Any information on how to run tests or other relevant commands
-                    - Any other information that would be helpful to a brand new developer
-                      Keep it short--just a few paragraphs will do.`
+            - An overview of the file structure
+            - Any information on how to run tests or other relevant commands
+            - Any other information that would be helpful to a brand new developer
+        Keep it short--just a few paragraphs will do.`
             }
 
 Please push the changes to your branch on ${providerName} and create a ${pr}. Please create a meaningful branch name that describes the changes. If a ${pr} template exists in the repository, please follow it when creating the ${prShort} description.`;

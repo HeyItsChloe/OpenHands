@@ -242,7 +242,6 @@ export function ChatInterface() {
     curAgentState === AgentState.LOADING || curAgentState === AgentState.INIT;
   const isStopStatus = curAgentState === AgentState.STOPPED;
   const isPausing = curAgentState === AgentState.PAUSED;
-  // const showStatusIndicator = curAgentState !== AgentState.AWAITING_USER_INPUT && isTaskPolling(subConversationTaskStatus);
   const serverStatusColor = getStatusColor({
     isPausing,
     isTask,
