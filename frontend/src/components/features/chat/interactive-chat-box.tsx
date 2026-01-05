@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { isFileImage } from "#/utils/is-file-image";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { validateFiles } from "#/utils/file-validation";
@@ -10,10 +9,7 @@ import { useConversationStore } from "#/stores/conversation-store";
 import { useAgentState } from "#/hooks/use-agent-state";
 import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
-import { getStatusColor, getStatusText, isTaskPolling } from "#/utils/utils";
-import ChatStatusIndicator from "./chat-status-indicator";
-import { useTaskPolling } from "#/hooks/query/use-task-polling";
-import { useErrorMessageStore } from "#/stores/error-message-store";
+import { isTaskPolling } from "#/utils/utils";
 
 interface InteractiveChatBoxProps {
   onSubmit: (message: string, images: File[], files: File[]) => void;
@@ -34,9 +30,6 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
   } = useConversationStore();
   const { curAgentState } = useAgentState();
   const { data: conversation } = useActiveConversation();
-  const { isTask, taskStatus, taskDetail } = useTaskPolling();
-  const { t } = useTranslation();
-  const { errorMessage } = useErrorMessageStore();
 
   // Poll sub-conversation task to check if it's loading
   const { taskStatus: subConversationTaskStatus } =
@@ -154,40 +147,8 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
     isTaskPolling(subConversationTaskStatus);
 
-  // Get server status indicator props
-  const isStartingStatus =
-    curAgentState === AgentState.LOADING || curAgentState === AgentState.INIT;
-  const isStopStatus = curAgentState === AgentState.STOPPED;
-  const isPausing = curAgentState === AgentState.PAUSED;
-  const showStatusIndicator = curAgentState !== AgentState.AWAITING_USER_INPUT;
-  const serverStatusColor = getStatusColor({
-    isPausing,
-    isTask,
-    taskStatus,
-    isStartingStatus,
-    isStopStatus,
-    curAgentState,
-  });
-  const serverStatusText = getStatusText({
-    isPausing,
-    isTask,
-    taskStatus,
-    taskDetail,
-    isStartingStatus,
-    isStopStatus,
-    curAgentState,
-    errorMessage,
-    t,
-  });
-
   return (
     <div data-testid="interactive-chat-box">
-      {showStatusIndicator && isDisabled && (
-        <ChatStatusIndicator
-          statusColor={serverStatusColor}
-          status={serverStatusText}
-        />
-      )}
       <CustomChatInput
         disabled={isDisabled}
         onSubmit={handleSubmit}

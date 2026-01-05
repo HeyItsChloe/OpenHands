@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import DebugStackframeDot from "#/icons/debug-stackframe-dot.svg?react";
 
 interface ChatStatusIndicatorProps {
@@ -9,6 +10,20 @@ function ChatStatusIndicator({
   status,
   statusColor,
 }: ChatStatusIndicatorProps) {
+  const [displayStatus, setDisplayStatus] = useState(status);
+  const [fadingOut, setFadingOut] = useState(false);
+
+  useEffect(() => {
+    setFadingOut(true);
+
+    const timeout = setTimeout(() => {
+      setDisplayStatus(status);
+      setFadingOut(false);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [status, displayStatus]);
+
   return (
     <div
       data-testid="chat-status-indicator"
@@ -17,8 +32,10 @@ function ChatStatusIndicator({
       <span className="animate-[pulse_1.2s_ease-in-out_infinite]">
         <DebugStackframeDot className="w-6 h-6 shrink-0" color={statusColor} />
       </span>
-      <span className="font-normal text-[11px] leading-[20px] normal-case">
-        {status}
+      <span
+        className={`font-normal text-[11px] leading-[20px] normal-case transition-opacity duration-900 ease-out ${fadingOut ? "opacity-0" : "opacity-100"}`}
+      >
+        {displayStatus}
       </span>
     </div>
   );

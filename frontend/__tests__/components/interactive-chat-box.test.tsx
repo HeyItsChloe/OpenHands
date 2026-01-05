@@ -249,27 +249,4 @@ describe("InteractiveChatBox", () => {
     expect(screen.getByTestId("chat-input")).toHaveTextContent("");
   });
 
-  it("should render ChatStatusIndicator when agent is not awaiting user input / conversation is NOT ready", () => {
-    vi.mocked(useAgentState).mockReturnValue({
-      curAgentState: AgentState.LOADING,
-    });
-
-    renderInteractiveChatBox({ onSubmit: onSubmitMock });
-
-    expect(
-      screen.getByTestId("chat-status-indicator")
-    ).toBeInTheDocument();
-  });
-
-  it("should NOT render ChatStatusIndicator when agent is awaiting user input / conversation is ready", () => {
-    vi.mocked(useAgentState).mockReturnValue({
-      curAgentState: AgentState.AWAITING_USER_INPUT,
-    });
-
-    renderInteractiveChatBox({ onSubmit: onSubmitMock });
-
-    expect(
-      screen.queryByTestId("chat-status-indicator")
-    ).not.toBeInTheDocument();
-  });
 });

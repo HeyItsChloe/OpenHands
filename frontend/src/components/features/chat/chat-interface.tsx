@@ -49,6 +49,8 @@ import {
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useConversationWebSocket } from "#/contexts/conversation-websocket-context";
+import ChatStatusIndicator from "./chat-status-indicator";
+import { getStatusColor, getStatusText } from "#/utils/utils";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -65,7 +67,7 @@ export function ChatInterface() {
   const { data: conversation } = useActiveConversation();
   const { errorMessage } = useErrorMessageStore();
   const { isLoadingMessages } = useWsClient();
-  const { isTask } = useTaskPolling();
+  const { isTask, taskStatus, taskDetail } = useTaskPolling();
   const conversationWebSocket = useConversationWebSocket();
   const { send } = useSendMessage();
   const storeEvents = useEventStore((state) => state.events);
@@ -235,6 +237,32 @@ export function ChatInterface() {
   const v1UserEventsExist = hasV1UserEvent(v1FullEvents);
   const userEventsExist = v0UserEventsExist || v1UserEventsExist;
 
+  // Get server status indicator props
+  const isStartingStatus =
+    curAgentState === AgentState.LOADING || curAgentState === AgentState.INIT;
+  const isStopStatus = curAgentState === AgentState.STOPPED;
+  const isPausing = curAgentState === AgentState.PAUSED;
+  // const showStatusIndicator = curAgentState !== AgentState.AWAITING_USER_INPUT && isTaskPolling(subConversationTaskStatus);
+  const serverStatusColor = getStatusColor({
+    isPausing,
+    isTask,
+    taskStatus,
+    isStartingStatus,
+    isStopStatus,
+    curAgentState,
+  });
+  const serverStatusText = getStatusText({
+    isPausing,
+    isTask,
+    taskStatus,
+    taskDetail,
+    isStartingStatus,
+    isStopStatus,
+    curAgentState,
+    errorMessage,
+    t,
+  });
+
   return (
     <ScrollProvider value={scrollProviderValue}>
       <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative">
@@ -284,6 +312,12 @@ export function ChatInterface() {
           <div className="flex justify-between relative">
             <div className="flex items-center gap-1">
               <ConfirmationModeEnabled />
+              {isStartingStatus && (
+                <ChatStatusIndicator
+                  statusColor={serverStatusColor}
+                  status={serverStatusText}
+                />
+              )}
               {totalEvents > 0 && !isV1Conversation && (
                 <TrajectoryActions
                   onPositiveFeedback={() =>
