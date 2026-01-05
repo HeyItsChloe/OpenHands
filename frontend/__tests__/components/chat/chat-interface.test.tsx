@@ -354,7 +354,7 @@ describe("ChatInterface - Empty state", () => {
 
 describe('ChatInterface - Status Indicator', () => {
   it("should render ChatStatusIndicator when agent is not awaiting user input / conversation is NOT ready", () => {
-    (useAgentState as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    vi.mocked(useAgentState).mockReturnValue({
       curAgentState: AgentState.LOADING,
     });
 
@@ -364,7 +364,7 @@ describe('ChatInterface - Status Indicator', () => {
   });
 
   it("should NOT render ChatStatusIndicator when agent is awaiting user input / conversation is ready", () => {
-    (useAgentState as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    vi.mocked(useAgentState).mockReturnValue({
       curAgentState: AgentState.AWAITING_USER_INPUT,
     });
 

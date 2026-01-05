@@ -8,7 +8,19 @@ import { getStatusText } from "#/utils/utils";
 import { AgentState } from "#/types/agent-state";
 import { I18nKey } from "#/i18n/declaration";
 
-const t = vi.fn((key: string) => key);
+// Mock translations
+const t = (key: string) => {
+  const translations: { [key: string]: string } = {
+    COMMON$WAITING_FOR_SANDBOX: "Waiting For Sandbox",
+    COMMON$STOPPING: "Stopping",
+    COMMON$STARTING: "Starting",
+    COMMON$SERVER_STOPPED: "Server stopped",
+    COMMON$RUNNING: "Running",
+    CONVERSATION$READY: "Ready",
+    CONVERSATION$ERROR_STARTING_CONVERSATION: "Error starting conversation",
+  };
+  return translations[key] || key;
+};
 
 test("removeApiKey", () => {
   const data = [{ args: { LLM_API_KEY: "key", LANGUAGE: "en" } }];
@@ -42,7 +54,7 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe(I18nKey.COMMON$STOPPING);
+    expect(result).toBe(t(I18nKey.COMMON$STOPPING));
   });
 
   it("formats task status when polling a task", () => {
@@ -57,7 +69,7 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe("Waiting For Sandbox");
+    expect(result).toBe(t(I18nKey.COMMON$WAITING_FOR_SANDBOX));
   });
 
   it("returns task detail when task status is ERROR and detail exists", () => {
@@ -88,7 +100,7 @@ describe("getStatusText", () => {
     });
 
     expect(result).toBe(
-      I18nKey.CONVERSATION$ERROR_STARTING_CONVERSATION,
+     t(I18nKey.CONVERSATION$ERROR_STARTING_CONVERSATION),
     );
   });
 
@@ -104,7 +116,7 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe(I18nKey.CONVERSATION$READY);
+    expect(result).toBe(t(I18nKey.CONVERSATION$READY));
   });
 
   it("returns STARTING when starting status is true", () => {
@@ -119,7 +131,7 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe(I18nKey.COMMON$STARTING);
+    expect(result).toBe(t(I18nKey.COMMON$STARTING));
   });
 
   it("returns SERVER_STOPPED when stop status is true", () => {
@@ -134,7 +146,7 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe(I18nKey.COMMON$SERVER_STOPPED);
+    expect(result).toBe(t(I18nKey.COMMON$SERVER_STOPPED));
   });
 
   it("returns errorMessage when agent state is ERROR", () => {
@@ -165,6 +177,6 @@ describe("getStatusText", () => {
       t,
     });
 
-    expect(result).toBe(I18nKey.COMMON$RUNNING);
+    expect(result).toBe(t(I18nKey.COMMON$RUNNING));
   });
 });

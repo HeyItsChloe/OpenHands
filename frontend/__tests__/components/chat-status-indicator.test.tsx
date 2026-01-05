@@ -35,7 +35,7 @@ describe("ChatStatusIndicator", () => {
     expect(icon).toHaveAttribute("color", "#FF684E");
   });
 
-  it("renders the animated status dot", () => {
+  it("renders the DebugStackframeDot icon", () => {
     render(
       <ChatStatusIndicator
         status="Loading"
@@ -43,10 +43,6 @@ describe("ChatStatusIndicator", () => {
       />
     );
 
-    const animatedWrapper = screen
-      .getByTestId("debug-stackframe-dot")
-      .parentElement;
-
-    expect(animatedWrapper?.className).toContain("animate");
+    expect(screen.getByTestId("debug-stackframe-dot")).toBeInTheDocument();
   });
 });

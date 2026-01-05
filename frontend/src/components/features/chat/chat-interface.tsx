@@ -309,7 +309,7 @@ export function ChatInterface() {
 
         <div className="flex flex-col gap-[6px]">
           <div className="flex justify-between relative">
-            <div className="flex items-center gap-1">
+            <div className="flex items-end gap-1">
               <ConfirmationModeEnabled />
               {isStartingStatus && (
                 <ChatStatusIndicator

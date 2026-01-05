@@ -38,7 +38,6 @@ vi.mock("#/hooks/use-user-providers", () => ({
   }),
 }));
 
-// Mock the conversation context menu hook
 vi.mock("#/hooks/use-conversation-name-context-menu", () => ({
   useConversationNameContextMenu: () => ({
     isOpen: false,
