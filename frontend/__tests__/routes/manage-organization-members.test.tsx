@@ -16,8 +16,8 @@ import {
 } from "#/mocks/org-handlers";
 import OptionService from "#/api/option-service/option-service.api";
 import {
-  checkIfUserHasPermissionToChangeRole,
-  getAvailableRolesToChangeTo,
+  doesUserHavePermissionToAssignRoles,
+  getAvailableRolesAUserCanAssign,
 } from "#/utils/org/permission-checks";
 import { rolePermissions, Permission } from "#/utils/org/permissions";
 import { OrganizationUserRole, OrganizationMember } from "#/types/org";
@@ -829,11 +829,11 @@ describe("Manage Organization Members Route", () => {
   });
 
 
-  describe("checkIfUserHasPermissionToChangeRole", () => {
+  describe("doesUserHavePermissionToAssignRoles", () => {
     let user: OrganizationMember | undefined;
 
     const run = (memberId: string, memberRole: OrganizationUserRole) =>
-      checkIfUserHasPermissionToChangeRole(user, memberId, memberRole);
+      doesUserHavePermissionToAssignRoles(user, memberId, memberRole);
 
     const createUser = (
       user_id: string,
@@ -909,9 +909,9 @@ describe("Manage Organization Members Route", () => {
     });
   });
 
-  describe("getAvailableRolesToChangeTo", () => {
+  describe("getAvailableRolesAUserCanAssign", () => {
     it("returns empty array if user has no permissions", () => {
-      const result = getAvailableRolesToChangeTo([]);
+      const result = getAvailableRolesAUserCanAssign([]);
       expect(result).toEqual([]);
     });
 
@@ -920,7 +920,7 @@ describe("Manage Organization Members Route", () => {
         "change_user_role:member",
         "change_user_role:admin",
       ];
-      const result = getAvailableRolesToChangeTo(userPermissions);
+      const result = getAvailableRolesAUserCanAssign(userPermissions);
       expect(result.sort()).toEqual(["admin", "member"].sort());
     });
 
@@ -930,7 +930,7 @@ describe("Manage Organization Members Route", () => {
         "change_user_role:admin",
         "change_user_role:owner",
       ];
-      const result = getAvailableRolesToChangeTo(allPermissions);
+      const result = getAvailableRolesAUserCanAssign(allPermissions);
       expect(result.sort()).toEqual(["member", "admin", "owner"].sort());
     });
   });

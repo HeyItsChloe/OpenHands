@@ -1,58 +1,82 @@
+import { organizationService } from "#/api/organization-service/organization-service.api";
+import { getSelectedOrganizationIdFromStore } from "#/stores/selected-organization-store";
 import { OrganizationMember, OrganizationUserRole } from "#/types/org";
+import { getMeFromQueryClient } from "../query-client-getters";
 import { Permission, rolePermissions } from "./permissions";
+import { queryClient } from "#/query-client-config";
 
 /**
- * Check if active user has permission to change an organization members role
+ * Get the active organization user.
+ * Reads from cache first, fetches if missing.
+ * @returns OrganizationMember
+ */
+export const getActiveOrganizationUser = async (): Promise<
+  OrganizationMember | undefined
+> => {
+  const orgId = getSelectedOrganizationIdFromStore();
+  if (!orgId) return undefined;
+  let user = getMeFromQueryClient(orgId);
+  if (!user) {
+    user = await organizationService.getMe({ orgId });
+    queryClient.setQueryData(["organizations", orgId, "me"], user);
+  }
+  return user;
+};
+
+/**
+ * Check if active user has permission to change another member's role
  * @param user OrganizationMember
  * @param memberId Id of org member whose role would change
  * @param memberRole Role of org member whose role would change
  * @returns boolean
  */
-export const checkIfUserHasPermissionToChangeRole = (
+export const doesUserHavePermissionToAssignRoles = (
   user: OrganizationMember | undefined,
-  memberId: string,
-  memberRole: OrganizationUserRole,
-) => {
+  targetMemberId: string,
+  targetMemberRole: OrganizationUserRole,
+): boolean => {
   if (!user) return false;
 
-  // Users cannot change their own role
-  if (memberId === user.user_id) return false;
+  if (user.user_id === targetMemberId) return false;
 
-  // Members can never change roles
   if (user.role === "member") return false;
 
-  // Owners cannot change another owner's role
-  if (user.role === "owner" && memberRole === "owner") return false;
-
-  // Admins cannot change admin or owner roles
   if (user.role === "admin") {
-    if (memberRole === "admin" || memberRole === "owner") return false;
+    if (targetMemberRole !== "member") return false;
 
-    // Admins can change member roles
-    return rolePermissions.admin.includes(`change_user_role:${memberRole}`);
+    return rolePermissions.admin.includes("change_user_role:member");
   }
 
-  // Owners can change member & admin roles
-  return rolePermissions.owner.includes(`change_user_role:${memberRole}`);
+  if (user.role === "owner") {
+    if (targetMemberRole === "owner") return false;
+
+    return rolePermissions.owner.includes(
+      `change_user_role:${targetMemberRole}`,
+    );
+  }
+
+  return false;
 };
 
 /**
- * Get the list of roles that a user can assign to others
+ * Get a list of roles that a user has permission to assign to other users
  * @param userPermissions all permission for active user
  * @returns an array of roles (strings) the user can change other users to
  */
-export const getAvailableRolesToChangeTo = (
+export const getAvailableRolesAUserCanAssign = (
   userPermissions: Permission[],
 ): OrganizationUserRole[] => {
-  const roleChangeMap: Record<OrganizationUserRole, Permission> = {
+  const roleToPermissionMap: Record<OrganizationUserRole, Permission> = {
     owner: "change_user_role:owner",
     admin: "change_user_role:admin",
     member: "change_user_role:member",
   };
 
-  return (Object.entries(roleChangeMap) as [OrganizationUserRole, Permission][])
-    .filter((roleMap_keyValuePairs) =>
-      userPermissions.includes(roleMap_keyValuePairs[1]),
+  return (
+    Object.entries(roleToPermissionMap) as [OrganizationUserRole, Permission][]
+  )
+    .filter((roleToPermissionMap_keyValuePairs) =>
+      userPermissions.includes(roleToPermissionMap_keyValuePairs[1]),
     )
-    .map(([roleMap_Key]) => roleMap_Key);
+    .map(([role]) => role);
 };

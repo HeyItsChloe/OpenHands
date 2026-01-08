@@ -8,6 +8,8 @@ import { GetConfigResponse } from "#/api/option-service/option.types";
 import { SettingsLayout } from "#/components/features/settings/settings-layout";
 import { Typography } from "#/ui/typography";
 import { useSettingsNavItems } from "#/hooks/use-settings-nav-items";
+import { getActiveOrganizationUser } from "#/utils/org/permission-checks";
+import { OrganizationMember, OrganizationUserRole } from "#/types/org";
 
 const SAAS_ONLY_PATHS = [
   "/settings/user",
@@ -21,6 +23,9 @@ const SAAS_ONLY_PATHS = [
 export const clientLoader = async ({ request }: Route.ClientLoaderArgs) => {
   const url = new URL(request.url);
   const { pathname } = url;
+  const user: OrganizationMember | undefined =
+    await getActiveOrganizationUser();
+  const userRole: OrganizationUserRole = !user ? "member" : user?.role;
 
   let config = queryClient.getQueryData<GetConfigResponse>(["config"]);
   if (!config) {
@@ -41,7 +46,10 @@ export const clientLoader = async ({ request }: Route.ClientLoaderArgs) => {
   }
 
   // If billing is hidden and user tries to access the billing page
-  if (config?.FEATURE_FLAGS?.HIDE_BILLING && pathname === "/settings/billing") {
+  if (
+    (config?.FEATURE_FLAGS?.HIDE_BILLING || userRole === "member") &&
+    pathname === "/settings/billing"
+  ) {
     // Redirect to the first available settings page
     if (isSaas) {
       return redirect("/settings/user");

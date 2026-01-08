@@ -19,8 +19,8 @@ import { getMeFromQueryClient } from "#/utils/query-client-getters";
 import { I18nKey } from "#/i18n/declaration";
 import { usePermission } from "#/hooks/organizations/use-permissions";
 import {
-  checkIfUserHasPermissionToChangeRole,
-  getAvailableRolesToChangeTo,
+  doesUserHavePermissionToAssignRoles,
+  getAvailableRolesAUserCanAssign,
 } from "#/utils/org/permission-checks";
 
 export const clientLoader = async () => {
@@ -60,7 +60,7 @@ function ManageOrganizationMembers() {
   };
 
   const availableRolesToChangeTo = React.useMemo(
-    () => getAvailableRolesToChangeTo(rolePermissions[currentUserRole]),
+    () => getAvailableRolesAUserCanAssign(rolePermissions[currentUserRole]),
     [currentUserRole],
   );
 
@@ -105,7 +105,7 @@ function ManageOrganizationMembers() {
                 email={member.email}
                 role={member.role}
                 status={member.status}
-                hasPermissionToChangeRole={checkIfUserHasPermissionToChangeRole(
+                hasPermissionToChangeRole={doesUserHavePermissionToAssignRoles(
                   user,
                   member.user_id,
                   member.role,
