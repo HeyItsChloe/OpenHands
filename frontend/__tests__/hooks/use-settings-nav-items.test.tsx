@@ -31,7 +31,7 @@ const seedActiveUser = (
     { user_id: "u1", role: "admin", ...user } as OrganizationMember,
   );
 
-  vi.spyOn(orgStore, "getSelectedOrganizationIdFromStore") //TODO:: correct format
+  vi.spyOn(orgStore, "getSelectedOrganizationIdFromStore")
     .mockReturnValue(orgId);
 };
 

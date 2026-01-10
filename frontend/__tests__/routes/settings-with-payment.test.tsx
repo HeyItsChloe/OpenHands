@@ -186,7 +186,19 @@ describe("Settings Billing", () => {
     within(navbar).getByText("Billing");
   });
 
-  //TODO:: should NOT render billing tab if member
+  it("should NOT render the billing tab if: SaaS mode, billing is enabled, and member user", async () => {
+    vi.mocked(getActiveOrganizationUser).mockResolvedValue({
+      user_id: "u1",
+      role: "member",
+    } as OrganizationMember);
+
+    seedConfig(); // Ensure SaaS mode
+
+    renderSettingsScreen();
+
+    const navbar = await screen.findByTestId("settings-navbar");
+    within(navbar).getByText("Billing");
+  });
 
   it("should render the billing settings if clicking the billing item", async () => {
     const user = userEvent.setup();
