@@ -10,8 +10,8 @@ import { INITIAL_MOCK_ORGS } from "#/mocks/org-handlers";
 import AuthService from "#/api/auth-service/auth-service.api";
 import { SAAS_NAV_ITEMS, OSS_NAV_ITEMS } from "#/constants/settings-nav";
 import OptionService from "#/api/option-service/option-service.api";
-import * as useMeModule from "#/hooks/query/use-me";
 import { OrganizationMember } from "#/types/org";
+import { useSelectedOrganizationStore } from "#/stores/selected-organization-store";
 
 type UserContextMenuProps = GetComponentPropTypes<typeof UserContextMenu>;
 
@@ -50,32 +50,27 @@ vi.mock("react-router", async (importActual) => ({
   }),
 }));
 
-vi.mock("#/context/use-selected-organization", () => {
-  const React = require("react");
-  return {
-    useSelectedOrganizationId: () => {
-      const [organizationId, setOrganizationId] = React.useState(null);
-      return { organizationId, setOrganizationId };
-    },
-  };
+const createMockUser = (
+  overrides: Partial<OrganizationMember> = {},
+): OrganizationMember => ({
+  org_id: "org-1",
+  user_id: "user-1",
+  email: "test@example.com",
+  role: "member",
+  llm_api_key: "",
+  max_iterations: 100,
+  llm_model: "gpt-4",
+  llm_api_key_for_byor: null,
+  llm_base_url: "",
+  status: "active",
+  ...overrides,
 });
 
-vi.mock("#/stores/selected-organization-store", () => ({
-  getSelectedOrganizationIdFromStore: () => "org-1",
-}));
-
-const seedActiveUser = (
-  user: Partial<OrganizationMember>,
-) => {
-  vi.spyOn(useMeModule, "useMe").mockReturnValue({
-    data: user,
-    status: "success",
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    refetch: vi.fn(),
-    error: null,
-  } as any);
+const seedActiveUser = (user: Partial<OrganizationMember>) => {
+  useSelectedOrganizationStore.setState({ organizationId: "org-1" });
+  vi.spyOn(organizationService, "getMe").mockResolvedValue(
+    createMockUser(user),
+  );
 };
 
 describe("UserContextMenu", () => {
@@ -329,13 +324,22 @@ describe("UserContextMenu", () => {
       expect(userLink).toHaveAttribute("href", "/settings/user");
     });
 
-    const billingLink = screen.getByText("SETTINGS$NAV_BILLING").closest("a");
-    expect(billingLink).toHaveAttribute("href", "/settings/billing");
+    await waitFor(() => {
+      const billingLink = screen
+        .getByText("SETTINGS$NAV_BILLING")
+        .closest("a");
+      expect(billingLink).toHaveAttribute("href", "/settings/billing");
+    });
 
-    const integrationsLink = screen
-      .getByText("SETTINGS$NAV_INTEGRATIONS")
-      .closest("a");
-    expect(integrationsLink).toHaveAttribute("href", "/settings/integrations");
+    await waitFor(() => {
+      const integrationsLink = screen
+        .getByText("SETTINGS$NAV_INTEGRATIONS")
+        .closest("a");
+      expect(integrationsLink).toHaveAttribute(
+        "href",
+        "/settings/integrations",
+      );
+    });
   });
 
   it("should navigate to /settings/org-members when Manage Organization Members is clicked", async () => {

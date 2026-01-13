@@ -5,7 +5,8 @@ import { SAAS_NAV_ITEMS, OSS_NAV_ITEMS } from "#/constants/settings-nav";
 import OptionService from "#/api/option-service/option-service.api";
 import { useSettingsNavItems } from "#/hooks/use-settings-nav-items";
 import { OrganizationMember } from "#/types/org";
-import * as useMeModule from "#/hooks/query/use-me";
+import { useSelectedOrganizationStore } from "#/stores/selected-organization-store";
+import { organizationService } from "#/api/organization-service/organization-service.api";
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -19,18 +20,31 @@ const mockConfig = (appMode: "saas" | "oss", hideLlmSettings = false) => {
   } as Awaited<ReturnType<typeof OptionService.getConfig>>);
 };
 
-const seedActiveUser = (
-  user: Partial<OrganizationMember>,
-) => {
-  vi.spyOn(useMeModule, "useMe").mockReturnValue({
-    data: user,
-    status: "success",
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    refetch: vi.fn(),
-    error: null,
-  } as any);
+vi.mock("react-router", () => ({
+  useRevalidator: () => ({ revalidate: vi.fn() }),
+}));
+
+const createMockUser = (
+  overrides: Partial<OrganizationMember> = {},
+): OrganizationMember => ({
+  org_id: "org-1",
+  user_id: "user-1",
+  email: "test@example.com",
+  role: "member",
+  llm_api_key: "",
+  max_iterations: 100,
+  llm_model: "gpt-4",
+  llm_api_key_for_byor: null,
+  llm_base_url: "",
+  status: "active",
+  ...overrides,
+});
+
+const seedActiveUser = (user: Partial<OrganizationMember>) => {
+  useSelectedOrganizationStore.setState({ organizationId: "org-1" });
+  vi.spyOn(organizationService, "getMe").mockResolvedValue(
+    createMockUser(user),
+  );
 };
 
 describe("useSettingsNavItems", () => {

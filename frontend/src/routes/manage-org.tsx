@@ -247,7 +247,7 @@ function ManageOrg() {
   const canDeleteOrg = !!me && hasPermission("delete_organization");
   const canAddCredits = !!me && hasPermission("add_credits");
   const isBillingHidden =
-    config?.FEATURE_FLAGS?.HIDE_BILLING || role === "member";
+    config?.FEATURE_FLAGS?.HIDE_BILLING || !hasPermission("view_billing");
 
   return (
     <div

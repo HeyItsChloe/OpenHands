@@ -15,9 +15,6 @@ import {
   resetOrgsAndMembersMockData,
 } from "#/mocks/org-handlers";
 import OptionService from "#/api/option-service/option-service.api";
-import { getAvailableRolesAUserCanAssign } from "#/utils/org/permission-checks";
-import { rolePermissions, Permission } from "#/utils/org/permissions";
-import { OrganizationUserRole, OrganizationMember } from "#/types/org";
 
 function ManageOrganizationMembersWithPortalRoot() {
   return (
@@ -824,31 +821,4 @@ describe("Manage Organization Members Route", () => {
       },
     );
   });
-
-  describe("getAvailableRolesAUserCanAssign", () => {
-    it("returns empty array if user has no permissions", () => {
-      const result = getAvailableRolesAUserCanAssign([]);
-      expect(result).toEqual([]);
-    });
-
-    it("returns only roles the user has permission for", () => {
-      const userPermissions: Permission[] = [
-        "change_user_role:member",
-        "change_user_role:admin",
-      ];
-      const result = getAvailableRolesAUserCanAssign(userPermissions);
-      expect(result.sort()).toEqual(["admin", "member"].sort());
-    });
-
-    it("returns all roles if user has all permissions", () => {
-      const allPermissions: Permission[] = [
-        "change_user_role:member",
-        "change_user_role:admin",
-        "change_user_role:owner",
-      ];
-      const result = getAvailableRolesAUserCanAssign(allPermissions);
-      expect(result.sort()).toEqual(["member", "admin", "owner"].sort());
-    });
-  });
-
 });

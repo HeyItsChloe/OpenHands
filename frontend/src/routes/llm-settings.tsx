@@ -29,7 +29,7 @@ import { DEFAULT_SETTINGS } from "#/services/settings";
 import { getProviderId } from "#/utils/map-provider";
 import { DEFAULT_OPENHANDS_MODEL } from "#/utils/verified-models";
 import { useMe } from "#/hooks/query/use-me";
-import { OrganizationUserRole } from "#/types/org";
+import { usePermission } from "#/hooks/organizations/use-permissions";
 
 interface OpenHandsApiKeyHelpProps {
   testId: string;
@@ -65,6 +65,8 @@ function OpenHandsApiKeyHelp({ testId }: OpenHandsApiKeyHelpProps) {
 function LlmSettingsScreen() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { data: user } = useMe();
+  const { hasPermission } = usePermission(user?.role || "member");
 
   const { mutate: saveSettings, isPending } = useSaveSettings();
 
@@ -72,9 +74,7 @@ function LlmSettingsScreen() {
   const { data: settings, isLoading, isFetching } = useSettings();
   const { data: config } = useConfig();
 
-  const { data: user } = useMe();
-  const userRole: OrganizationUserRole = user?.role ?? "member";
-  const isUserRoleViewOnly = userRole === "member";
+  const isUserRoleViewOnly = !hasPermission("edit_llm_settings");
 
   const [view, setView] = React.useState<"basic" | "advanced">("basic");
 
