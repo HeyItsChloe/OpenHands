@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { cn } from "#/utils/utils";
 
 interface TabWrapperProps {
-  // isActive: /boolean;
   children: ReactNode;
 }
 
