@@ -47,6 +47,28 @@ oauth_router = APIRouter(prefix='/oauth')
 token_manager = TokenManager()
 
 
+def needs_profile_questions(user: User) -> bool:
+    """Check if a user needs to complete their profile questions.
+
+    This is used to determine if a new user should be redirected to the
+    profile questions page after authentication.
+
+    Args:
+        user: The User object to check
+
+    Returns:
+        bool: True if the user needs to answer profile questions, False otherwise
+
+    TODO: Implement the actual logic to check if the user has completed
+    their profile questions. This could check a field on the User model
+    such as `profile_completed` or `profile_questions_answered_at`.
+    """
+    # TODO: Replace with actual implementation
+    # Example implementation:
+    # return user.profile_questions_answered_at is None
+    return True
+
+
 def set_response_cookie(
     request: Request,
     response: Response,
@@ -384,6 +406,13 @@ async def keycloak_callback(
             f'{request.base_url}accept-tos?redirect_url={encoded_redirect_url}'
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
+    # Check if new user needs to answer profile questions
+    elif needs_profile_questions(user):
+        encoded_redirect_url = quote(redirect_url, safe='')
+        profile_questions_url = (
+            f'{request.base_url}profile-questions?redirect_url={encoded_redirect_url}'
+        )
+        response = RedirectResponse(profile_questions_url, status_code=302)
     else:
         response = RedirectResponse(redirect_url, status_code=302)
 
