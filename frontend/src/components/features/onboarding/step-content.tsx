@@ -3,7 +3,6 @@ import { StepOption } from "./step-option";
 export interface Option {
   id: string;
   label: string;
-  description?: string;
 }
 
 interface StepContentProps {
@@ -27,7 +26,6 @@ export function StepContent({
           key={option.id}
           id={option.id}
           label={option.label}
-          description={option.description}
           selected={selectedOptionId === option.id}
           onClick={() => onSelectOption(option.id)}
         />

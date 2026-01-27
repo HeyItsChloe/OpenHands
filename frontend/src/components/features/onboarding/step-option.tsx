@@ -3,7 +3,6 @@ import { cn } from "@heroui/react";
 interface StepOptionProps {
   id: string;
   label: string;
-  description?: string;
   selected: boolean;
   onClick: () => void;
 }
@@ -11,7 +10,6 @@ interface StepOptionProps {
 export function StepOption({
   id,
   label,
-  description,
   selected,
   onClick,
 }: StepOptionProps) {
@@ -36,9 +34,6 @@ export function StepOption({
     >
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium text-content">{label}</span>
-        {description && (
-          <span className="text-xs text-neutral-400">{description}</span>
-        )}
       </div>
     </div>
   );
