@@ -27,6 +27,8 @@ from server.config import sign_token
 from server.constants import IS_FEATURE_ENV
 from server.routes.event_webhook import _get_session_api_key, _get_user_id
 from storage.database import session_maker
+from storage.org import Org
+from storage.org_member import OrgMember
 from storage.user import User
 from storage.user_store import UserStore
 
@@ -48,25 +50,28 @@ token_manager = TokenManager()
 
 
 def needs_onboarding(user: User) -> bool:
-    """Check if a user needs to complete their profile questions.
+    # New users must complete onboarding (profile questions).
 
-    This is used to determine if a new user should be redirected to the
-    profile questions page after authentication.
+    with session_maker() as session:
+        user_id = user.id
+        personal_org_name = f'user_{user_id}_org'
 
-    Args:
-        user: The User object to check
+        # Check 1: Does user have a personal org?
+        personal_org = (
+            session.query(Org).filter(Org.name == personal_org_name).first()
+        )
+        if personal_org:
+            return False
 
-    Returns:
-        bool: True if the user needs to answer profile questions, False otherwise
+        # Check 2: Does user have any org membership (any status)?
+        any_membership = (
+            session.query(OrgMember).filter(OrgMember.user_id == user_id).first()
+        )
+        if any_membership:
+            return False
 
-    TODO: Implement the actual logic to check if the user has completed
-    their profile questions. This could check a field on the User model
-    such as `profile_completed` or `onboarding_answered_at`.
-    """
-    # TODO: Replace with actual implementation
-    # Example implementation:
-    # return user.onboarding_answered_at is None
-    return True
+        # User is "new" - needs onboarding
+        return True
 
 
 def set_response_cookie(

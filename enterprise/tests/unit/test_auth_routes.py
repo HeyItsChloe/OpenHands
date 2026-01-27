@@ -177,6 +177,7 @@ async def test_keycloak_callback_success_with_valid_offline_token(mock_request):
         patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog') as mock_posthog,
+        patch('server.routes.auth.needs_onboarding', return_value=False),
     ):
         # Mock user with accepted_tos
         mock_user = MagicMock()
@@ -336,6 +337,7 @@ async def test_keycloak_callback_success_without_offline_token(mock_request):
         patch('server.routes.auth.KEYCLOAK_CLIENT_ID', 'test-client'),
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog') as mock_posthog,
+        patch('server.routes.auth.needs_onboarding', return_value=False),
     ):
         # Mock user with accepted_tos
         mock_user = MagicMock()
