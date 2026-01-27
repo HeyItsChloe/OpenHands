@@ -47,7 +47,7 @@ oauth_router = APIRouter(prefix='/oauth')
 token_manager = TokenManager()
 
 
-def needs_profile_questions(user: User) -> bool:
+def needs_onboarding(user: User) -> bool:
     """Check if a user needs to complete their profile questions.
 
     This is used to determine if a new user should be redirected to the
@@ -61,11 +61,11 @@ def needs_profile_questions(user: User) -> bool:
 
     TODO: Implement the actual logic to check if the user has completed
     their profile questions. This could check a field on the User model
-    such as `profile_completed` or `profile_questions_answered_at`.
+    such as `profile_completed` or `onboarding_answered_at`.
     """
     # TODO: Replace with actual implementation
     # Example implementation:
-    # return user.profile_questions_answered_at is None
+    # return user.onboarding_answered_at is None
     return True
 
 
@@ -407,12 +407,12 @@ async def keycloak_callback(
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
     # Check if new user needs to answer profile questions
-    elif needs_profile_questions(user):
+    elif needs_onboarding(user):
         encoded_redirect_url = quote(redirect_url, safe='')
-        profile_questions_url = (
-            f'{request.base_url}profile-questions?redirect_url={encoded_redirect_url}'
+        onboarding_url = (
+            f'{request.base_url}onboarding?redirect_url={encoded_redirect_url}'
         )
-        response = RedirectResponse(profile_questions_url, status_code=302)
+        response = RedirectResponse(onboarding_url, status_code=302)
     else:
         response = RedirectResponse(redirect_url, status_code=302)
 

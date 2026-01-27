@@ -31,8 +31,8 @@ describe("useIsOnIntermediatePage", () => {
       expect(result.current).toBe(true);
     });
 
-    it("should return true when on /profile-questions page", () => {
-      window.location.pathname = "/profile-questions";
+    it("should return true when on /onboarding page", () => {
+      window.location.pathname = "/onboarding";
 
       const { result } = renderHook(() => useIsOnIntermediatePage());
 

@@ -5,7 +5,7 @@
  *
  * Add new intermediate page paths here as needed.
  */
-const INTERMEDIATE_PAGE_PATHS = ["/accept-tos", "/profile-questions"] as const;
+const INTERMEDIATE_PAGE_PATHS = ["/accept-tos", "/onboarding"];
 
 /**
  * Hook to check if the current page is an intermediate page.
