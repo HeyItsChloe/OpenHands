@@ -18,7 +18,10 @@ export function StepContent({
   onSelectOption,
 }: StepContentProps) {
   return (
-    <div data-testid="step-content" className="flex flex-col gap-3 w-full">
+    <div
+      data-testid="step-content"
+      className="flex flex-col mt-8 mb-8 gap-[12px] w-full"
+    >
       {options.map((option) => (
         <StepOption
           key={option.id}

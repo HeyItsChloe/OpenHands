@@ -28,7 +28,7 @@ export function StepOption({
         }
       }}
       className={cn(
-        "w-full p-4 rounded-lg border-2 cursor-pointer transition-all duration-200",
+        "w-full py-8 px-5 rounded-[12px] border-2 cursor-pointer transition-all duration-200",
         "hover:border-white",
         "focus:outline-none focus:ring-2 focus:ring-white/50",
         selected ? "border-white" : "border-neutral-600",

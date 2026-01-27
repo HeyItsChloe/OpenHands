@@ -12,10 +12,10 @@ function StepHeader({
   totalSteps,
 }: StepHeaderProps) {
   return (
-    <div data-testid="step-header" className="flex flex-col gap-2 mb-6">
-      <h2 className="text-2xl font-semibold text-content">{title}</h2>
+    <div data-testid="step-header" className="flex flex-col gap-[32px]">
+      <span className="text-[39px] font-semibold text-content">{title}</span>
       {subtitle && <p className="text-sm text-neutral-400">{subtitle}</p>}
-      <div className="flex w-full gap-1 mt-2">
+      <div className="flex w-full gap-[12px]">
         {Array.from({ length: totalSteps }).map((_, index) => (
           <div
             key={index}

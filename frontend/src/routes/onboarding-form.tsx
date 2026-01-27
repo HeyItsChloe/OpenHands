@@ -1,109 +1,101 @@
 import React from "react";
 
-import { cn } from "@heroui/react";
 import { useTranslation } from "react-i18next";
 import StepHeader from "#/components/features/onboarding/step-header";
-import {
-  StepContent,
-  Option,
-} from "#/components/features/onboarding/step-content";
+import { StepContent } from "#/components/features/onboarding/step-content";
+import { BrandButton } from "#/components/features/settings/brand-button";
+import { I18nKey } from "#/i18n/declaration";
 
-export interface FormStep {
+interface StepOption {
   id: string;
-  title: string;
-  subtitle?: string;
-  options: Option[];
+  labelKey?: I18nKey;
+  label?: string;
 }
 
-const steps = [
+interface FormStep {
+  id: string;
+  titleKey: I18nKey;
+  subtitleKey?: I18nKey;
+  options: StepOption[];
+}
+
+const steps: FormStep[] = [
   {
     id: "step1",
-    title: "What best describes you?",
-    subtitle: "Select the option that best fits you",
+    titleKey: I18nKey.ONBOARDING$STEP1_TITLE,
+    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "option1",
-        label: "Individual developer / hobbyist",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP1_OPTION1,
       },
       {
         id: "option2",
-        label: "Startup team (2–20)",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP1_OPTION2,
       },
       {
         id: "option3",
-        label: "Growing company (20–200)",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP1_OPTION3,
       },
       {
         id: "option4",
-        label: "Enterprise / Large org (200+)",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP1_OPTION4,
       },
     ],
   },
   {
     id: "step2",
-    title: "Where do you want to deploy OpenHands?",
-    subtitle: "Select the option that best fits you",
+    titleKey: I18nKey.ONBOARDING$STEP2_TITLE,
+    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "option1",
-        label: "Cloud (hosted by us)",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP2_OPTION1,
       },
       {
         id: "option2",
-        label: "Local Environment",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP2_OPTION2,
       },
       {
         id: "option3",
-        label: "Private Cloud (Self-hosted)",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP2_OPTION3,
       },
       {
         id: "option4",
-        label: "Not sure yet",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP2_OPTION4,
       },
     ],
   },
   {
     id: "step3",
-    title: "How many teammates will use OpenHands?",
-    subtitle: "Select the option that best fits you",
+    titleKey: I18nKey.ONBOARDING$STEP3_TITLE,
+    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "option1",
-        label: "Just me",
-        description: "",
+        labelKey: I18nKey.ONBOARDING$STEP3_OPTION1,
       },
       {
         id: "option2",
         label: "2–10",
-        description: "",
       },
       {
         id: "option3",
-        label: "11-50",
-        description: "",
+        label: "11–50",
       },
       {
         id: "option4",
         label: "50+",
-        description: "",
       },
     ],
   },
 ];
 
-interface ProgressiveFormProps {
+interface OnboardingFormProps {
   onComplete: (selections: Record<string, string>) => void;
 }
 
-export function ProgressiveForm({ onComplete }: ProgressiveFormProps) {
+function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [selections, setSelections] = React.useState<Record<string, string>>(
     {},
@@ -130,37 +122,42 @@ export function ProgressiveForm({ onComplete }: ProgressiveFormProps) {
     }
   };
 
+  const translatedOptions = currentStep.options.map((option) => ({
+    id: option.id,
+    label: option.labelKey ? t(option.labelKey) : option.label!,
+  }));
+
   return (
-    <div data-testid="progressive-form" className="w-[700px] mx-auto p-6">
+    <div data-testid="onboarding-form" className="w-[700px] mx-auto p-6">
       <StepHeader
-        title={currentStep.title}
-        subtitle={currentStep.subtitle}
+        title={t(currentStep.titleKey)}
+        subtitle={
+          currentStep.subtitleKey ? t(currentStep.subtitleKey) : undefined
+        }
         currentStep={currentStepIndex + 1}
         totalSteps={steps.length}
       />
       <StepContent
-        options={currentStep.options}
+        options={translatedOptions}
         selectedOptionId={currentSelection}
         onSelectOption={handleSelectOption}
       />
       <div
         data-testid="step-actions"
-        className="flex justify-start items-center mt-8"
+        className="flex justify-start items-center"
       >
-        <button
+        <BrandButton
           type="button"
+          variant="primary"
           onClick={handleNext}
-          disabled={!currentSelection}
-          className={cn(
-            "px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-            !currentSelection
-              ? "bg-neutral-600 text-neutral-400 cursor-not-allowed"
-              : "bg-white text-black hover:bg-white/90 active:bg-white/80",
-          )}
+          isDisabled={!currentSelection}
+          className="px-6 py-2.5 bg-white text-black hover:bg-white/90"
         >
-          {t("TOS$CONTINUE")}
-        </button>
+          {t(I18nKey.ONBOARDING$NEXT_BUTTON)}
+        </BrandButton>
       </div>
     </div>
   );
 }
+
+export default OnboardingForm;
