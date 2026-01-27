@@ -7,12 +7,7 @@ interface StepOptionProps {
   onClick: () => void;
 }
 
-export function StepOption({
-  id,
-  label,
-  selected,
-  onClick,
-}: StepOptionProps) {
+export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
   return (
     <div
       data-testid={`step-option-${id}`}
