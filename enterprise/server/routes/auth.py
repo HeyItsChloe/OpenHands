@@ -409,7 +409,7 @@ async def keycloak_callback(
             f'{request.base_url}accept-tos?redirect_url={encoded_redirect_url}'
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
-    # Check if new user needs to answer profile questions
+    # if new user must complete onboarding, redirect to the onboarding-form
     elif needs_onboarding(user):
         encoded_redirect_url = quote(redirect_url, safe='')
         onboarding_url = (
