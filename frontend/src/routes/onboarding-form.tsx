@@ -5,6 +5,7 @@ import StepHeader from "#/components/features/onboarding/step-header";
 import { StepContent } from "#/components/features/onboarding/step-content";
 import { BrandButton } from "#/components/features/settings/brand-button";
 import { I18nKey } from "#/i18n/declaration";
+import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
 
 interface StepOption {
   id: string;
@@ -96,6 +97,8 @@ interface OnboardingFormProps {
 }
 
 function OnboardingForm({ onComplete }: OnboardingFormProps) {
+  const { t } = useTranslation();
+
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [selections, setSelections] = React.useState<Record<string, string>>(
     {},
@@ -104,8 +107,6 @@ function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
   const currentSelection = selections[currentStep.id] || null;
-
-  const { t } = useTranslation();
 
   const handleSelectOption = (optionId: string) => {
     setSelections((prev) => ({
@@ -129,6 +130,9 @@ function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   return (
     <div data-testid="onboarding-form" className="w-[700px] mx-auto p-6">
+      <div className="flex justify-center mb-[130px]">
+        <OpenHandsLogoWhite width={80} height={80} />
+      </div>
       <StepHeader
         title={t(currentStep.titleKey)}
         subtitle={
