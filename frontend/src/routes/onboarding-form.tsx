@@ -92,11 +92,11 @@ const steps: FormStep[] = [
   },
 ];
 
-interface OnboardingFormProps {
-  onComplete: (selections: Record<string, string>) => void;
-}
+const onComplete = (selections: Record<string, string>) =>
+  // TODO: persist user responses
+  selections;
 
-function OnboardingForm({ onComplete }: OnboardingFormProps) {
+function OnboardingForm() {
   const { t } = useTranslation();
 
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
@@ -130,7 +130,7 @@ function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   return (
     <div data-testid="onboarding-form" className="w-[700px] mx-auto p-6">
-      <div className="flex justify-center mb-[130px]">
+      <div className="flex justify-center mb-12 md:mb-20 lg:mb-[130px]">
         <OpenHandsLogoWhite width={80} height={80} />
       </div>
       <StepHeader

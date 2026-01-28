@@ -10,13 +10,13 @@ describe("OnboardingForm", () => {
   };
 
   it("should render with the correct test id", () => {
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     expect(screen.getByTestId("onboarding-form")).toBeInTheDocument();
   });
 
   it("should render the first step initially", () => {
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     expect(screen.getByTestId("step-header")).toBeInTheDocument();
     expect(screen.getByTestId("step-content")).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should display step progress indicator with 3 bars", () => {
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     const stepHeader = screen.getByTestId("step-header");
     const progressBars = stepHeader.querySelectorAll(".rounded-full");
@@ -32,7 +32,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should have the Next button disabled when no option is selected", () => {
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     const nextButton = screen.getByRole("button", { name: /next/i });
     expect(nextButton).toBeDisabled();
@@ -40,7 +40,7 @@ describe("OnboardingForm", () => {
 
   it("should enable the Next button when an option is selected", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     await user.click(screen.getByTestId("step-option-option1"));
 
@@ -50,7 +50,7 @@ describe("OnboardingForm", () => {
 
   it("should advance to the next step when Next is clicked", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     // On step 1, first progress bar should be filled (bg-white)
     const stepHeader = screen.getByTestId("step-header");
@@ -67,7 +67,7 @@ describe("OnboardingForm", () => {
 
   it("should disable Next button again on new step until option is selected", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm />);
 
     await user.click(screen.getByTestId("step-option-option1"));
     await user.click(screen.getByRole("button", { name: /next/i }));
@@ -79,7 +79,7 @@ describe("OnboardingForm", () => {
   it("should call onComplete with selections when finishing the last step", async () => {
     const onCompleteMock = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm onComplete={onCompleteMock} />);
+    renderWithProviders(<OnboardingForm />);
 
     // Step 1
     await user.click(screen.getByTestId("step-option-option1"));
@@ -102,7 +102,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should render 4 options on step 1", () => {
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm/>);
 
     const options = screen.getAllByRole("button").filter(
       (btn) => btn.getAttribute("data-testid")?.startsWith("step-option-"),
@@ -113,7 +113,7 @@ describe("OnboardingForm", () => {
   it("should preserve selections when navigating through steps", async () => {
     const onCompleteMock = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm onComplete={onCompleteMock} />);
+    renderWithProviders(<OnboardingForm/>);
 
     // Select option1 on step 1
     await user.click(screen.getByTestId("step-option-option1"));
@@ -137,7 +137,7 @@ describe("OnboardingForm", () => {
 
   it("should show all progress bars filled on the last step", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm {...defaultProps} />);
+    renderWithProviders(<OnboardingForm/>);
 
     // Navigate to step 3
     await user.click(screen.getByTestId("step-option-option1"));
