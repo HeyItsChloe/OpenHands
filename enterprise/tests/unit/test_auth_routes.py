@@ -1896,3 +1896,105 @@ class TestKeycloakCallbackRecaptcha:
             assert call_kwargs[0][0] == 'recaptcha_blocked_at_callback'
             assert call_kwargs[1]['extra']['score'] == 0.2
             assert call_kwargs[1]['extra']['user_id'] == 'test_user_id'
+
+
+@pytest.mark.asyncio
+async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_request):
+    """Test that new users who need onboarding are redirected to /onboarding."""
+    with (
+        patch('server.routes.auth.token_manager') as mock_token_manager,
+        patch('server.routes.auth.user_verifier') as mock_verifier,
+        patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
+        patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('server.routes.auth.posthog') as mock_posthog,
+        patch('server.routes.auth.needs_onboarding', return_value=True),
+    ):
+        # Mock user with accepted_tos (so we skip TOS page) but needs onboarding
+        mock_user = MagicMock()
+        mock_user.id = 'test_user_id'
+        mock_user.current_org_id = 'test_org_id'
+        mock_user.accepted_tos = '2025-01-01'
+
+        # Setup UserStore mocks
+        mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
+        mock_user_store.create_user = AsyncMock(return_value=mock_user)
+        mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
+
+        mock_token_manager.get_keycloak_tokens = AsyncMock(
+            return_value=('test_access_token', 'test_refresh_token')
+        )
+        mock_token_manager.get_user_info = AsyncMock(
+            return_value={
+                'sub': 'test_user_id',
+                'preferred_username': 'test_user',
+                'identity_provider': 'github',
+                'email_verified': True,
+            }
+        )
+        mock_token_manager.store_idp_tokens = AsyncMock()
+        mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
+
+        mock_verifier.is_active.return_value = True
+        mock_verifier.is_user_allowed.return_value = True
+
+        result = await keycloak_callback(
+            code='test_code', state='http://localhost:8000/', request=mock_request
+        )
+
+        assert isinstance(result, RedirectResponse)
+        assert result.status_code == 302
+        # Verify redirect is to onboarding page
+        assert 'onboarding' in result.headers['location']
+        assert 'redirect_url=' in result.headers['location']
+
+
+@pytest.mark.asyncio
+async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request):
+    """Test that existing users who don't need onboarding are redirected to the app."""
+    with (
+        patch('server.routes.auth.token_manager') as mock_token_manager,
+        patch('server.routes.auth.user_verifier') as mock_verifier,
+        patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
+        patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('server.routes.auth.posthog') as mock_posthog,
+        patch('server.routes.auth.needs_onboarding', return_value=False),
+    ):
+        # Mock existing user with accepted_tos and completed onboarding
+        mock_user = MagicMock()
+        mock_user.id = 'test_user_id'
+        mock_user.current_org_id = 'test_org_id'
+        mock_user.accepted_tos = '2025-01-01'
+
+        # Setup UserStore mocks
+        mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
+        mock_user_store.create_user = AsyncMock(return_value=mock_user)
+        mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
+
+        mock_token_manager.get_keycloak_tokens = AsyncMock(
+            return_value=('test_access_token', 'test_refresh_token')
+        )
+        mock_token_manager.get_user_info = AsyncMock(
+            return_value={
+                'sub': 'test_user_id',
+                'preferred_username': 'test_user',
+                'identity_provider': 'github',
+                'email_verified': True,
+            }
+        )
+        mock_token_manager.store_idp_tokens = AsyncMock()
+        mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
+
+        mock_verifier.is_active.return_value = True
+        mock_verifier.is_user_allowed.return_value = True
+
+        redirect_url = 'http://localhost:8000/conversations'
+        result = await keycloak_callback(
+            code='test_code', state=redirect_url, request=mock_request
+        )
+
+        assert isinstance(result, RedirectResponse)
+        assert result.status_code == 302
+        # Verify redirect is NOT to onboarding page
+        assert 'onboarding' not in result.headers['location']
+        # Should redirect to the original destination
+        assert result.headers['location'] == redirect_url

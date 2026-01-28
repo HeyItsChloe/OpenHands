@@ -50,16 +50,14 @@ token_manager = TokenManager()
 
 
 def needs_onboarding(user: User) -> bool:
-    # New users must complete onboarding (profile questions).
+    # New users must complete onboarding.
 
     with session_maker() as session:
         user_id = user.id
         personal_org_name = f'user_{user_id}_org'
 
         # Check 1: Does user have a personal org?
-        personal_org = (
-            session.query(Org).filter(Org.name == personal_org_name).first()
-        )
+        personal_org = session.query(Org).filter(Org.name == personal_org_name).first()
         if personal_org:
             return False
 
