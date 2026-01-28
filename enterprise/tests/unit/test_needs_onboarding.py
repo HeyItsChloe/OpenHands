@@ -67,7 +67,9 @@ def test_needs_onboarding_returns_false_when_user_has_active_membership(session_
             assert result is False
 
 
-def test_needs_onboarding_returns_false_when_user_has_inactive_membership(session_maker):
+def test_needs_onboarding_returns_false_when_user_has_inactive_membership(
+    session_maker,
+):
     """User with inactive org membership does not need onboarding (not a new user)."""
     with session_maker() as session:
         user_id = uuid.uuid4()

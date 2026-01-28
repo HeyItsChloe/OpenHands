@@ -104,9 +104,11 @@ describe("OnboardingForm", () => {
   it("should render 4 options on step 1", () => {
     renderWithProviders(<OnboardingForm {...defaultProps} />);
 
-    const options = screen.getAllByRole("button").filter(
-      (btn) => btn.getAttribute("data-testid")?.startsWith("step-option-"),
-    );
+    const options = screen
+      .getAllByRole("button")
+      .filter((btn) =>
+        btn.getAttribute("data-testid")?.startsWith("step-option-"),
+      );
     expect(options).toHaveLength(4);
   });
 
