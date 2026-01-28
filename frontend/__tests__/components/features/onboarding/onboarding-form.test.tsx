@@ -3,11 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../test-utils";
 import OnboardingForm from "#/routes/onboarding-form";
-import { onComplete } from "#/routes/onboarding-utils";
+import { onComplete } from "#/utils/onboarding-utils";
 
-vi.mock("#/routes/onboarding-utils", async (importOriginal) => {
+vi.mock("#/utils/onboarding-utils", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("#/routes/onboarding-utils")>();
+    await importOriginal<typeof import("#/utils/onboarding-utils")>();
   return {
     ...original,
     onComplete: vi.fn(original.onComplete),

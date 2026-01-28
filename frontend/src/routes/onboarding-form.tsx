@@ -6,7 +6,7 @@ import { StepContent } from "#/components/features/onboarding/step-content";
 import { BrandButton } from "#/components/features/settings/brand-button";
 import { I18nKey } from "#/i18n/declaration";
 import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
-import { onComplete } from "./onboarding-utils";
+import { onComplete } from "#/utils/onboarding-utils";
 
 interface StepOption {
   id: string;
