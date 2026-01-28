@@ -1,13 +1,25 @@
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../test-utils";
 import OnboardingForm from "#/routes/onboarding-form";
+import { onComplete } from "#/routes/onboarding-utils";
+
+vi.mock("#/routes/onboarding-utils", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("#/routes/onboarding-utils")>();
+  return {
+    ...original,
+    onComplete: vi.fn(original.onComplete),
+  };
+});
+
+const mockedOnComplete = vi.mocked(onComplete);
 
 describe("OnboardingForm", () => {
-  const defaultProps = {
-    onComplete: vi.fn(),
-  };
+  beforeEach(() => {
+    mockedOnComplete.mockClear();
+  });
 
   it("should render with the correct test id", () => {
     renderWithProviders(<OnboardingForm />);
@@ -77,7 +89,6 @@ describe("OnboardingForm", () => {
   });
 
   it("should call onComplete with selections when finishing the last step", async () => {
-    const onCompleteMock = vi.fn();
     const user = userEvent.setup();
     renderWithProviders(<OnboardingForm />);
 
@@ -93,8 +104,8 @@ describe("OnboardingForm", () => {
     await user.click(screen.getByTestId("step-option-option3"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    expect(onCompleteMock).toHaveBeenCalledTimes(1);
-    expect(onCompleteMock).toHaveBeenCalledWith({
+    expect(mockedOnComplete).toHaveBeenCalledTimes(1);
+    expect(mockedOnComplete).toHaveBeenCalledWith({
       step1: "option1",
       step2: "option2",
       step3: "option3",
@@ -102,7 +113,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should render 4 options on step 1", () => {
-    renderWithProviders(<OnboardingForm/>);
+    renderWithProviders(<OnboardingForm />);
 
     const options = screen
       .getAllByRole("button")
@@ -113,9 +124,8 @@ describe("OnboardingForm", () => {
   });
 
   it("should preserve selections when navigating through steps", async () => {
-    const onCompleteMock = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm/>);
+    renderWithProviders(<OnboardingForm />);
 
     // Select option1 on step 1
     await user.click(screen.getByTestId("step-option-option1"));
@@ -130,7 +140,7 @@ describe("OnboardingForm", () => {
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // Verify all selections were preserved
-    expect(onCompleteMock).toHaveBeenCalledWith({
+    expect(mockedOnComplete).toHaveBeenCalledWith({
       step1: "option1",
       step2: "option2",
       step3: "option1",
@@ -139,7 +149,7 @@ describe("OnboardingForm", () => {
 
   it("should show all progress bars filled on the last step", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm/>);
+    renderWithProviders(<OnboardingForm />);
 
     // Navigate to step 3
     await user.click(screen.getByTestId("step-option-option1"));
