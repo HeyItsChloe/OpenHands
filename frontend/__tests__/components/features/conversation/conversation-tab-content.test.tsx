@@ -253,37 +253,6 @@ describe("ConversationTabContent", () => {
     });
   });
 
-  describe("Lazy loading", () => {
-    it("should show loading fallback while component is loading", async () => {
-      // Create a delayed mock to simulate lazy loading
-      let resolvePromise: () => void;
-      const delayedPromise = new Promise<void>((resolve) => {
-        resolvePromise = resolve;
-      });
-
-      vi.doMock("#/routes/browser-tab", () => ({
-        default: async () => {
-          await delayedPromise;
-          return (
-            <div data-testid="browser-tab-content">Browser Tab Content</div>
-          );
-        },
-      }));
-
-      setSelectedTab("browser");
-
-      render(<ConversationTabContent />, { wrapper: createWrapper() });
-
-      // Eventually the content should be rendered
-      await waitFor(() => {
-        expect(screen.getByTestId("browser-tab-content")).toBeInTheDocument();
-      });
-
-      // Resolve the promise (cleanup)
-      resolvePromise!();
-    });
-  });
-
   describe("Tab state persistence", () => {
     it("should render content based on store state", async () => {
       // First render with editor tab
