@@ -9,9 +9,10 @@ import {
 } from "#/stores/conversation-store";
 
 // Mock useConversationId hook
+let mockConversationId = "test-conversation-id-123";
 vi.mock("#/hooks/use-conversation-id", () => ({
   useConversationId: () => ({
-    conversationId: "test-conversation-id",
+    conversationId: mockConversationId,
   }),
 }));
 
@@ -29,10 +30,15 @@ vi.mock("#/routes/changes-tab", () => ({
   default: () => <div data-testid="editor-tab-content">Editor Tab Content</div>,
 }));
 
+// Control for lazy loading test
+let pendingBrowserTab: { promise: Promise<void>; resolve: () => void } | null = null;
 vi.mock("#/routes/browser-tab", () => ({
-  default: () => (
-    <div data-testid="browser-tab-content">Browser Tab Content</div>
-  ),
+  default: () => {
+    if (pendingBrowserTab) {
+      throw pendingBrowserTab.promise;
+    }
+    return <div data-testid="browser-tab-content">Browser Tab Content</div>;
+  },
 }));
 
 vi.mock("#/routes/served-tab", () => ({
@@ -91,6 +97,8 @@ describe("ConversationTabContent", () => {
     });
     // Reset store state
     useConversationStore.setState({ selectedTab: "editor" });
+    // Reset conversation ID
+    mockConversationId = "test-conversation-id-123";
   });
 
   afterEach(() => {
@@ -200,13 +208,13 @@ describe("ConversationTabContent", () => {
       tab: ConversationTab;
       expectedTitle: string;
     }> = [
-      { tab: "editor", expectedTitle: "COMMON$CHANGES" },
-      { tab: "browser", expectedTitle: "COMMON$BROWSER" },
-      { tab: "served", expectedTitle: "COMMON$APP" },
-      { tab: "vscode", expectedTitle: "COMMON$CODE" },
-      { tab: "terminal", expectedTitle: "COMMON$TERMINAL" },
-      { tab: "planner", expectedTitle: "COMMON$PLANNER" },
-    ];
+        { tab: "editor", expectedTitle: "COMMON$CHANGES" },
+        { tab: "browser", expectedTitle: "COMMON$BROWSER" },
+        { tab: "served", expectedTitle: "COMMON$APP" },
+        { tab: "vscode", expectedTitle: "COMMON$CODE" },
+        { tab: "terminal", expectedTitle: "COMMON$TERMINAL" },
+        { tab: "planner", expectedTitle: "COMMON$PLANNER" },
+      ];
 
     tabTitleMapping.forEach(({ tab, expectedTitle }) => {
       it(`should display "${expectedTitle}" title for "${tab}" tab`, async () => {
@@ -222,10 +230,10 @@ describe("ConversationTabContent", () => {
   });
 
   describe("Tab key behavior", () => {
-    it("should have different key for terminal tab with conversation ID", async () => {
+    it("should remount terminal when conversation ID changes", async () => {
       setSelectedTab("terminal");
 
-      const { container } = render(<ConversationTabContent />, {
+      const { rerender } = render(<ConversationTabContent />, {
         wrapper: createWrapper(),
       });
 
@@ -233,15 +241,30 @@ describe("ConversationTabContent", () => {
         expect(screen.getByTestId("terminal-tab-content")).toBeInTheDocument();
       });
 
-      // The key should include the conversation ID for terminal tab
-      // This ensures Terminal remounts when conversation changes
-      expect(container).toBeTruthy();
+      // Get reference to the terminal DOM node
+      const terminalBefore = screen.getByTestId("terminal-tab-content");
+
+      // Change conversation ID
+      mockConversationId = "test-conversation-id-456";
+
+      // Rerender to pick up the new conversation ID
+      rerender(<ConversationTabContent />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("terminal-tab-content")).toBeInTheDocument();
+      });
+
+      // Get new reference
+      const terminalAfter = screen.getByTestId("terminal-tab-content");
+
+      // If key includes conversation ID, component should remount = different DOM node
+      expect(terminalBefore).not.toBe(terminalAfter);
     });
 
-    it("should have just the tab name as key for non-terminal tabs", async () => {
+    it("should NOT remount non-terminal tabs when conversation ID changes", async () => {
       setSelectedTab("browser");
 
-      const { container } = render(<ConversationTabContent />, {
+      const { rerender } = render(<ConversationTabContent />, {
         wrapper: createWrapper(),
       });
 
@@ -249,38 +272,58 @@ describe("ConversationTabContent", () => {
         expect(screen.getByTestId("browser-tab-content")).toBeInTheDocument();
       });
 
-      expect(container).toBeTruthy();
+      // Get reference to the browser DOM node
+      const browserBefore = screen.getByTestId("browser-tab-content");
+
+      // Change conversation ID
+      mockConversationId = "test-conversation-id-789";
+
+      // Rerender
+      rerender(<ConversationTabContent />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("browser-tab-content")).toBeInTheDocument();
+      });
+
+      // Get new reference
+      const browserAfter = screen.getByTestId("browser-tab-content");
+
+      // If key does NOT include conversation ID, component should NOT remount = same DOM node
+      expect(browserBefore).toBe(browserAfter);
     });
   });
 
   describe("Lazy loading", () => {
-    it("should show loading fallback while component is loading", async () => {
-      // Create a delayed mock to simulate lazy loading
-      let resolvePromise: () => void;
-      const delayedPromise = new Promise<void>((resolve) => {
-        resolvePromise = resolve;
-      });
+    afterEach(() => {
+      pendingBrowserTab = null;
+    });
 
-      vi.doMock("#/routes/browser-tab", () => ({
-        default: async () => {
-          await delayedPromise;
-          return (
-            <div data-testid="browser-tab-content">Browser Tab Content</div>
-          );
+    it("should show loading fallback while component is loading", async () => {
+      let resolveFn: () => void;
+      pendingBrowserTab = {
+        promise: new Promise<void>((resolve) => {
+          resolveFn = resolve;
+        }),
+        resolve: () => {
+          pendingBrowserTab = null; // Clear first so re-render doesn't throw again
+          resolveFn();
         },
-      }));
+      };
 
       setSelectedTab("browser");
 
       render(<ConversationTabContent />, { wrapper: createWrapper() });
 
-      // Eventually the content should be rendered
+      // Verify loading fallback is shown
+      expect(screen.getByTestId("conversation-loading")).toBeInTheDocument();
+
+      // Resolve to load the component
+      pendingBrowserTab!.resolve();
+
+      // Verify content appears
       await waitFor(() => {
         expect(screen.getByTestId("browser-tab-content")).toBeInTheDocument();
       });
-
-      // Resolve the promise (cleanup)
-      resolvePromise!();
     });
   });
 
