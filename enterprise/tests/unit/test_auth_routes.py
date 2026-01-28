@@ -41,6 +41,7 @@ def mock_response():
 
 def test_set_response_cookie(mock_response, mock_request):
     """Test setting the auth cookie on a response."""
+
     with patch('server.routes.auth.config') as mock_config:
         mock_config.jwt_secret.get_secret_value.return_value = 'test_secret'
 
@@ -1903,9 +1904,9 @@ async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_reque
     with (
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.user_verifier') as mock_verifier,
-        patch('server.routes.auth.set_response_cookie'),
+        patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
         patch('server.routes.auth.UserStore') as mock_user_store,
-        patch('server.routes.auth.posthog'),
+        patch('server.routes.auth.posthog') as mock_posthog,
         patch('server.routes.auth.needs_onboarding', return_value=True),
     ):
         # Mock user with accepted_tos (so we skip TOS page) but needs onboarding
@@ -1953,9 +1954,9 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
     with (
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.user_verifier') as mock_verifier,
-        patch('server.routes.auth.set_response_cookie'),
+        patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
         patch('server.routes.auth.UserStore') as mock_user_store,
-        patch('server.routes.auth.posthog'),
+        patch('server.routes.auth.posthog') as mock_posthog,
         patch('server.routes.auth.needs_onboarding', return_value=False),
     ):
         # Mock existing user with accepted_tos and completed onboarding
