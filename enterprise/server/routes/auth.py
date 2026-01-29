@@ -27,8 +27,7 @@ from server.config import sign_token
 from server.constants import IS_FEATURE_ENV
 from server.routes.event_webhook import _get_session_api_key, _get_user_id
 from storage.database import session_maker
-from storage.org import Org
-from storage.org_member import OrgMember
+from storage.org_service import OrgService
 from storage.user import User
 from storage.user_store import UserStore
 
@@ -47,29 +46,6 @@ api_router = APIRouter(prefix='/api')
 oauth_router = APIRouter(prefix='/oauth')
 
 token_manager = TokenManager()
-
-
-def needs_onboarding(user: User) -> bool:
-    # New users must complete onboarding.
-
-    with session_maker() as session:
-        user_id = user.id
-        personal_org_name = f'user_{user_id}_org'
-
-        # Check 1: Does user have a personal org?
-        personal_org = session.query(Org).filter(Org.name == personal_org_name).first()
-        if personal_org:
-            return False
-
-        # Check 2: Does user have any org membership (any status)?
-        any_membership = (
-            session.query(OrgMember).filter(OrgMember.user_id == user_id).first()
-        )
-        if any_membership:
-            return False
-
-        # User is "new" - needs onboarding
-        return True
 
 
 def set_response_cookie(
@@ -410,7 +386,7 @@ async def keycloak_callback(
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
     # if new user must complete onboarding, redirect to the onboarding-form
-    elif needs_onboarding(user):
+    elif await OrgService.needs_onboarding(user):
         encoded_redirect_url = quote(redirect_url, safe='')
         onboarding_url = (
             f'{request.base_url}onboarding?redirect_url={encoded_redirect_url}'

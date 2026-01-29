@@ -17,7 +17,7 @@ interface StepOption {
 interface FormStep {
   id: string;
   titleKey: I18nKey;
-  subtitleKey?: I18nKey;
+  subtitleKey?: I18nKey; // All steps share the same subtitle.
   options: StepOption[];
 }
 
@@ -28,20 +28,28 @@ const steps: FormStep[] = [
     subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
-        id: "option1",
-        labelKey: I18nKey.ONBOARDING$STEP1_OPTION1,
+        id: "software_engineer",
+        labelKey: I18nKey.ONBOARDING$SOFTWARE_ENGINEER,
       },
       {
-        id: "option2",
-        labelKey: I18nKey.ONBOARDING$STEP1_OPTION2,
+        id: "engineering_manager",
+        labelKey: I18nKey.ONBOARDING$ENGINEERING_MANAGER,
       },
       {
-        id: "option3",
-        labelKey: I18nKey.ONBOARDING$STEP1_OPTION3,
+        id: "cto_founder",
+        labelKey: I18nKey.ONBOARDING$CTO_FOUNDER,
       },
       {
-        id: "option4",
-        labelKey: I18nKey.ONBOARDING$STEP1_OPTION4,
+        id: "product_operations",
+        labelKey: I18nKey.ONBOARDING$PRODUCT_OPERATIONS,
+      },
+      {
+        id: "student_hobbyist",
+        labelKey: I18nKey.ONBOARDING$STUDENT_HOBBYIST,
+      },
+      {
+        id: "other",
+        labelKey: I18nKey.ONBOARDING$OTHER,
       },
     ],
   },
@@ -51,20 +59,24 @@ const steps: FormStep[] = [
     subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
-        id: "option1",
-        labelKey: I18nKey.ONBOARDING$STEP2_OPTION1,
+        id: "solo",
+        labelKey: I18nKey.ONBOARDING$SOLO,
       },
       {
-        id: "option2",
-        labelKey: I18nKey.ONBOARDING$STEP2_OPTION2,
+        id: "org_2_10",
+        labelKey: I18nKey.ONBOARDING$ORG_2_10,
       },
       {
-        id: "option3",
-        labelKey: I18nKey.ONBOARDING$STEP2_OPTION3,
+        id: "org_11_50",
+        labelKey: I18nKey.ONBOARDING$ORG_11_50,
       },
       {
-        id: "option4",
-        labelKey: I18nKey.ONBOARDING$STEP2_OPTION4,
+        id: "org_51_200",
+        labelKey: I18nKey.ONBOARDING$ORG_51_200,
+      },
+      {
+        id: "org_200_plus",
+        labelKey: I18nKey.ONBOARDING$ORG_200_PLUS,
       },
     ],
   },
@@ -74,20 +86,28 @@ const steps: FormStep[] = [
     subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
-        id: "option1",
-        labelKey: I18nKey.ONBOARDING$STEP3_OPTION1,
+        id: "new_features",
+        labelKey: I18nKey.ONBOARDING$NEW_FEATURES,
       },
       {
-        id: "option2",
-        label: "2–10",
+        id: "app_from_scratch",
+        labelKey: I18nKey.ONBOARDING$APP_FROM_SCRATCH,
       },
       {
-        id: "option3",
-        label: "11–50",
+        id: "fixing_bugs",
+        labelKey: I18nKey.ONBOARDING$FIXING_BUGS,
       },
       {
-        id: "option4",
-        label: "50+",
+        id: "refactoring",
+        labelKey: I18nKey.ONBOARDING$REFACTORING,
+      },
+      {
+        id: "automating_tasks",
+        labelKey: I18nKey.ONBOARDING$AUTOMATING_TASKS,
+      },
+      {
+        id: "not_sure",
+        labelKey: I18nKey.ONBOARDING$NOT_SURE,
       },
     ],
   },

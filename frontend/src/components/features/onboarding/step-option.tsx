@@ -1,4 +1,5 @@
 import { cn } from "@heroui/react";
+import { Typography } from "#/ui/typography";
 
 interface StepOptionProps {
   id: string;
@@ -28,7 +29,9 @@ export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
       )}
     >
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-content">{label}</span>
+        <Typography.Text className="text-sm font-medium text-content">
+          {label}
+        </Typography.Text>
       </div>
     </div>
   );

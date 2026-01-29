@@ -54,7 +54,7 @@ describe("OnboardingForm", () => {
     const user = userEvent.setup();
     renderWithProviders(<OnboardingForm />);
 
-    await user.click(screen.getByTestId("step-option-option1"));
+    await user.click(screen.getByTestId("step-option-software_engineer"));
 
     const nextButton = screen.getByRole("button", { name: /next/i });
     expect(nextButton).not.toBeDisabled();
@@ -69,7 +69,7 @@ describe("OnboardingForm", () => {
     let progressBars = stepHeader.querySelectorAll(".bg-white");
     expect(progressBars).toHaveLength(1);
 
-    await user.click(screen.getByTestId("step-option-option1"));
+    await user.click(screen.getByTestId("step-option-software_engineer"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // On step 2, first two progress bars should be filled
@@ -81,7 +81,7 @@ describe("OnboardingForm", () => {
     const user = userEvent.setup();
     renderWithProviders(<OnboardingForm />);
 
-    await user.click(screen.getByTestId("step-option-option1"));
+    await user.click(screen.getByTestId("step-option-software_engineer"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     const nextButton = screen.getByRole("button", { name: /next/i });
@@ -92,27 +92,27 @@ describe("OnboardingForm", () => {
     const user = userEvent.setup();
     renderWithProviders(<OnboardingForm />);
 
-    // Step 1
-    await user.click(screen.getByTestId("step-option-option1"));
+    // Step 1 - select role
+    await user.click(screen.getByTestId("step-option-software_engineer"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    // Step 2
-    await user.click(screen.getByTestId("step-option-option2"));
+    // Step 2 - select org size
+    await user.click(screen.getByTestId("step-option-org_2_10"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    // Step 3
-    await user.click(screen.getByTestId("step-option-option3"));
+    // Step 3 - select use case
+    await user.click(screen.getByTestId("step-option-new_features"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     expect(mockedOnComplete).toHaveBeenCalledTimes(1);
     expect(mockedOnComplete).toHaveBeenCalledWith({
-      step1: "option1",
-      step2: "option2",
-      step3: "option3",
+      step1: "software_engineer",
+      step2: "org_2_10",
+      step3: "new_features",
     });
   });
 
-  it("should render 4 options on step 1", () => {
+  it("should render 6 options on step 1", () => {
     renderWithProviders(<OnboardingForm />);
 
     const options = screen
@@ -120,30 +120,30 @@ describe("OnboardingForm", () => {
       .filter((btn) =>
         btn.getAttribute("data-testid")?.startsWith("step-option-"),
       );
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(6);
   });
 
   it("should preserve selections when navigating through steps", async () => {
     const user = userEvent.setup();
     renderWithProviders(<OnboardingForm />);
 
-    // Select option1 on step 1
-    await user.click(screen.getByTestId("step-option-option1"));
+    // Select role on step 1
+    await user.click(screen.getByTestId("step-option-cto_founder"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    // Select option2 on step 2
-    await user.click(screen.getByTestId("step-option-option2"));
+    // Select org size on step 2
+    await user.click(screen.getByTestId("step-option-solo"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    // Select option1 on step 3
-    await user.click(screen.getByTestId("step-option-option1"));
+    // Select use case on step 3
+    await user.click(screen.getByTestId("step-option-fixing_bugs"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // Verify all selections were preserved
     expect(mockedOnComplete).toHaveBeenCalledWith({
-      step1: "option1",
-      step2: "option2",
-      step3: "option1",
+      step1: "cto_founder",
+      step2: "solo",
+      step3: "fixing_bugs",
     });
   });
 
@@ -152,10 +152,10 @@ describe("OnboardingForm", () => {
     renderWithProviders(<OnboardingForm />);
 
     // Navigate to step 3
-    await user.click(screen.getByTestId("step-option-option1"));
+    await user.click(screen.getByTestId("step-option-software_engineer"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    await user.click(screen.getByTestId("step-option-option1"));
+    await user.click(screen.getByTestId("step-option-solo"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // On step 3, all three progress bars should be filled
