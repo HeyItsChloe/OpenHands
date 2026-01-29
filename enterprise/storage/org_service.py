@@ -6,8 +6,6 @@ Separates business logic from route handlers.
 from uuid import UUID, uuid4
 from uuid import UUID as parse_uuid
 
-from sqlalchemy import select
-
 from server.constants import ORG_SETTINGS_VERSION, get_default_litellm_model
 from server.routes.org_models import (
     LiteLLMIntegrationError,
@@ -17,6 +15,7 @@ from server.routes.org_models import (
     OrgNotFoundError,
     OrgUpdate,
 )
+from sqlalchemy import select
 from storage.database import a_session_maker
 from storage.lite_llm_manager import LiteLlmManager
 from storage.org import Org

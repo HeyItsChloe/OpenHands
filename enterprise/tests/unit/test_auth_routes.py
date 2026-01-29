@@ -177,7 +177,7 @@ async def test_keycloak_callback_success_with_valid_offline_token(mock_request):
         patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog') as mock_posthog,
-        patch('server.routes.auth.needs_onboarding', return_value=False),
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Mock user with accepted_tos
         mock_user = MagicMock()
@@ -337,7 +337,7 @@ async def test_keycloak_callback_success_without_offline_token(mock_request):
         patch('server.routes.auth.KEYCLOAK_CLIENT_ID', 'test-client'),
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog') as mock_posthog,
-        patch('server.routes.auth.needs_onboarding', return_value=False),
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Mock user with accepted_tos
         mock_user = MagicMock()
@@ -1907,7 +1907,7 @@ async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_reque
         patch('server.routes.auth.set_response_cookie'),
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog'),
-        patch('server.routes.auth.needs_onboarding', return_value=True),
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
     ):
         # Mock user with accepted_tos (so we skip TOS page) but needs onboarding
         mock_user = MagicMock()
@@ -1957,7 +1957,7 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
         patch('server.routes.auth.set_response_cookie'),
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog'),
-        patch('server.routes.auth.needs_onboarding', return_value=False),
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Mock existing user with accepted_tos and completed onboarding
         mock_user = MagicMock()
