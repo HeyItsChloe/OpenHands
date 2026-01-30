@@ -874,7 +874,7 @@ class OrgService:
 
             # Check 2: Does the user have any org membership (any status)?
             result = await session.execute(
-                select(OrgMember).where(OrgMember.user_id == user_id)
+                select(OrgMember).where(OrgMember.user_id == user_id).limit(1)
             )
             any_membership = result.scalar_one_or_none()
             if any_membership:
