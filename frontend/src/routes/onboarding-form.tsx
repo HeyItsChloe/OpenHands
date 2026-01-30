@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import StepHeader from "#/components/features/onboarding/step-header";
 import { StepContent } from "#/components/features/onboarding/step-content";
 import { BrandButton } from "#/components/features/settings/brand-button";
@@ -115,6 +116,7 @@ const steps: FormStep[] = [
 
 function OnboardingForm() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [selections, setSelections] = React.useState<Record<string, string>>(
@@ -123,6 +125,7 @@ function OnboardingForm() {
 
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
+  const isFirstStep = currentStepIndex === 0;
   const currentSelection = selections[currentStep.id] || null;
 
   const handleSelectOption = (optionId: string) => {
@@ -140,21 +143,29 @@ function OnboardingForm() {
     }
   };
 
+  const handleBack = () => {
+    if (isFirstStep) {
+      navigate(-1);
+    } else {
+      setCurrentStepIndex((prev) => prev - 1);
+    }
+  };
+
   const translatedOptions = currentStep.options.map((option) => ({
     id: option.id,
     label: option.labelKey ? t(option.labelKey) : option.label!,
   }));
 
   return (
-    <div data-testid="onboarding-form" className="w-[700px] mx-auto p-6">
-      <div className="flex justify-center mb-12 md:mb-20 lg:mb-[130px]">
-        <OpenHandsLogoWhite width={80} height={80} />
+    <div
+      data-testid="onboarding-form"
+      className="w-[500px] mx-auto p-6 min-h-screen flex flex-col justify-center"
+    >
+      <div className="flex flex-col items-center mb-4">
+        <OpenHandsLogoWhite width={55} height={55} />
       </div>
       <StepHeader
         title={t(currentStep.titleKey)}
-        subtitle={
-          currentStep.subtitleKey ? t(currentStep.subtitleKey) : undefined
-        }
         currentStep={currentStepIndex + 1}
         totalSteps={steps.length}
       />
@@ -165,16 +176,24 @@ function OnboardingForm() {
       />
       <div
         data-testid="step-actions"
-        className="flex justify-start items-center"
+        className="flex justify-start items-center gap-3"
       >
         <BrandButton
           type="button"
           variant="primary"
           onClick={handleNext}
           isDisabled={!currentSelection}
-          className="px-6 py-2.5 bg-white text-black hover:bg-white/90"
+          className="flex-1 px-6 py-2.5 bg-white text-black hover:bg-white/90"
         >
           {t(I18nKey.ONBOARDING$NEXT_BUTTON)}
+        </BrandButton>
+        <BrandButton
+          type="button"
+          variant="secondary"
+          onClick={handleBack}
+          className="flex-1 px-6 py-2.5 bg-black text-white border border-white/50 hover:bg-white hover:text-black"
+        >
+          {t(I18nKey.ONBOARDING$BACK_BUTTON)}
         </BrandButton>
       </div>
     </div>

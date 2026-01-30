@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../test-utils";
 import OnboardingForm from "#/routes/onboarding-form";
@@ -16,19 +17,27 @@ vi.mock("#/utils/onboarding-utils", async (importOriginal) => {
 
 const mockedOnComplete = vi.mocked(onComplete);
 
+const renderOnboardingForm = () => {
+  return renderWithProviders(
+    <MemoryRouter>
+      <OnboardingForm />
+    </MemoryRouter>,
+  );
+};
+
 describe("OnboardingForm", () => {
   beforeEach(() => {
     mockedOnComplete.mockClear();
   });
 
   it("should render with the correct test id", () => {
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     expect(screen.getByTestId("onboarding-form")).toBeInTheDocument();
   });
 
   it("should render the first step initially", () => {
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     expect(screen.getByTestId("step-header")).toBeInTheDocument();
     expect(screen.getByTestId("step-content")).toBeInTheDocument();
@@ -36,7 +45,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should display step progress indicator with 3 bars", () => {
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     const stepHeader = screen.getByTestId("step-header");
     const progressBars = stepHeader.querySelectorAll(".rounded-full");
@@ -44,7 +53,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should have the Next button disabled when no option is selected", () => {
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     const nextButton = screen.getByRole("button", { name: /next/i });
     expect(nextButton).toBeDisabled();
@@ -52,7 +61,7 @@ describe("OnboardingForm", () => {
 
   it("should enable the Next button when an option is selected", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     await user.click(screen.getByTestId("step-option-software_engineer"));
 
@@ -62,7 +71,7 @@ describe("OnboardingForm", () => {
 
   it("should advance to the next step when Next is clicked", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     // On step 1, first progress bar should be filled (bg-white)
     const stepHeader = screen.getByTestId("step-header");
@@ -79,7 +88,7 @@ describe("OnboardingForm", () => {
 
   it("should disable Next button again on new step until option is selected", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     await user.click(screen.getByTestId("step-option-software_engineer"));
     await user.click(screen.getByRole("button", { name: /next/i }));
@@ -90,7 +99,7 @@ describe("OnboardingForm", () => {
 
   it("should call onComplete with selections when finishing the last step", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     // Step 1 - select role
     await user.click(screen.getByTestId("step-option-software_engineer"));
@@ -113,7 +122,7 @@ describe("OnboardingForm", () => {
   });
 
   it("should render 6 options on step 1", () => {
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     const options = screen
       .getAllByRole("button")
@@ -125,7 +134,7 @@ describe("OnboardingForm", () => {
 
   it("should preserve selections when navigating through steps", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     // Select role on step 1
     await user.click(screen.getByTestId("step-option-cto_founder"));
@@ -149,7 +158,7 @@ describe("OnboardingForm", () => {
 
   it("should show all progress bars filled on the last step", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OnboardingForm />);
+    renderOnboardingForm();
 
     // Navigate to step 3
     await user.click(screen.getByTestId("step-option-software_engineer"));

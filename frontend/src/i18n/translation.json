@@ -16302,5 +16302,21 @@
     "es": "Siguiente",
     "tr": "İleri",
     "uk": "Далі"
+  },
+  "ONBOARDING$BACK_BUTTON": {
+    "en": "Back",
+    "ja": "戻る",
+    "zh-CN": "返回",
+    "zh-TW": "返回",
+    "ko-KR": "뒤로",
+    "no": "Tilbake",
+    "ar": "رجوع",
+    "de": "Zurück",
+    "fr": "Retour",
+    "it": "Indietro",
+    "pt": "Voltar",
+    "es": "Atrás",
+    "tr": "Geri",
+    "uk": "Назад"
   }
 }

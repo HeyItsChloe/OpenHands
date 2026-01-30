@@ -22,17 +22,15 @@ export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
         }
       }}
       className={cn(
-        "w-full py-8 px-5 rounded-[12px] border-2 cursor-pointer transition-all duration-200",
-        "hover:border-white",
-        "focus:outline-none focus:ring-2 focus:ring-white/50",
-        selected ? "border-white" : "border-neutral-600",
+        "h-10 w-full rounded-md border py-2 px-4 transition-colors text-white",
+        selected
+          ? "border-white bg-[#3a3a3a]"
+          : "border-[#3a3a3a] bg-[#2a2a2a] hover:bg-[#3a3a3a]",
       )}
     >
-      <div className="flex flex-col gap-1">
-        <Typography.Text className="text-sm font-medium text-content">
-          {label}
-        </Typography.Text>
-      </div>
+      <Typography.Text className="text-sm font-medium text-content">
+        {label}
+      </Typography.Text>
     </div>
   );
 }
