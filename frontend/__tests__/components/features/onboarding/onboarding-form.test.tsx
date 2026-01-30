@@ -4,18 +4,23 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../test-utils";
 import OnboardingForm from "#/routes/onboarding-form";
-import { onComplete } from "#/utils/onboarding-utils";
 
-vi.mock("#/utils/onboarding-utils", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("#/utils/onboarding-utils")>();
+const mockMutate = vi.fn();
+const mockNavigate = vi.fn();
+
+vi.mock("react-router", async (importOriginal) => {
+  const original = await importOriginal<typeof import("react-router")>();
   return {
     ...original,
-    onComplete: vi.fn(original.onComplete),
+    useNavigate: () => mockNavigate,
   };
 });
 
-const mockedOnComplete = vi.mocked(onComplete);
+vi.mock("#/hooks/mutation/use-submit-onboarding", () => ({
+  useSubmitOnboarding: () => ({
+    mutate: mockMutate,
+  }),
+}));
 
 const renderOnboardingForm = () => {
   return renderWithProviders(
@@ -27,7 +32,8 @@ const renderOnboardingForm = () => {
 
 describe("OnboardingForm", () => {
   beforeEach(() => {
-    mockedOnComplete.mockClear();
+    mockMutate.mockClear();
+    mockNavigate.mockClear();
   });
 
   it("should render with the correct test id", () => {
@@ -97,7 +103,7 @@ describe("OnboardingForm", () => {
     expect(nextButton).toBeDisabled();
   });
 
-  it("should call onComplete with selections when finishing the last step", async () => {
+  it("should call submitOnboarding with selections when finishing the last step", async () => {
     const user = userEvent.setup();
     renderOnboardingForm();
 
@@ -113,11 +119,13 @@ describe("OnboardingForm", () => {
     await user.click(screen.getByTestId("step-option-new_features"));
     await user.click(screen.getByRole("button", { name: /next/i }));
 
-    expect(mockedOnComplete).toHaveBeenCalledTimes(1);
-    expect(mockedOnComplete).toHaveBeenCalledWith({
-      step1: "software_engineer",
-      step2: "org_2_10",
-      step3: "new_features",
+    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockMutate).toHaveBeenCalledWith({
+      selections: {
+        step1: "software_engineer",
+        step2: "org_2_10",
+        step3: "new_features",
+      },
     });
   });
 
@@ -149,10 +157,12 @@ describe("OnboardingForm", () => {
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // Verify all selections were preserved
-    expect(mockedOnComplete).toHaveBeenCalledWith({
-      step1: "cto_founder",
-      step2: "solo",
-      step3: "fixing_bugs",
+    expect(mockMutate).toHaveBeenCalledWith({
+      selections: {
+        step1: "cto_founder",
+        step2: "solo",
+        step3: "fixing_bugs",
+      },
     });
   });
 

@@ -7,7 +7,7 @@ import { StepContent } from "#/components/features/onboarding/step-content";
 import { BrandButton } from "#/components/features/settings/brand-button";
 import { I18nKey } from "#/i18n/declaration";
 import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
-import { onComplete } from "#/utils/onboarding-utils";
+import { useSubmitOnboarding } from "#/hooks/mutation/use-submit-onboarding";
 
 interface StepOption {
   id: string;
@@ -117,6 +117,7 @@ const steps: FormStep[] = [
 function OnboardingForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { mutate: submitOnboarding } = useSubmitOnboarding();
 
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [selections, setSelections] = React.useState<Record<string, string>>(
@@ -137,7 +138,7 @@ function OnboardingForm() {
 
   const handleNext = () => {
     if (isLastStep) {
-      onComplete(selections);
+      submitOnboarding({ selections });
     } else {
       setCurrentStepIndex((prev) => prev + 1);
     }
