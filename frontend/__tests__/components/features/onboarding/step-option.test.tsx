@@ -84,6 +84,6 @@ describe("StepOption", () => {
     render(<StepOption {...defaultProps} selected={false} />);
 
     const option = screen.getByTestId("step-option-test-option");
-    expect(option).toHaveClass("border-neutral-600");
+    expect(option).toHaveClass("border-[#3a3a3a]");
   });
 });

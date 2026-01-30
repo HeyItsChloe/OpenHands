@@ -31,7 +31,7 @@ async def test_needs_onboarding_returns_false_when_user_has_personal_org(
         session.add(user)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -68,7 +68,7 @@ async def test_needs_onboarding_returns_false_when_user_has_active_membership(
         session.add(org_member)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -105,7 +105,7 @@ async def test_needs_onboarding_returns_false_when_user_has_inactive_membership(
         session.add(org_member)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -142,7 +142,7 @@ async def test_needs_onboarding_returns_false_when_user_has_pending_invite(
         session.add(org_member)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -179,7 +179,7 @@ async def test_needs_onboarding_returns_false_when_user_has_invited_status(
         session.add(org_member)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -216,7 +216,7 @@ async def test_needs_onboarding_returns_false_when_user_has_null_status_membersh
         session.add(org_member)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -239,7 +239,7 @@ async def test_needs_onboarding_returns_true_when_user_is_new(session_maker):
         session.add(user)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -264,7 +264,7 @@ async def test_needs_onboarding_checks_personal_org_name_format(session_maker):
         session.add(user)
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             # Should return True because the org name doesn't match the expected format
@@ -308,7 +308,7 @@ async def test_needs_onboarding_with_multiple_memberships(session_maker):
         session.add_all([org_member1, org_member2])
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)
@@ -351,7 +351,7 @@ async def test_needs_onboarding_with_only_inactive_memberships(session_maker):
         session.add_all([org_member1, org_member2])
         session.commit()
 
-    with patch('storage.org_service.session_maker', session_maker):
+    with patch('storage.org_service.a_session_maker', session_maker):
         with session_maker() as session:
             user = session.query(User).filter(User.id == user_id).first()
             result = await OrgService.needs_onboarding(user)

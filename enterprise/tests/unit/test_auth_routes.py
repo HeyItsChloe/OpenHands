@@ -131,6 +131,7 @@ async def test_keycloak_callback_user_not_allowed(mock_request):
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_token_manager.get_keycloak_tokens = AsyncMock(
             return_value=('test_access_token', 'test_refresh_token')
@@ -176,6 +177,7 @@ async def test_keycloak_callback_success_with_valid_offline_token(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.set_response_cookie') as mock_set_cookie,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         patch('server.routes.auth.posthog') as mock_posthog,
         patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
@@ -239,6 +241,7 @@ async def test_keycloak_callback_email_not_verified(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.email.verify_email', mock_verify_email),
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_token_manager.get_keycloak_tokens = AsyncMock(
             return_value=('test_access_token', 'test_refresh_token')
@@ -286,6 +289,7 @@ async def test_keycloak_callback_email_not_verified_missing_field(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.email.verify_email', mock_verify_email),
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_token_manager.get_keycloak_tokens = AsyncMock(
             return_value=('test_access_token', 'test_refresh_token')
@@ -336,6 +340,7 @@ async def test_keycloak_callback_success_without_offline_token(mock_request):
         patch('server.routes.auth.KEYCLOAK_REALM_NAME', 'test-realm'),
         patch('server.routes.auth.KEYCLOAK_CLIENT_ID', 'test-client'),
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         patch('server.routes.auth.posthog') as mock_posthog,
         patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
@@ -563,6 +568,7 @@ async def test_keycloak_callback_blocked_email_domain(mock_request):
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.domain_blocker') as mock_domain_blocker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_token_manager.get_keycloak_tokens = AsyncMock(
             return_value=('test_access_token', 'test_refresh_token')
@@ -613,6 +619,7 @@ async def test_keycloak_callback_allowed_email_domain(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_session = MagicMock()
         mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -676,6 +683,7 @@ async def test_keycloak_callback_domain_blocking_inactive(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_session = MagicMock()
         mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -737,6 +745,7 @@ async def test_keycloak_callback_missing_email(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         mock_session = MagicMock()
         mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -793,6 +802,7 @@ async def test_keycloak_callback_duplicate_email_detected(mock_request):
     with (
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Arrange
         mock_token_manager.get_keycloak_tokens = AsyncMock(
@@ -837,6 +847,7 @@ async def test_keycloak_callback_duplicate_email_deletion_fails(mock_request):
     with (
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Arrange
         mock_token_manager.get_keycloak_tokens = AsyncMock(
@@ -880,6 +891,7 @@ async def test_keycloak_callback_duplicate_check_exception(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Arrange
         mock_session = MagicMock()
@@ -939,6 +951,7 @@ async def test_keycloak_callback_no_duplicate_email(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Arrange
         mock_session = MagicMock()
@@ -1000,6 +1013,7 @@ async def test_keycloak_callback_no_email_in_user_info(mock_request):
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.session_maker') as mock_session_maker,
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):
         # Arrange
         mock_session = MagicMock()
@@ -1154,6 +1168,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1232,6 +1247,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.RECAPTCHA_SITE_KEY', 'test-site-key'),
             patch('server.routes.auth.domain_blocker') as mock_domain_blocker,
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_token_manager.get_keycloak_tokens = AsyncMock(
                 return_value=('test_access_token', 'test_refresh_token')
@@ -1300,6 +1316,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1387,6 +1404,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1471,6 +1489,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1554,6 +1573,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1634,6 +1654,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1700,6 +1721,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1772,6 +1794,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.auth.logger') as mock_logger,
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1856,6 +1879,7 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.logger') as mock_logger,
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         ):
             mock_token_manager.get_keycloak_tokens = AsyncMock(
                 return_value=('test_access_token', 'test_refresh_token')
@@ -1906,6 +1930,7 @@ async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_reque
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.set_response_cookie'),
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         patch('server.routes.auth.posthog'),
         patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
     ):
@@ -1956,6 +1981,7 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
         patch('server.routes.auth.user_verifier') as mock_verifier,
         patch('server.routes.auth.set_response_cookie'),
         patch('server.routes.auth.UserStore') as mock_user_store,
+        patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         patch('server.routes.auth.posthog'),
         patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
     ):

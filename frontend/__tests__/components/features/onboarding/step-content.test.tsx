@@ -50,7 +50,7 @@ describe("StepContent", () => {
     const unselectedOption = screen.getByTestId("step-option-option2");
 
     expect(selectedOption).toHaveClass("border-white");
-    expect(unselectedOption).toHaveClass("border-neutral-600");
+    expect(unselectedOption).toHaveClass("border-[#3a3a3a]");
   });
 
   it("should render no options when options array is empty", () => {
