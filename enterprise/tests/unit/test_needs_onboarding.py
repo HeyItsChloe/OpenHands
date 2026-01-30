@@ -58,9 +58,7 @@ async def test_needs_onboarding_returns_false_when_user_has_personal_org(
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -97,9 +95,7 @@ async def test_needs_onboarding_returns_false_when_user_has_active_membership(
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -136,9 +132,7 @@ async def test_needs_onboarding_returns_false_when_user_has_inactive_membership(
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -175,9 +169,7 @@ async def test_needs_onboarding_returns_false_when_user_has_pending_invite(
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -214,9 +206,7 @@ async def test_needs_onboarding_returns_false_when_user_has_invited_status(
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -253,9 +243,7 @@ async def test_needs_onboarding_returns_false_when_user_has_null_status_membersh
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -278,9 +266,7 @@ async def test_needs_onboarding_returns_true_when_user_is_new(async_session_make
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is True
 
@@ -304,9 +290,7 @@ async def test_needs_onboarding_checks_personal_org_name_format(async_session_ma
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             # Should return True because the org name doesn't match the expected format
             assert await OrgService.needs_onboarding(user) is True
@@ -350,9 +334,7 @@ async def test_needs_onboarding_with_multiple_memberships(async_session_maker):
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False
 
@@ -395,8 +377,6 @@ async def test_needs_onboarding_with_only_inactive_memberships(async_session_mak
 
     with patch('storage.org_service.a_session_maker', async_session_maker):
         async with async_session_maker() as session:
-            result = await session.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalar_one()
             assert await OrgService.needs_onboarding(user) is False

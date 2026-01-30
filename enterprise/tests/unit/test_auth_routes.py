@@ -1168,7 +1168,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1247,7 +1249,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.RECAPTCHA_SITE_KEY', 'test-site-key'),
             patch('server.routes.auth.domain_blocker') as mock_domain_blocker,
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_token_manager.get_keycloak_tokens = AsyncMock(
                 return_value=('test_access_token', 'test_refresh_token')
@@ -1316,7 +1320,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1404,7 +1410,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1489,7 +1497,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1573,7 +1583,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1654,7 +1666,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1721,7 +1735,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1794,7 +1810,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.posthog'),
             patch('server.routes.auth.logger') as mock_logger,
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_session = MagicMock()
             mock_session_maker.return_value.__enter__.return_value = mock_session
@@ -1879,7 +1897,9 @@ class TestKeycloakCallbackRecaptcha:
             patch('server.routes.auth.logger') as mock_logger,
             patch('server.routes.email.verify_email', new_callable=AsyncMock),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
+            patch(
+                'storage.org_service.OrgService.needs_onboarding', return_value=False
+            ),
         ):
             mock_token_manager.get_keycloak_tokens = AsyncMock(
                 return_value=('test_access_token', 'test_refresh_token')
