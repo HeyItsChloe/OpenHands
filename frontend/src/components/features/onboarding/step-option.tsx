@@ -10,9 +10,9 @@ interface StepOptionProps {
 
 export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
   return (
-    <div
+    <button
       data-testid={`step-option-${id}`}
-      role="button"
+      type="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => {
@@ -22,15 +22,15 @@ export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
         }
       }}
       className={cn(
-        "h-10 w-full rounded-md border py-2 px-4 transition-colors text-white",
+        "h-10 w-full rounded-md border text-left px-4 transition-colors text-white",
         selected
           ? "border-white bg-[#3a3a3a]"
-          : "border-[#3a3a3a] bg-[#2a2a2a] hover:bg-[#3a3a3a]",
+          : "border-[#3a3a3a] hover:bg-[#3a3a3a]",
       )}
     >
       <Typography.Text className="text-sm font-medium text-content">
         {label}
       </Typography.Text>
-    </div>
+    </button>
   );
 }

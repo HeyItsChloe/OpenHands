@@ -191,7 +191,7 @@ function OnboardingForm() {
           type="button"
           variant="secondary"
           onClick={handleBack}
-          className="flex-1 px-6 py-2.5 bg-black text-white border border-white/50 hover:bg-white hover:text-black"
+          className="flex-1 px-6 py-2.5 bg-[050505] text-white border hover:bg-white border-[#242424] hover:text-black"
         >
           {t(I18nKey.ONBOARDING$BACK_BUTTON)}
         </BrandButton>
