@@ -213,11 +213,29 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this.syncMessages();
     }
 
-    // Handle file operations
+    // Handle file operations - automatically apply writes with confirmation
     if (event.action === 'write' && event.args) {
-      const path = event.args.path as string;
+      const filePath = event.args.path as string;
       const fileContent = event.args.content as string;
-      this.notifyFileChange(path, fileContent);
+      this.outputChannel.appendLine(`Agent wants to write file: ${filePath}`);
+      this.handleFileWrite(filePath, fileContent);
+    }
+  }
+
+  private async handleFileWrite(filePath: string, content: string): Promise<void> {
+    try {
+      // Use writeFileWithConfirmation to show user what's being written
+      const applied = await this.fileOps.writeFileWithConfirmation(filePath, content);
+      if (applied) {
+        this.outputChannel.appendLine(`File written: ${filePath}`);
+        // Open the file in editor
+        const uri = vscode.Uri.file(filePath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc);
+      }
+    } catch (error) {
+      this.outputChannel.appendLine(`Error writing file: ${error}`);
+      vscode.window.showErrorMessage(`Failed to write file: ${filePath}`);
     }
   }
 
