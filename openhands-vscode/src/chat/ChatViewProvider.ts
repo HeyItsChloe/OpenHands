@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { OpenHandsClient, AgentEvent, FileContext } from '../api';
 import { AuthService } from '../auth';
 import { FileOperationsService } from '../files';
@@ -237,6 +238,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this.handleFileWrite(filePath, fileContent);
     }
 
+    // Handle edit actions (str_replace_editor tool calls)
+    if (event.action === 'edit' && event.tool_call_metadata) {
+      this.outputChannel.appendLine(`Agent edit action detected`);
+      this.handleEditAction(event);
+    }
+
     // Also handle run_ipython which might create files
     if (event.action === 'run_ipython' && event.args?.code) {
       this.outputChannel.appendLine(`Agent running IPython: ${(event.args.code as string).substring(0, 100)}`);
@@ -246,6 +253,65 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     if (event.action === 'run' && event.args?.command) {
       this.outputChannel.appendLine(`Agent running command: ${event.args.command}`);
     }
+  }
+
+  private async handleEditAction(event: AgentEvent): Promise<void> {
+    try {
+      // Extract the tool call arguments
+      const toolCallMetadata = event.tool_call_metadata as any;
+      const modelResponse = toolCallMetadata?.model_response;
+      const choices = modelResponse?.choices;
+      
+      if (!choices || choices.length === 0) {
+        return;
+      }
+
+      const toolCalls = choices[0]?.message?.tool_calls;
+      if (!toolCalls || toolCalls.length === 0) {
+        return;
+      }
+
+      for (const toolCall of toolCalls) {
+        if (toolCall.function?.name === 'str_replace_editor') {
+          const argsStr = toolCall.function.arguments;
+          let args: any;
+          try {
+            args = JSON.parse(argsStr);
+          } catch {
+            this.outputChannel.appendLine(`Failed to parse edit args: ${argsStr}`);
+            continue;
+          }
+
+          const command = args.command;
+          const remotePath = args.path as string;
+          const fileText = args.file_text as string;
+
+          this.outputChannel.appendLine(`Edit command: ${command}, path: ${remotePath}`);
+
+          if ((command === 'create' || command === 'str_replace') && fileText) {
+            // Map remote path to local workspace
+            const localPath = this.mapRemotePathToLocal(remotePath);
+            this.outputChannel.appendLine(`Mapping ${remotePath} -> ${localPath}`);
+            
+            await this.handleFileWrite(localPath, fileText);
+          }
+        }
+      }
+    } catch (error) {
+      this.outputChannel.appendLine(`Error handling edit action: ${error}`);
+    }
+  }
+
+  private mapRemotePathToLocal(remotePath: string): string {
+    // Convert cloud /workspace/... paths to local workspace
+    const workspaceRoot = this.fileOps.getWorkspaceRoot();
+    if (!workspaceRoot) {
+      return remotePath;
+    }
+
+    // Remove /workspace prefix and join with local workspace
+    const relativePath = remotePath.replace(/^\/workspace\/?/, '');
+    return path.join(workspaceRoot, relativePath);
   }
 
   private async handleFileWrite(filePath: string, content: string): Promise<void> {

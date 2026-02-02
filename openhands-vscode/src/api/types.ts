@@ -31,6 +31,22 @@ export interface AgentEvent {
   content?: string;
   extras?: Record<string, unknown>;
   timestamp?: string;
+  tool_call_metadata?: {
+    function_name?: string;
+    tool_call_id?: string;
+    model_response?: {
+      choices?: Array<{
+        message?: {
+          tool_calls?: Array<{
+            function?: {
+              name?: string;
+              arguments?: string;
+            };
+          }>;
+        };
+      }>;
+    };
+  };
 }
 
 export interface FileReadAction {
