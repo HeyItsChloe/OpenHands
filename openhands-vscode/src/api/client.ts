@@ -171,46 +171,7 @@ export class OpenHandsClient {
       
       this.log(`Socket.IO transport: websocket only`);
       
-      // Add detailed engine-level debugging
-      this.socket.io.on('error', (error: Error) => {
-        this.log(`Socket.IO engine error: ${error.message}`);
-      });
-      
-      this.socket.io.on('ping', () => {
-        this.log(`Socket.IO ping`);
-      });
-      
-      (this.socket.io as any).on('pong', () => {
-        this.log(`Socket.IO pong`);
-      });
-      
-      this.socket.io.on('open', () => {
-        this.log(`Socket.IO engine opened`);
-      });
-      
-      this.socket.io.on('close', (reason: string, description: any) => {
-        this.log(`Socket.IO engine closed: ${reason}`);
-        if (description) {
-          this.log(`Close description: ${JSON.stringify(description)}`);
-        }
-      });
-      
-      this.socket.io.on('packet', (packet: any) => {
-        this.log(`Socket.IO packet: type=${packet.type}, data=${JSON.stringify(packet.data)?.substring(0, 200)}`);
-      });
-      
-      // Log raw data from the engine
-      const engine = (this.socket.io as any).engine;
-      if (engine) {
-        engine.on('data', (data: any) => {
-          const dataStr = typeof data === 'string' ? data : data.toString();
-          this.log(`Engine raw data: ${dataStr.substring(0, 300)}`);
-        });
-        engine.on('message', (msg: any) => {
-          this.log(`Engine message: ${typeof msg === 'string' ? msg.substring(0, 300) : 'binary'}`);
-        });
-      }
-      
+      // Socket-level events
       this.socket.on('connect', () => {
         this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
         resolve();
@@ -218,7 +179,7 @@ export class OpenHandsClient {
       
       this.socket.on('connect_error', (error: Error) => {
         this.log(`Socket.IO connection error: ${error.message}`);
-        this.log(`Error details: ${JSON.stringify(error)}`);
+        this.log(`Error stack: ${error.stack}`);
         reject(error);
       });
       
@@ -232,6 +193,48 @@ export class OpenHandsClient {
         if (description) {
           this.log(`Disconnect description: ${JSON.stringify(description)}`);
         }
+      });
+      
+      // Catch-all for any event
+      this.socket.onAny((eventName: string, ...args: any[]) => {
+        this.log(`Socket event '${eventName}': ${JSON.stringify(args).substring(0, 200)}`);
+      });
+      
+      // Manager-level events
+      this.socket.io.on('error', (error: Error) => {
+        this.log(`Manager error: ${error.message}`);
+      });
+      
+      this.socket.io.on('ping', () => {
+        this.log(`Manager ping`);
+      });
+      
+      this.socket.io.on('open', () => {
+        this.log(`Manager opened - setting up engine listeners`);
+        
+        // Engine is now available
+        const engine = (this.socket!.io as any).engine;
+        if (engine) {
+          this.log(`Engine available, transport: ${engine.transport?.name}`);
+          
+          engine.on('message', (msg: string) => {
+            this.log(`Engine message: ${msg.substring(0, 500)}`);
+          });
+          
+          engine.on('close', (reason: string, desc: any) => {
+            this.log(`Engine close: ${reason}, desc: ${JSON.stringify(desc)}`);
+          });
+        } else {
+          this.log(`Engine not available!`);
+        }
+      });
+      
+      this.socket.io.on('close', (reason: string) => {
+        this.log(`Manager closed: ${reason}`);
+      });
+      
+      this.socket.io.on('packet', (packet: any) => {
+        this.log(`Manager packet: type=${packet.type}, nsp=${packet.nsp}, data=${JSON.stringify(packet.data)?.substring(0, 200)}`);
       });
       
       // Now connect
