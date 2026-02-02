@@ -285,15 +285,24 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           const command = args.command;
           const remotePath = args.path as string;
           const fileText = args.file_text as string;
+          const oldStr = args.old_str as string;
+          const newStr = args.new_str as string;
 
           this.outputChannel.appendLine(`Edit command: ${command}, path: ${remotePath}`);
 
-          if ((command === 'create' || command === 'str_replace') && fileText) {
-            // Map remote path to local workspace
-            const localPath = this.mapRemotePathToLocal(remotePath);
-            this.outputChannel.appendLine(`Mapping ${remotePath} -> ${localPath}`);
-            
+          // Map remote path to local workspace
+          const localPath = this.mapRemotePathToLocal(remotePath);
+          this.outputChannel.appendLine(`Mapping ${remotePath} -> ${localPath}`);
+
+          if (command === 'create' && fileText) {
+            // Create new file
             await this.handleFileWrite(localPath, fileText);
+          } else if (command === 'str_replace' && oldStr && newStr !== undefined) {
+            // String replacement in existing file
+            await this.handleStringReplace(localPath, oldStr, newStr);
+          } else if (command === 'insert' && args.insert_line !== undefined && newStr) {
+            // Insert at line
+            await this.handleInsert(localPath, args.insert_line as number, newStr);
           }
         }
       }
@@ -328,6 +337,55 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     } catch (error) {
       this.outputChannel.appendLine(`Error writing file: ${error}`);
       vscode.window.showErrorMessage(`Failed to write file: ${filePath}`);
+    }
+  }
+
+  private async handleStringReplace(filePath: string, oldStr: string, newStr: string): Promise<void> {
+    try {
+      // Read existing file
+      let content: string;
+      try {
+        content = await this.fileOps.readFile(filePath);
+      } catch {
+        this.outputChannel.appendLine(`File does not exist locally: ${filePath}, creating with new content`);
+        // File doesn't exist locally, write newStr directly
+        await this.handleFileWrite(filePath, newStr);
+        return;
+      }
+
+      // Apply replacement
+      if (!content.includes(oldStr)) {
+        this.outputChannel.appendLine(`Warning: old_str not found in local file, writing new content directly`);
+        // Old string not found, might be due to sync issues
+        // Write the new content assuming the agent knows what it's doing
+        const newContent = content + newStr;
+        await this.handleFileWrite(filePath, newContent);
+        return;
+      }
+
+      const newContent = content.replace(oldStr, newStr);
+      this.outputChannel.appendLine(`Replacing in ${filePath}: "${oldStr.substring(0, 30)}..." -> "${newStr.substring(0, 30)}..."`);
+      
+      await this.handleFileWrite(filePath, newContent);
+    } catch (error) {
+      this.outputChannel.appendLine(`Error in string replace: ${error}`);
+      vscode.window.showErrorMessage(`Failed to edit file: ${filePath}`);
+    }
+  }
+
+  private async handleInsert(filePath: string, insertLine: number, content: string): Promise<void> {
+    try {
+      const existingContent = await this.fileOps.readFile(filePath);
+      const lines = existingContent.split('\n');
+      
+      // Insert at the specified line (0-indexed)
+      lines.splice(insertLine, 0, content);
+      const newContent = lines.join('\n');
+      
+      await this.handleFileWrite(filePath, newContent);
+    } catch (error) {
+      this.outputChannel.appendLine(`Error in insert: ${error}`);
+      vscode.window.showErrorMessage(`Failed to insert into file: ${filePath}`);
     }
   }
 
