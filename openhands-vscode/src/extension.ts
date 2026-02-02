@@ -43,13 +43,50 @@ export function activate(context: vscode.ExtensionContext) {
   // Register auth commands
   context.subscriptions.push(
     vscode.commands.registerCommand('openhands.setApiKey', async () => {
-      await authService.promptForApiKey();
+      const currentKey = await authService.getApiKey();
+      outputChannel.appendLine(`[Auth] Current API key: ${currentKey ? currentKey.substring(0, 10) + '...' : 'NONE'}`);
+      
+      const newKey = await vscode.window.showInputBox({
+        prompt: 'Enter your OpenHands API Key (from app.all-hands.dev/settings/api-keys)',
+        password: true,
+        placeHolder: 'Paste your API key here',
+        ignoreFocusOut: true,
+      });
+      
+      if (newKey && newKey.trim()) {
+        await authService.setApiKey(newKey.trim());
+        outputChannel.appendLine(`[Auth] New API key set: ${newKey.trim().substring(0, 10)}...`);
+        
+        // Verify it was saved
+        const savedKey = await authService.getApiKey();
+        outputChannel.appendLine(`[Auth] Verified saved key: ${savedKey ? savedKey.substring(0, 10) + '...' : 'FAILED TO SAVE'}`);
+        
+        vscode.window.showInformationMessage('OpenHands API key saved!');
+      }
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('openhands.setServerUrl', async () => {
       await authService.promptForServerUrl();
+    })
+  );
+  
+  // Debug command to check current auth state
+  context.subscriptions.push(
+    vscode.commands.registerCommand('openhands.debugAuth', async () => {
+      const apiKey = await authService.getApiKey();
+      const serverUrl = authService.getServerUrl();
+      const isCloud = authService.isCloudServer();
+      
+      outputChannel.appendLine(`[Debug] Server URL: ${serverUrl}`);
+      outputChannel.appendLine(`[Debug] Is Cloud: ${isCloud}`);
+      outputChannel.appendLine(`[Debug] API Key: ${apiKey ? apiKey.substring(0, 15) + '...' : 'NOT SET'}`);
+      outputChannel.show();
+      
+      vscode.window.showInformationMessage(
+        `Server: ${serverUrl}\nAPI Key: ${apiKey ? 'Set (' + apiKey.substring(0, 8) + '...)' : 'NOT SET'}`
+      );
     })
   );
 

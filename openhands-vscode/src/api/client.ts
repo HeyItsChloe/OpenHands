@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { io, Socket } from 'socket.io-client';
 import { AuthService } from '../auth';
 import { 
   Conversation, 
@@ -12,6 +13,8 @@ export class OpenHandsClient {
   private outputChannel: vscode.OutputChannel;
   private currentConversationId: string | null = null;
   private eventSource: EventSource | null = null;
+  private socket: Socket | null = null;
+  private eventHandlers: ((event: AgentEvent) => void)[] = [];
 
   constructor(authService: AuthService, outputChannel: vscode.OutputChannel) {
     this.authService = authService;
@@ -34,6 +37,10 @@ export class OpenHandsClient {
     const headers = await this.authService.getAuthHeadersAsync();
     
     this.log(`${options.method || 'GET'} ${url}`);
+    this.log(`Auth headers present: ${Object.keys(headers).join(', ') || 'NONE'}`);
+    if (headers['Authorization']) {
+      this.log(`Auth type: ${headers['Authorization'].substring(0, 20)}...`);
+    }
     
     const response = await fetch(url, {
       ...options,
@@ -54,6 +61,7 @@ export class OpenHandsClient {
   }
 
   async createConversation(): Promise<Conversation> {
+    // Step 1: Create the conversation
     const response = await this.fetch('/api/conversations', {
       method: 'POST',
       body: JSON.stringify({}),
@@ -62,7 +70,88 @@ export class OpenHandsClient {
     const conversation = await response.json() as Conversation;
     this.currentConversationId = conversation.conversation_id;
     this.log(`Created conversation: ${conversation.conversation_id}`);
+    
+    // Step 2: Start the conversation (required before sending messages)
+    await this.startConversation(conversation.conversation_id);
+    
     return conversation;
+  }
+
+  async startConversation(conversationId: string): Promise<void> {
+    this.log(`Starting conversation: ${conversationId}`);
+    
+    await this.fetch(`/api/conversations/${conversationId}/start`, {
+      method: 'POST',
+      body: JSON.stringify({
+        providers_set: []
+      }),
+    });
+    
+    this.log(`Started conversation: ${conversationId}`);
+    
+    // Connect via Socket.IO
+    await this.connectSocket(conversationId);
+  }
+
+  private async connectSocket(conversationId: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      this.log(`Connecting Socket.IO to conversation: ${conversationId}`);
+      
+      const headers = await this.authService.getAuthHeadersAsync();
+      const baseUrl = this.baseUrl.replace(/\/$/, '');
+      
+      // Disconnect existing socket if any
+      if (this.socket) {
+        this.socket.disconnect();
+        this.socket = null;
+      }
+      
+      this.socket = io(baseUrl, {
+        path: '/socket.io',
+        transports: ['websocket', 'polling'],
+        query: {
+          conversation_id: conversationId,
+          latest_event_id: -1,
+        },
+        extraHeaders: headers,
+        auth: headers,
+      });
+      
+      this.socket.on('connect', () => {
+        this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
+        resolve();
+      });
+      
+      this.socket.on('connect_error', (error) => {
+        this.log(`Socket.IO connection error: ${error.message}`);
+        reject(error);
+      });
+      
+      this.socket.on('oh_event', (event: AgentEvent) => {
+        this.log(`Received event: ${event.action || event.observation || 'unknown'}`);
+        this.eventHandlers.forEach(handler => handler(event));
+      });
+      
+      this.socket.on('disconnect', (reason) => {
+        this.log(`Socket.IO disconnected: ${reason}`);
+      });
+      
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        if (!this.socket?.connected) {
+          this.log('Socket.IO connection timeout');
+          reject(new Error('Socket.IO connection timeout'));
+        }
+      }, 30000);
+    });
+  }
+
+  onEvent(handler: (event: AgentEvent) => void): void {
+    this.eventHandlers.push(handler);
+  }
+
+  offEvent(handler: (event: AgentEvent) => void): void {
+    this.eventHandlers = this.eventHandlers.filter(h => h !== handler);
   }
 
   async getConversation(conversationId: string): Promise<Conversation> {
@@ -81,14 +170,20 @@ export class OpenHandsClient {
       fullMessage = this.buildContextualMessage(message, context);
     }
 
-    await this.fetch(`/api/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      body: JSON.stringify({
-        role: 'user',
-        content: fullMessage,
-      }),
-    });
+    if (!this.socket?.connected) {
+      throw new Error('Socket.IO not connected. Please start a conversation first.');
+    }
 
+    // Send message via Socket.IO using oh_user_action event
+    const messageEvent = {
+      action: 'message',
+      args: {
+        content: fullMessage,
+      },
+    };
+    
+    this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
+    this.socket.emit('oh_user_action', messageEvent);
     this.log(`Sent message to conversation ${conversationId}`);
   }
 
