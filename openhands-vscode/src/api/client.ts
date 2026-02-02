@@ -156,15 +156,23 @@ export class OpenHandsClient {
       // Get API key for authorization header
       const apiKey = await this.authService.getApiKey();
       
-      // Use wss:// for secure connections (like frontend)
-      this.socket = io(`wss://${socketHost}`, {
+      // Use https:// and start with polling (supports headers), then upgrade to websocket
+      this.socket = io(`https://${socketHost}`, {
         path: '/socket.io',
-        transports: ['websocket'],
+        transports: ['polling', 'websocket'], // Start with polling to send headers
+        upgrade: true,
         query,
         // Pass Authorization header for API key auth
         extraHeaders: apiKey ? {
           'Authorization': `Bearer ${apiKey}`,
         } : undefined,
+        // Also try auth option
+        auth: apiKey ? {
+          token: apiKey,
+        } : undefined,
+        reconnection: true,
+        reconnectionAttempts: 3,
+        timeout: 20000,
       });
       
       this.log(`Socket.IO auth: ${apiKey ? 'Bearer token' : 'none'}`);
