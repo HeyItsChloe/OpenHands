@@ -77,6 +77,22 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // Warn if no workspace is open (agent can still respond, but file ops won't work)
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+      const action = await vscode.window.showWarningMessage(
+        'No folder is open. File operations will not work. Open a folder first?',
+        'Open Folder',
+        'Continue Anyway'
+      );
+      if (action === 'Open Folder') {
+        await vscode.commands.executeCommand('vscode.openFolder');
+        return;
+      }
+      if (action !== 'Continue Anyway') {
+        return;
+      }
+    }
+
     this.isProcessing = true;
     this.updateWebviewState();
 
