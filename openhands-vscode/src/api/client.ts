@@ -153,12 +153,21 @@ export class OpenHandsClient {
       this.log(`Connecting Socket.IO to host: ${socketHost}`);
       this.log(`Query params: ${JSON.stringify(query)}`);
       
+      // Get API key for authorization header
+      const apiKey = await this.authService.getApiKey();
+      
       // Use wss:// for secure connections (like frontend)
       this.socket = io(`wss://${socketHost}`, {
         path: '/socket.io',
         transports: ['websocket'],
         query,
+        // Pass Authorization header for API key auth
+        extraHeaders: apiKey ? {
+          'Authorization': `Bearer ${apiKey}`,
+        } : undefined,
       });
+      
+      this.log(`Socket.IO auth: ${apiKey ? 'Bearer token' : 'none'}`);
       
       this.socket.on('connect', () => {
         this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
