@@ -322,9 +322,9 @@ export class OpenHandsClient {
       const result = await response.json() as { events: AgentEvent[], has_more: boolean };
       this.log(`Fetched ${result.events?.length || 0} events`);
       
-      // Log each event for debugging
+      // Log each event in full for debugging
       for (const event of result.events || []) {
-        this.log(`Fetched event: id=${event.id}, action=${event.action}, source=${event.source}`);
+        this.log(`Fetched event: ${JSON.stringify(event).substring(0, 500)}`);
       }
       
       return result.events || [];
