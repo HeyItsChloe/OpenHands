@@ -103,10 +103,12 @@ export class OpenHandsClient {
         const response = await this.fetch(`/api/conversations/${conversationId}`);
         const data = await response.json() as any;
         this.log(`Conversation status: ${data.status}, runtime: ${data.runtime_status}`);
+        this.log(`Conversation URL: ${data.url || 'none'}`);
         
         // Check if the conversation is ready
         if (data.status === 'RUNNING' || data.status === 'AWAITING_USER_INPUT') {
           this.log(`Conversation is ready!`);
+          this.log(`Full conversation data: ${JSON.stringify(data)}`);
           return data;
         }
       } catch (error) {
