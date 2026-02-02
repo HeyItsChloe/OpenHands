@@ -126,7 +126,10 @@ export class OpenHandsClient {
       this.log(`Connecting Socket.IO to conversation: ${conversationId}`);
       
       const headers = await this.authService.getAuthHeadersAsync();
-      const baseUrl = this.baseUrl.replace(/\/$/, '');
+      
+      // Parse URL to get just the host (like frontend does)
+      const urlObj = new URL(this.baseUrl);
+      const socketHost = urlObj.host; // e.g., "app.all-hands.dev"
       
       // Disconnect existing socket if any
       if (this.socket) {
@@ -143,15 +146,18 @@ export class OpenHandsClient {
       if (sessionApiKey) {
         query.session_api_key = sessionApiKey;
         this.log(`Using session_api_key for Socket.IO auth`);
+      } else {
+        this.log(`WARNING: No session_api_key available!`);
       }
       
-      this.log(`Connecting to ${baseUrl} with path /socket.io`);
+      this.log(`Connecting Socket.IO to host: ${socketHost}`);
+      this.log(`Query params: ${JSON.stringify(query)}`);
       
-      this.socket = io(baseUrl, {
+      // Use wss:// for secure connections (like frontend)
+      this.socket = io(`wss://${socketHost}`, {
         path: '/socket.io',
-        transports: ['websocket', 'polling'],
+        transports: ['websocket'],
         query,
-        extraHeaders: headers,
       });
       
       this.socket.on('connect', () => {
@@ -161,7 +167,7 @@ export class OpenHandsClient {
       
       this.socket.on('connect_error', (error: Error) => {
         this.log(`Socket.IO connection error: ${error.message}`);
-        reject(error);
+        // Don't reject immediately, let it retry
       });
       
       this.socket.on('oh_event', (event: AgentEvent) => {
@@ -176,7 +182,7 @@ export class OpenHandsClient {
       // Timeout after 30 seconds
       setTimeout(() => {
         if (!this.socket?.connected) {
-          this.log('Socket.IO connection timeout');
+          this.log('Socket.IO connection timeout - check if session_api_key is valid');
           reject(new Error('Socket.IO connection timeout'));
         }
       }, 30000);
