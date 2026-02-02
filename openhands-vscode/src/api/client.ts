@@ -80,20 +80,48 @@ export class OpenHandsClient {
   async startConversation(conversationId: string): Promise<void> {
     this.log(`Starting conversation: ${conversationId}`);
     
-    await this.fetch(`/api/conversations/${conversationId}/start`, {
+    const response = await this.fetch(`/api/conversations/${conversationId}/start`, {
       method: 'POST',
       body: JSON.stringify({
         providers_set: []
       }),
     });
     
-    this.log(`Started conversation: ${conversationId}`);
+    const startResult = await response.json() as any;
+    this.log(`Started conversation: ${conversationId}, status: ${startResult.conversation_status}`);
     
-    // Connect via Socket.IO
-    await this.connectSocket(conversationId);
+    // Wait for conversation to be ready
+    const conversationInfo = await this.waitForConversationReady(conversationId);
+    
+    // Connect via Socket.IO with session_api_key
+    await this.connectSocket(conversationId, conversationInfo?.session_api_key);
   }
 
-  private async connectSocket(conversationId: string): Promise<void> {
+  private async waitForConversationReady(conversationId: string, maxAttempts: number = 30): Promise<any> {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const response = await this.fetch(`/api/conversations/${conversationId}`);
+        const data = await response.json() as any;
+        this.log(`Conversation status: ${data.status}, runtime: ${data.runtime_status}`);
+        
+        // Check if the conversation is ready
+        if (data.status === 'RUNNING' || data.status === 'AWAITING_USER_INPUT') {
+          this.log(`Conversation is ready!`);
+          return data;
+        }
+      } catch (error) {
+        this.log(`Waiting... (attempt ${i + 1}/${maxAttempts})`);
+      }
+      
+      // Wait 2 seconds between checks
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    this.log(`Conversation may not be fully ready, proceeding anyway...`);
+    return null;
+  }
+
+  private async connectSocket(conversationId: string, sessionApiKey?: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       this.log(`Connecting Socket.IO to conversation: ${conversationId}`);
       
@@ -106,15 +134,24 @@ export class OpenHandsClient {
         this.socket = null;
       }
       
+      // Build query params - session_api_key is required for Socket.IO auth
+      const query: Record<string, any> = {
+        conversation_id: conversationId,
+        latest_event_id: -1,
+      };
+      
+      if (sessionApiKey) {
+        query.session_api_key = sessionApiKey;
+        this.log(`Using session_api_key for Socket.IO auth`);
+      }
+      
+      this.log(`Connecting to ${baseUrl} with path /socket.io`);
+      
       this.socket = io(baseUrl, {
         path: '/socket.io',
         transports: ['websocket', 'polling'],
-        query: {
-          conversation_id: conversationId,
-          latest_event_id: -1,
-        },
+        query,
         extraHeaders: headers,
-        auth: headers,
       });
       
       this.socket.on('connect', () => {
