@@ -169,6 +169,23 @@ export class OpenHandsClient {
       
       this.log(`Socket.IO transport: websocket only`);
       
+      // Add detailed engine-level debugging
+      this.socket.io.on('error', (error: Error) => {
+        this.log(`Socket.IO engine error: ${error.message}`);
+      });
+      
+      this.socket.io.on('ping', () => {
+        this.log(`Socket.IO ping`);
+      });
+      
+      this.socket.io.on('open', () => {
+        this.log(`Socket.IO engine opened`);
+      });
+      
+      this.socket.io.on('close', (reason: string) => {
+        this.log(`Socket.IO engine closed: ${reason}`);
+      });
+      
       this.socket.on('connect', () => {
         this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
         resolve();
@@ -176,7 +193,8 @@ export class OpenHandsClient {
       
       this.socket.on('connect_error', (error: Error) => {
         this.log(`Socket.IO connection error: ${error.message}`);
-        // Don't reject immediately, let it retry
+        this.log(`Error details: ${JSON.stringify(error)}`);
+        reject(error);
       });
       
       this.socket.on('oh_event', (event: AgentEvent) => {
@@ -191,7 +209,8 @@ export class OpenHandsClient {
       // Timeout after 30 seconds
       setTimeout(() => {
         if (!this.socket?.connected) {
-          this.log('Socket.IO connection timeout - check if session_api_key is valid');
+          this.log('Socket.IO connection timeout');
+          this.log(`Socket state: connected=${this.socket?.connected}, disconnected=${this.socket?.disconnected}`);
           reject(new Error('Socket.IO connection timeout'));
         }
       }, 30000);
