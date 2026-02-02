@@ -93,8 +93,12 @@ export class OpenHandsClient {
     // Wait for conversation to be ready
     const conversationInfo = await this.waitForConversationReady(conversationId);
     
-    // Connect via Socket.IO with session_api_key
-    await this.connectSocket(conversationId, conversationInfo?.session_api_key);
+    // Connect via Socket.IO - use conversation URL if provided (it points to the runtime server)
+    await this.connectSocket(
+      conversationId, 
+      conversationInfo?.session_api_key,
+      conversationInfo?.url
+    );
   }
 
   private async waitForConversationReady(conversationId: string, maxAttempts: number = 30): Promise<any> {
@@ -123,15 +127,9 @@ export class OpenHandsClient {
     return null;
   }
 
-  private async connectSocket(conversationId: string, sessionApiKey?: string): Promise<void> {
+  private async connectSocket(conversationId: string, sessionApiKey?: string, conversationUrl?: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       this.log(`Connecting Socket.IO to conversation: ${conversationId}`);
-      
-      const headers = await this.authService.getAuthHeadersAsync();
-      
-      // Parse URL to get just the host (like frontend does)
-      const urlObj = new URL(this.baseUrl);
-      const socketHost = urlObj.host; // e.g., "app.all-hands.dev"
       
       // Disconnect existing socket if any
       if (this.socket) {
@@ -139,10 +137,29 @@ export class OpenHandsClient {
         this.socket = null;
       }
       
+      // Determine Socket.IO host and path
+      // If conversationUrl is provided (points to runtime server), use that
+      // Otherwise fall back to main app URL
+      let socketHost: string;
+      let socketPath: string = '/socket.io';
+      
+      if (conversationUrl && !conversationUrl.startsWith('/')) {
+        const u = new URL(conversationUrl);
+        socketHost = u.host;
+        // Check if there's a path prefix before /api/conversations
+        const pathBeforeApi = u.pathname.split('/api/conversations')[0] || '/';
+        socketPath = `${pathBeforeApi.replace(/\/$/, '')}/socket.io`;
+        this.log(`Using runtime URL: ${socketHost}, path: ${socketPath}`);
+      } else {
+        const urlObj = new URL(this.baseUrl);
+        socketHost = urlObj.host;
+        this.log(`Using main app URL: ${socketHost}`);
+      }
+      
       // Get API key
       const apiKey = await this.authService.getApiKey();
       
-      // Build query params - include both session_api_key and api_key for auth
+      // Build query params
       const query: Record<string, any> = {
         conversation_id: conversationId,
         latest_event_id: -1,
@@ -159,7 +176,7 @@ export class OpenHandsClient {
       // Try WebSocket-only with headers (works better in Node.js)
       // autoConnect: false so we can set up handlers first
       this.socket = io(`https://${socketHost}`, {
-        path: '/socket.io',
+        path: socketPath,
         transports: ['websocket'],
         query,
         extraHeaders: apiKey ? {
