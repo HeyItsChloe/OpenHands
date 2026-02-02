@@ -137,7 +137,10 @@ export class OpenHandsClient {
         this.socket = null;
       }
       
-      // Build query params - session_api_key is required for Socket.IO auth
+      // Get API key
+      const apiKey = await this.authService.getApiKey();
+      
+      // Build query params - include both session_api_key and api_key for auth
       const query: Record<string, any> = {
         conversation_id: conversationId,
         latest_event_id: -1,
@@ -146,36 +149,25 @@ export class OpenHandsClient {
       if (sessionApiKey) {
         query.session_api_key = sessionApiKey;
         this.log(`Using session_api_key for Socket.IO auth`);
-      } else {
-        this.log(`WARNING: No session_api_key available!`);
       }
       
       this.log(`Connecting Socket.IO to host: ${socketHost}`);
       this.log(`Query params: ${JSON.stringify(query)}`);
       
-      // Get API key for authorization header
-      const apiKey = await this.authService.getApiKey();
-      
-      // Use https:// and start with polling (supports headers), then upgrade to websocket
+      // Try WebSocket-only with headers (works better in Node.js)
       this.socket = io(`https://${socketHost}`, {
         path: '/socket.io',
-        transports: ['polling', 'websocket'], // Start with polling to send headers
-        upgrade: true,
+        transports: ['websocket'],
         query,
-        // Pass Authorization header for API key auth
         extraHeaders: apiKey ? {
           'Authorization': `Bearer ${apiKey}`,
         } : undefined,
-        // Also try auth option
-        auth: apiKey ? {
-          token: apiKey,
-        } : undefined,
-        reconnection: true,
-        reconnectionAttempts: 3,
-        timeout: 20000,
+        forceNew: true,
+        reconnection: false, // Disable reconnection for debugging
+        timeout: 25000,
       });
       
-      this.log(`Socket.IO auth: ${apiKey ? 'Bearer token' : 'none'}`);
+      this.log(`Socket.IO transport: websocket only`);
       
       this.socket.on('connect', () => {
         this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
