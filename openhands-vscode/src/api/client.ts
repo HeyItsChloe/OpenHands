@@ -122,7 +122,7 @@ export class OpenHandsClient {
         resolve();
       });
       
-      this.socket.on('connect_error', (error) => {
+      this.socket.on('connect_error', (error: Error) => {
         this.log(`Socket.IO connection error: ${error.message}`);
         reject(error);
       });
@@ -132,7 +132,7 @@ export class OpenHandsClient {
         this.eventHandlers.forEach(handler => handler(event));
       });
       
-      this.socket.on('disconnect', (reason) => {
+      this.socket.on('disconnect', (reason: string) => {
         this.log(`Socket.IO disconnected: ${reason}`);
       });
       
