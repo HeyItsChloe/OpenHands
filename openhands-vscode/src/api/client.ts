@@ -148,6 +148,10 @@ export class OpenHandsClient {
         socketHost = u.host;
         // Store runtime base URL for REST API calls
         this.runtimeUrl = `https://${u.host}`;
+        // Store session API key for REST API auth
+        if (sessionApiKey) {
+          this.sessionApiKey = sessionApiKey;
+        }
         // Check if there's a path prefix before /api/conversations
         const pathBeforeApi = u.pathname.split('/api/conversations')[0] || '/';
         socketPath = `${pathBeforeApi.replace(/\/$/, '')}/socket.io`;
@@ -289,13 +293,14 @@ export class OpenHandsClient {
 
   // Fetch events from the runtime server (useful for getting missed events)
   async fetchEvents(conversationId: string, startId: number = 0): Promise<AgentEvent[]> {
-    if (!this.runtimeUrl) {
-      this.log('No runtime URL available for fetching events');
+    if (!this.runtimeUrl || !this.sessionApiKey) {
+      this.log('No runtime URL or session_api_key available for fetching events');
       return [];
     }
     
     try {
       // The events endpoint is at /api/conversations/{id}/events
+      // Include session_api_key for runtime server auth
       const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events?start_id=${startId}&limit=50`;
       this.log(`Fetching events from: ${url}`);
       
@@ -304,6 +309,7 @@ export class OpenHandsClient {
         headers: {
           ...headers,
           'Content-Type': 'application/json',
+          'X-Session-API-Key': this.sessionApiKey,
         },
       });
       
@@ -329,9 +335,14 @@ export class OpenHandsClient {
   }
 
   private runtimeUrl: string | null = null;
+  private sessionApiKey: string | null = null;
   
   setRuntimeUrl(url: string) {
     this.runtimeUrl = url;
+  }
+  
+  setSessionApiKey(key: string) {
+    this.sessionApiKey = key;
   }
 
   async sendMessage(
