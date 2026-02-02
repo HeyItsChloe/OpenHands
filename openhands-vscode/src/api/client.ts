@@ -370,6 +370,18 @@ export class OpenHandsClient {
     
     this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
     this.socket.emit('oh_user_action', messageEvent);
+    
+    // After sending message, trigger agent to run
+    // This is needed because the agent starts in AWAITING_USER_INPUT state
+    const runEvent = {
+      action: 'change_agent_state',
+      args: {
+        agent_state: 'running',
+      },
+    };
+    this.log(`Triggering agent to run...`);
+    this.socket.emit('oh_user_action', runEvent);
+    
     this.log(`Sent message to conversation ${conversationId}`);
   }
 
