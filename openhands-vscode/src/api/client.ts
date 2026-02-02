@@ -155,6 +155,7 @@ export class OpenHandsClient {
       this.log(`Query params: ${JSON.stringify(query)}`);
       
       // Try WebSocket-only with headers (works better in Node.js)
+      // autoConnect: false so we can set up handlers first
       this.socket = io(`https://${socketHost}`, {
         path: '/socket.io',
         transports: ['websocket'],
@@ -163,8 +164,9 @@ export class OpenHandsClient {
           'Authorization': `Bearer ${apiKey}`,
         } : undefined,
         forceNew: true,
-        reconnection: false, // Disable reconnection for debugging
+        reconnection: false,
         timeout: 25000,
+        autoConnect: false, // Don't connect until handlers are set up
       });
       
       this.log(`Socket.IO transport: websocket only`);
@@ -182,8 +184,15 @@ export class OpenHandsClient {
         this.log(`Socket.IO engine opened`);
       });
       
-      this.socket.io.on('close', (reason: string) => {
+      this.socket.io.on('close', (reason: string, description: any) => {
         this.log(`Socket.IO engine closed: ${reason}`);
+        if (description) {
+          this.log(`Close description: ${JSON.stringify(description)}`);
+        }
+      });
+      
+      this.socket.io.on('packet', (packet: any) => {
+        this.log(`Socket.IO packet received: type=${packet.type}`);
       });
       
       this.socket.on('connect', () => {
@@ -202,15 +211,23 @@ export class OpenHandsClient {
         this.eventHandlers.forEach(handler => handler(event));
       });
       
-      this.socket.on('disconnect', (reason: string) => {
+      this.socket.on('disconnect', (reason: string, description: any) => {
         this.log(`Socket.IO disconnected: ${reason}`);
+        if (description) {
+          this.log(`Disconnect description: ${JSON.stringify(description)}`);
+        }
       });
+      
+      // Now connect
+      this.log(`Connecting socket...`);
+      this.socket.connect();
       
       // Timeout after 30 seconds
       setTimeout(() => {
         if (!this.socket?.connected) {
           this.log('Socket.IO connection timeout');
           this.log(`Socket state: connected=${this.socket?.connected}, disconnected=${this.socket?.disconnected}`);
+          this.log(`Socket id: ${this.socket?.id}`);
           reject(new Error('Socket.IO connection timeout'));
         }
       }, 30000);
