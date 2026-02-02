@@ -360,6 +360,10 @@ export class OpenHandsClient {
       throw new Error('Socket.IO not connected. Please start a conversation first.');
     }
 
+    // Wait a moment for the agent to be fully ready
+    // This helps avoid the first-message-not-processed issue
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Send message via Socket.IO using oh_user_action event
     const messageEvent = {
       action: 'message',
@@ -370,6 +374,9 @@ export class OpenHandsClient {
     
     this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
     this.socket.emit('oh_user_action', messageEvent);
+    
+    // Small delay before triggering run
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // After sending message, trigger agent to run
     // This is needed because the agent starts in AWAITING_USER_INPUT state
