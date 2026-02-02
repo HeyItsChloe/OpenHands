@@ -295,7 +295,8 @@ export class OpenHandsClient {
     }
     
     try {
-      const url = `${this.runtimeUrl}/events?start_id=${startId}`;
+      // The events endpoint requires conversation_id as query param and session_api_key
+      const url = `${this.runtimeUrl}/events?conversation_id=${conversationId}&start_id=${startId}&limit=50`;
       this.log(`Fetching events from: ${url}`);
       
       const headers = await this.authService.getAuthHeadersAsync();
@@ -307,13 +308,20 @@ export class OpenHandsClient {
       });
       
       if (!response.ok) {
-        this.log(`Failed to fetch events: ${response.status}`);
+        const text = await response.text();
+        this.log(`Failed to fetch events: ${response.status} - ${text.substring(0, 200)}`);
         return [];
       }
       
-      const events = await response.json() as AgentEvent[];
-      this.log(`Fetched ${events.length} events`);
-      return events;
+      const result = await response.json() as { events: AgentEvent[], has_more: boolean };
+      this.log(`Fetched ${result.events?.length || 0} events`);
+      
+      // Log each event for debugging
+      for (const event of result.events || []) {
+        this.log(`Fetched event: id=${event.id}, action=${event.action}, source=${event.source}`);
+      }
+      
+      return result.events || [];
     } catch (error) {
       this.log(`Error fetching events: ${error}`);
       return [];
