@@ -142,9 +142,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   private handleAgentEvent(event: AgentEvent, assistantMessage: ChatMessage) {
-    this.outputChannel.appendLine(`Chat Event: ${JSON.stringify(event).substring(0, 500)}`);
+    this.outputChannel.appendLine(`Chat Event: ${JSON.stringify(event).substring(0, 800)}`);
 
-    // Skip status updates and agent state changes (they don't have content)
+    // Skip status updates
     if ((event as any).status_update) {
       return;
     }
@@ -154,40 +154,58 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    // Handle agent state changes
+    // Skip agent state changes (no displayable content)
     if (event.observation === 'agent_state_changed') {
-      return; // Just state changes, no content to display
-    }
-
-    // Handle assistant/agent messages
-    if (event.source === 'agent' && event.action === 'message' && event.args?.content) {
-      const content = event.args.content as string;
-      if (content && content.trim()) {
-        assistantMessage.content = content; // Replace, don't append
-        this.syncMessages();
-      }
       return;
     }
 
-    // Handle message content directly
-    if (event.message && event.message.trim() && event.source === 'agent') {
-      assistantMessage.content = event.message;
+    let content: string | undefined;
+
+    // Try various ways to extract content from agent events
+    
+    // 1. AgentFinishAction with outputs.content
+    if (event.action === 'finish' && event.args?.outputs) {
+      const outputs = event.args.outputs as Record<string, any>;
+      content = outputs.content || event.args.final_thought as string;
+    }
+    
+    // 2. MessageAction from agent
+    if (!content && event.action === 'message' && event.args?.content) {
+      content = event.args.content as string;
+    }
+    
+    // 3. Direct message field
+    if (!content && event.message) {
+      content = event.message;
+    }
+    
+    // 4. Direct content field  
+    if (!content && event.content) {
+      content = event.content;
+    }
+    
+    // 5. AgentThinkAction - show thought
+    if (!content && event.action === 'think' && event.args?.thought) {
+      content = `*Thinking: ${event.args.thought}*`;
+    }
+
+    // 6. Check extras for content
+    if (!content && event.extras?.content) {
+      content = event.extras.content as string;
+    }
+
+    // Update message if we found content
+    if (content && content.trim()) {
+      this.outputChannel.appendLine(`Setting assistant content: ${content.substring(0, 200)}`);
+      assistantMessage.content = content;
       this.syncMessages();
-      return;
-    }
-
-    // Handle content field
-    if (event.content && event.content.trim() && event.source === 'agent') {
-      assistantMessage.content = event.content;
-      this.syncMessages();
-      return;
     }
 
     // Handle file operations
     if (event.action === 'write' && event.args) {
       const path = event.args.path as string;
-      const content = event.args.content as string;
-      this.notifyFileChange(path, content);
+      const fileContent = event.args.content as string;
+      this.notifyFileChange(path, fileContent);
     }
   }
 
