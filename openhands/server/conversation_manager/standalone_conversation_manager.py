@@ -582,6 +582,9 @@ class StandaloneConversationManager(ConversationManager):
         """
         # Early return if event is None or not the correct type
         if not event or not isinstance(event, CmdOutputObservation):
+            logger.debug(
+                f'Git check: event is None or not CmdOutputObservation (type={type(event).__name__ if event else "None"})'
+            )
             return False
 
         # Check CmdOutputObservation for git commands that change branches
@@ -605,14 +608,16 @@ class StandaloneConversationManager(ConversationManager):
 
             is_git_related = any(git_cmd in command for git_cmd in git_commands)
 
-            if is_git_related:
-                logger.debug(
-                    f'Detected git-related command: {command} with exit code {event.metadata.exit_code}',
-                    extra={'command': command, 'exit_code': event.metadata.exit_code},
-                )
+            logger.debug(
+                f'Git check: command="{event.command}", exit_code={event.metadata.exit_code}, is_git_related={is_git_related}',
+                extra={'command': command, 'exit_code': event.metadata.exit_code},
+            )
 
             return is_git_related
 
+        logger.debug(
+            f'Git check: skipped (observation={getattr(event, "observation", "N/A")}, exit_code={getattr(event.metadata, "exit_code", "N/A") if hasattr(event, "metadata") else "N/A"})'
+        )
         return False
 
     async def _update_conversation_branch(self, conversation: ConversationMetadata):
@@ -628,22 +633,79 @@ class StandaloneConversationManager(ConversationManager):
                 conversation.conversation_id
             )
             if not session or not runtime:
+                logger.debug(
+                    f'Branch update skipped: no session or runtime for conversation',
+                    extra={'session_id': conversation.conversation_id},
+                )
                 return
 
             # Get the current branch from the workspace
             current_branch = self._get_current_workspace_branch(
                 runtime, conversation.selected_repository
             )
+            logger.debug(
+                f'Branch check: metadata_branch={conversation.selected_branch}, workspace_branch={current_branch}',
+                extra={'session_id': conversation.conversation_id},
+            )
 
             # Update branch if it has changed
             if self._should_update_branch(conversation.selected_branch, current_branch):
+                old_branch = conversation.selected_branch
                 self._update_branch_in_conversation(conversation, current_branch)
+                # Emit WebSocket event to notify frontend of branch change
+                await self._emit_branch_update_event(
+                    conversation.conversation_id, old_branch, current_branch
+                )
+            else:
+                logger.debug(
+                    f'Branch update not needed: no change detected',
+                    extra={'session_id': conversation.conversation_id},
+                )
 
         except Exception as e:
             # Log an error that occurred during branch update
             logger.warning(
                 f'Failed to update conversation branch: {e}',
                 extra={'session_id': conversation.conversation_id},
+            )
+
+    async def _emit_branch_update_event(
+        self,
+        conversation_id: str,
+        old_branch: str | None,
+        new_branch: str | None,
+    ):
+        """
+        Emit a WebSocket event to notify the frontend of a branch change.
+
+        Args:
+            conversation_id: The conversation ID
+            old_branch: The previous branch name
+            new_branch: The new branch name
+        """
+        try:
+            status_update_dict = {
+                'status_update': True,
+                'type': 'info',
+                'message': conversation_id,
+                'selected_branch': new_branch,
+            }
+            await run_in_loop(
+                self.sio.emit(
+                    'oh_event',
+                    status_update_dict,
+                    to=ROOM_KEY.format(sid=conversation_id),
+                ),
+                self._loop,  # type:ignore
+            )
+            logger.info(
+                f'Emitted branch update event: {old_branch} -> {new_branch}',
+                extra={'session_id': conversation_id},
+            )
+        except Exception as e:
+            logger.error(
+                f'Error emitting branch update event: {e}',
+                extra={'session_id': conversation_id},
             )
 
     def _get_session_and_runtime(
