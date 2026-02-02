@@ -180,6 +180,10 @@ export class OpenHandsClient {
         this.log(`Socket.IO ping`);
       });
       
+      (this.socket.io as any).on('pong', () => {
+        this.log(`Socket.IO pong`);
+      });
+      
       this.socket.io.on('open', () => {
         this.log(`Socket.IO engine opened`);
       });
@@ -192,8 +196,20 @@ export class OpenHandsClient {
       });
       
       this.socket.io.on('packet', (packet: any) => {
-        this.log(`Socket.IO packet received: type=${packet.type}`);
+        this.log(`Socket.IO packet: type=${packet.type}, data=${JSON.stringify(packet.data)?.substring(0, 200)}`);
       });
+      
+      // Log raw data from the engine
+      const engine = (this.socket.io as any).engine;
+      if (engine) {
+        engine.on('data', (data: any) => {
+          const dataStr = typeof data === 'string' ? data : data.toString();
+          this.log(`Engine raw data: ${dataStr.substring(0, 300)}`);
+        });
+        engine.on('message', (msg: any) => {
+          this.log(`Engine message: ${typeof msg === 'string' ? msg.substring(0, 300) : 'binary'}`);
+        });
+      }
       
       this.socket.on('connect', () => {
         this.log(`Socket.IO connected! Socket ID: ${this.socket?.id}`);
