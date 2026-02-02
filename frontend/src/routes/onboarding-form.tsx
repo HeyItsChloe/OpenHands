@@ -8,6 +8,7 @@ import { BrandButton } from "#/components/features/settings/brand-button";
 import { I18nKey } from "#/i18n/declaration";
 import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
 import { useSubmitOnboarding } from "#/hooks/mutation/use-submit-onboarding";
+import { useTracking } from "#/hooks/use-tracking";
 
 interface StepOption {
   id: string;
@@ -18,7 +19,6 @@ interface StepOption {
 interface FormStep {
   id: string;
   titleKey: I18nKey;
-  subtitleKey?: I18nKey; // All steps share the same subtitle.
   options: StepOption[];
 }
 
@@ -26,7 +26,6 @@ const steps: FormStep[] = [
   {
     id: "step1",
     titleKey: I18nKey.ONBOARDING$STEP1_TITLE,
-    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "software_engineer",
@@ -57,7 +56,6 @@ const steps: FormStep[] = [
   {
     id: "step2",
     titleKey: I18nKey.ONBOARDING$STEP2_TITLE,
-    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "solo",
@@ -84,7 +82,6 @@ const steps: FormStep[] = [
   {
     id: "step3",
     titleKey: I18nKey.ONBOARDING$STEP3_TITLE,
-    subtitleKey: I18nKey.ONBOARDING$STEP1_SUBTITLE,
     options: [
       {
         id: "new_features",
@@ -118,6 +115,7 @@ function OnboardingForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mutate: submitOnboarding } = useSubmitOnboarding();
+  const { trackOnboardingCompleted } = useTracking();
 
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [selections, setSelections] = React.useState<Record<string, string>>(
@@ -139,6 +137,11 @@ function OnboardingForm() {
   const handleNext = () => {
     if (isLastStep) {
       submitOnboarding({ selections });
+      trackOnboardingCompleted({
+        role: selections.step1,
+        orgSize: selections.step2,
+        useCase: selections.step3,
+      });
     } else {
       setCurrentStepIndex((prev) => prev + 1);
     }
