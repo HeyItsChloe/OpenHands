@@ -582,9 +582,6 @@ class StandaloneConversationManager(ConversationManager):
         """
         # Early return if event is None or not the correct type
         if not event or not isinstance(event, CmdOutputObservation):
-            logger.debug(
-                f'Git check: event is None or not CmdOutputObservation (type={type(event).__name__ if event else "None"})'
-            )
             return False
 
         # Check CmdOutputObservation for git commands that change branches
@@ -608,16 +605,14 @@ class StandaloneConversationManager(ConversationManager):
 
             is_git_related = any(git_cmd in command for git_cmd in git_commands)
 
-            logger.debug(
-                f'Git check: command="{event.command}", exit_code={event.metadata.exit_code}, is_git_related={is_git_related}',
-                extra={'command': command, 'exit_code': event.metadata.exit_code},
-            )
+            if is_git_related:
+                logger.info(
+                    f'[BranchUpdate] Detected git command: "{event.command}" (exit_code={event.metadata.exit_code})',
+                    extra={'command': command, 'exit_code': event.metadata.exit_code},
+                )
 
             return is_git_related
 
-        logger.debug(
-            f'Git check: skipped (observation={getattr(event, "observation", "N/A")}, exit_code={getattr(event.metadata, "exit_code", "N/A") if hasattr(event, "metadata") else "N/A"})'
-        )
         return False
 
     async def _update_conversation_branch(self, conversation: ConversationMetadata):
@@ -633,9 +628,8 @@ class StandaloneConversationManager(ConversationManager):
                 conversation.conversation_id
             )
             if not session or not runtime:
-                logger.debug(
-                    f'Branch update skipped: no session or runtime for conversation',
-                    extra={'session_id': conversation.conversation_id},
+                logger.info(
+                    f'[BranchUpdate] Skipped: no session or runtime for conversation {conversation.conversation_id}',
                 )
                 return
 
@@ -643,8 +637,8 @@ class StandaloneConversationManager(ConversationManager):
             current_branch = self._get_current_workspace_branch(
                 runtime, conversation.selected_repository
             )
-            logger.debug(
-                f'Branch check: metadata_branch={conversation.selected_branch}, workspace_branch={current_branch}',
+            logger.info(
+                f'[BranchUpdate] Comparing branches - metadata: {conversation.selected_branch}, workspace: {current_branch}',
                 extra={'session_id': conversation.conversation_id},
             )
 
@@ -652,20 +646,24 @@ class StandaloneConversationManager(ConversationManager):
             if self._should_update_branch(conversation.selected_branch, current_branch):
                 old_branch = conversation.selected_branch
                 self._update_branch_in_conversation(conversation, current_branch)
+                logger.info(
+                    f'[BranchUpdate] Branch changed from "{old_branch}" to "{current_branch}"',
+                    extra={'session_id': conversation.conversation_id},
+                )
                 # Emit WebSocket event to notify frontend of branch change
                 await self._emit_branch_update_event(
                     conversation.conversation_id, old_branch, current_branch
                 )
             else:
-                logger.debug(
-                    f'Branch update not needed: no change detected',
+                logger.info(
+                    f'[BranchUpdate] No change detected (current: {current_branch})',
                     extra={'session_id': conversation.conversation_id},
                 )
 
         except Exception as e:
             # Log an error that occurred during branch update
             logger.warning(
-                f'Failed to update conversation branch: {e}',
+                f'[BranchUpdate] Failed to update conversation branch: {e}',
                 extra={'session_id': conversation.conversation_id},
             )
 
@@ -699,12 +697,12 @@ class StandaloneConversationManager(ConversationManager):
                 self._loop,  # type:ignore
             )
             logger.info(
-                f'Emitted branch update event: {old_branch} -> {new_branch}',
+                f'[BranchUpdate] Emitted WebSocket event: {old_branch} -> {new_branch}',
                 extra={'session_id': conversation_id},
             )
         except Exception as e:
             logger.error(
-                f'Error emitting branch update event: {e}',
+                f'[BranchUpdate] Error emitting WebSocket event: {e}',
                 extra={'session_id': conversation_id},
             )
 
