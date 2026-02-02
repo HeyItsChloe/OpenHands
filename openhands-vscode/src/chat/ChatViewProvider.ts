@@ -97,12 +97,24 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       };
 
       // Set up event handler for Socket.IO events
-      const eventHandler = (event: AgentEvent) => {
+      const eventHandler = async (event: AgentEvent) => {
         this.handleAgentEvent(event, assistantMessage);
         
         // Check if agent finished
         if (event.observation === 'agent_state_changed' && 
             event.extras?.agent_state === 'awaiting_user_input') {
+          
+          // If we still have no content, try fetching events from REST API
+          if (!assistantMessage.content && this.currentConversationId) {
+            this.outputChannel.appendLine('No content received via Socket.IO, fetching from REST...');
+            const events = await this.client.fetchEvents(this.currentConversationId, 0);
+            for (const e of events) {
+              if (e.source === 'agent' && (e.action === 'message' || e.action === 'finish')) {
+                this.handleAgentEvent(e, assistantMessage);
+              }
+            }
+          }
+          
           assistantMessage.isStreaming = false;
           this.syncMessages();
           this.isProcessing = false;

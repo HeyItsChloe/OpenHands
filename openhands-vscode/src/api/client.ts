@@ -146,6 +146,8 @@ export class OpenHandsClient {
       if (conversationUrl && !conversationUrl.startsWith('/')) {
         const u = new URL(conversationUrl);
         socketHost = u.host;
+        // Store runtime base URL for REST API calls
+        this.runtimeUrl = `https://${u.host}`;
         // Check if there's a path prefix before /api/conversations
         const pathBeforeApi = u.pathname.split('/api/conversations')[0] || '/';
         socketPath = `${pathBeforeApi.replace(/\/$/, '')}/socket.io`;
@@ -283,6 +285,45 @@ export class OpenHandsClient {
   async getConversation(conversationId: string): Promise<Conversation> {
     const response = await this.fetch(`/api/conversations/${conversationId}`);
     return response.json() as Promise<Conversation>;
+  }
+
+  // Fetch events from the runtime server (useful for getting missed events)
+  async fetchEvents(conversationId: string, startId: number = 0): Promise<AgentEvent[]> {
+    if (!this.runtimeUrl) {
+      this.log('No runtime URL available for fetching events');
+      return [];
+    }
+    
+    try {
+      const url = `${this.runtimeUrl}/events?start_id=${startId}`;
+      this.log(`Fetching events from: ${url}`);
+      
+      const headers = await this.authService.getAuthHeadersAsync();
+      const response = await fetch(url, {
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        this.log(`Failed to fetch events: ${response.status}`);
+        return [];
+      }
+      
+      const events = await response.json() as AgentEvent[];
+      this.log(`Fetched ${events.length} events`);
+      return events;
+    } catch (error) {
+      this.log(`Error fetching events: ${error}`);
+      return [];
+    }
+  }
+
+  private runtimeUrl: string | null = null;
+  
+  setRuntimeUrl(url: string) {
+    this.runtimeUrl = url;
   }
 
   async sendMessage(
