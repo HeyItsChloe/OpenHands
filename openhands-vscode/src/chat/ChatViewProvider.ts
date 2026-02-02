@@ -220,6 +220,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this.outputChannel.appendLine(`Agent wants to write file: ${filePath}`);
       this.handleFileWrite(filePath, fileContent);
     }
+
+    // Also handle run_ipython which might create files
+    if (event.action === 'run_ipython' && event.args?.code) {
+      this.outputChannel.appendLine(`Agent running IPython: ${(event.args.code as string).substring(0, 100)}`);
+    }
+
+    // Handle command execution that might create files
+    if (event.action === 'run' && event.args?.command) {
+      this.outputChannel.appendLine(`Agent running command: ${event.args.command}`);
+    }
   }
 
   private async handleFileWrite(filePath: string, content: string): Promise<void> {
