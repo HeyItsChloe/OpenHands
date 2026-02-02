@@ -88,15 +88,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
 
     try {
-      // Create conversation if needed
-      if (!this.currentConversationId) {
-        const conversation = await this.client.createConversation();
-        this.currentConversationId = conversation.conversation_id;
-      }
-
-      // Send message
-      await this.client.sendMessage(this.currentConversationId, message, context);
-
       // Add placeholder for assistant response
       const assistantMessage: ChatMessage = {
         role: 'assistant',
@@ -104,27 +95,40 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         timestamp: new Date(),
         isStreaming: true
       };
+
+      // Set up event handler for Socket.IO events
+      const eventHandler = (event: AgentEvent) => {
+        this.handleAgentEvent(event, assistantMessage);
+        
+        // Check if agent finished
+        if (event.observation === 'agent_state_changed' && 
+            event.extras?.agent_state === 'awaiting_user_input') {
+          assistantMessage.isStreaming = false;
+          this.syncMessages();
+          this.isProcessing = false;
+          this.updateWebviewState();
+          this.client.offEvent(eventHandler);
+        }
+      };
+      
+      this.client.onEvent(eventHandler);
+      
+      // Store cleanup function
+      this.streamCleanup = () => {
+        this.client.offEvent(eventHandler);
+      };
+
+      // Create conversation if needed (this also connects Socket.IO)
+      if (!this.currentConversationId) {
+        const conversation = await this.client.createConversation();
+        this.currentConversationId = conversation.conversation_id;
+      }
+
+      // Add assistant message placeholder after conversation is ready
       this.addMessage(assistantMessage);
 
-      // Stream response
-      this.streamCleanup = this.client.streamEvents(
-        this.currentConversationId,
-        (event) => this.handleAgentEvent(event, assistantMessage),
-        (error) => {
-          this.outputChannel.appendLine(`Stream error: ${error.message}`);
-          assistantMessage.content += '\n\n*Error: Connection lost*';
-          assistantMessage.isStreaming = false;
-          this.syncMessages();
-          this.isProcessing = false;
-          this.updateWebviewState();
-        },
-        () => {
-          assistantMessage.isStreaming = false;
-          this.syncMessages();
-          this.isProcessing = false;
-          this.updateWebviewState();
-        }
-      );
+      // Send message via Socket.IO
+      await this.client.sendMessage(this.currentConversationId, message, context);
     } catch (error) {
       this.outputChannel.appendLine(`Error sending message: ${error}`);
       this.addMessage({
@@ -138,15 +142,45 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   private handleAgentEvent(event: AgentEvent, assistantMessage: ChatMessage) {
-    this.outputChannel.appendLine(`Event: ${JSON.stringify(event)}`);
+    this.outputChannel.appendLine(`Chat Event: ${JSON.stringify(event).substring(0, 500)}`);
 
-    // Handle different event types
-    if (event.message) {
-      assistantMessage.content += event.message;
-    } else if (event.content) {
-      assistantMessage.content += event.content;
-    } else if (event.action === 'message' && event.args?.content) {
-      assistantMessage.content += event.args.content as string;
+    // Skip status updates and agent state changes (they don't have content)
+    if ((event as any).status_update) {
+      return;
+    }
+
+    // Skip user messages (we already show those)
+    if (event.source === 'user') {
+      return;
+    }
+
+    // Handle agent state changes
+    if (event.observation === 'agent_state_changed') {
+      return; // Just state changes, no content to display
+    }
+
+    // Handle assistant/agent messages
+    if (event.source === 'agent' && event.action === 'message' && event.args?.content) {
+      const content = event.args.content as string;
+      if (content && content.trim()) {
+        assistantMessage.content = content; // Replace, don't append
+        this.syncMessages();
+      }
+      return;
+    }
+
+    // Handle message content directly
+    if (event.message && event.message.trim() && event.source === 'agent') {
+      assistantMessage.content = event.message;
+      this.syncMessages();
+      return;
+    }
+
+    // Handle content field
+    if (event.content && event.content.trim() && event.source === 'agent') {
+      assistantMessage.content = event.content;
+      this.syncMessages();
+      return;
     }
 
     // Handle file operations
@@ -155,8 +189,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       const content = event.args.content as string;
       this.notifyFileChange(path, content);
     }
-
-    this.syncMessages();
   }
 
   private notifyFileChange(path: string, content: string) {
