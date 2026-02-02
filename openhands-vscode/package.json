@@ -1,0 +1,140 @@
+{
+  "name": "openhands-vscode",
+  "displayName": "OpenHands",
+  "description": "AI-powered coding assistant - Chat with OpenHands, get quick fixes, and let AI edit your code",
+  "version": "0.1.0",
+  "publisher": "openhands",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "copilot",
+    "openhands",
+    "code generation"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "icon": "resources/icon.png",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openhands.setApiKey",
+        "title": "OpenHands: Set API Key"
+      },
+      {
+        "command": "openhands.setServerUrl",
+        "title": "OpenHands: Set Server URL"
+      },
+      {
+        "command": "openhands.openChat",
+        "title": "OpenHands: Open Chat"
+      },
+      {
+        "command": "openhands.fixDiagnostic",
+        "title": "Fix with OpenHands"
+      },
+      {
+        "command": "openhands.explainCode",
+        "title": "OpenHands: Explain Selected Code"
+      },
+      {
+        "command": "openhands.improveCode",
+        "title": "OpenHands: Improve Selected Code"
+      },
+      {
+        "command": "openhands.clearChat",
+        "title": "OpenHands: Clear Chat History"
+      }
+    ],
+    "configuration": {
+      "title": "OpenHands",
+      "properties": {
+        "openhands.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "OpenHands server URL"
+        },
+        "openhands.autoApplyFixes": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically apply fixes without confirmation"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openhands",
+          "title": "OpenHands",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "openhands": [
+        {
+          "type": "webview",
+          "id": "openhands.chat",
+          "name": "Chat"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "openhands.explainCode",
+          "when": "editorHasSelection",
+          "group": "openhands@1"
+        },
+        {
+          "command": "openhands.improveCode",
+          "when": "editorHasSelection",
+          "group": "openhands@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "openhands.openChat",
+        "key": "ctrl+shift+o",
+        "mac": "cmd+shift+o"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "eventsource": "^2.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/All-Hands-AI/OpenHands"
+  },
+  "license": "MIT"
+}
