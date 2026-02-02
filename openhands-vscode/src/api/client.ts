@@ -295,8 +295,8 @@ export class OpenHandsClient {
     }
     
     try {
-      // The events endpoint requires conversation_id as query param and session_api_key
-      const url = `${this.runtimeUrl}/events?conversation_id=${conversationId}&start_id=${startId}&limit=50`;
+      // The events endpoint is at /api/conversations/{id}/events
+      const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events?start_id=${startId}&limit=50`;
       this.log(`Fetching events from: ${url}`);
       
       const headers = await this.authService.getAuthHeadersAsync();
