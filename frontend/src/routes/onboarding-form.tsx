@@ -89,8 +89,12 @@ const steps: FormStep[] = [
         labelKey: I18nKey.ONBOARDING$ORG_51_200,
       },
       {
-        id: "org_200_plus",
-        labelKey: I18nKey.ONBOARDING$ORG_200_PLUS,
+        id: "org_200_1000",
+        labelKey: I18nKey.ONBOARDING$ORG_200_1000,
+      },
+      {
+        id: "org_1000_plus",
+        labelKey: I18nKey.ONBOARDING$ORG_1000_PLUS,
       },
     ],
   },
