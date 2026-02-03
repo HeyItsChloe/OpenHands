@@ -26,6 +26,7 @@ const DEFAULT_FEATURE_FLAGS = {
   ENABLE_JIRA: false,
   ENABLE_JIRA_DC: false,
   ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: false,
 };
 
 const RouterStub = createRoutesStub([

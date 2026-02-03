@@ -5,6 +5,10 @@ import { useSettings } from "#/hooks/query/use-settings";
 import { openHands } from "#/api/open-hands-axios";
 import { displaySuccessToast } from "#/utils/custom-toast-handlers";
 import { useEmailVerification } from "#/hooks/use-email-verification";
+import { I18nKey } from "#/i18n/declaration";
+import { BrandButton } from "#/components/features/settings/brand-button";
+import { ModalBackdrop } from "#/components/shared/modals/modal-backdrop";
+import { useConfig } from "#/hooks/query/use-config";
 
 // Email validation regex pattern
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -110,18 +114,146 @@ function VerificationAlert() {
 
 // These components have been replaced with toast notifications
 
+interface DeleteAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  userEmail: string;
+}
+
+function DeleteAccountModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  userEmail,
+}: DeleteAccountModalProps) {
+  const { t } = useTranslation();
+  const [emailConfirmation, setEmailConfirmation] = useState("");
+
+  const isEmailMatch = userEmail.length > 0 && emailConfirmation === userEmail;
+
+  const handleClose = () => {
+    setEmailConfirmation("");
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    if (isEmailMatch) {
+      setEmailConfirmation("");
+      onConfirm();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <ModalBackdrop onClose={handleClose}>
+      <div
+        className="bg-base-secondary p-6 rounded-xl flex flex-col gap-4 border border-tertiary"
+        style={{ width: "500px" }}
+        data-testid="delete-account-modal"
+      >
+        <h3 className="text-xl font-bold">
+          {t(I18nKey.SETTINGS$DELETE_ACCOUNT)}
+        </h3>
+        <p className="text-sm text-[#A3A3A3]">
+          {t(I18nKey.SETTINGS$DELETE_ACCOUNT_CONFIRMATION)}
+        </p>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm" htmlFor="email-confirmation">
+            {t(I18nKey.SETTINGS$USER_EMAIL)}
+          </label>
+          <input
+            id="email-confirmation"
+            type="email"
+            value={emailConfirmation}
+            onChange={(e) => setEmailConfirmation(e.target.value)}
+            className="text-base text-white p-2 rounded-sm border border-tertiary"
+            style={{ backgroundColor: "#2D2F36" }}
+            placeholder={userEmail}
+            data-testid="delete-account-email-input"
+          />
+        </div>
+        <div className="w-full flex gap-2 mt-2">
+          <BrandButton
+            type="button"
+            variant="danger"
+            className="grow"
+            onClick={handleConfirm}
+            isDisabled={!isEmailMatch}
+            testId="confirm-delete-account-button"
+          >
+            {t(I18nKey.SETTINGS$DELETE_ACCOUNT)}
+          </BrandButton>
+          <BrandButton
+            type="button"
+            variant="secondary"
+            className="grow"
+            onClick={handleClose}
+            testId="cancel-delete-account-button"
+          >
+            {t(I18nKey.BUTTON$CANCEL)}
+          </BrandButton>
+        </div>
+      </div>
+    </ModalBackdrop>
+  );
+}
+
+function DangerZone({
+  onDeleteAccountClick,
+}: {
+  onDeleteAccountClick: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className="mt-8 border border-red-600 rounded-lg p-4"
+      data-testid="danger-zone"
+    >
+      <h3 className="text-lg font-semibold text-red-500 mb-4">
+        {t(I18nKey.SETTINGS$DANGER_ZONE)}
+      </h3>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">
+            {t(I18nKey.SETTINGS$DELETE_ACCOUNT)}
+          </span>
+          <span className="text-sm text-[#A3A3A3]">
+            {t(I18nKey.SETTINGS$DELETE_ACCOUNT_DESCRIPTION)}
+          </span>
+        </div>
+        <BrandButton
+          type="button"
+          variant="danger"
+          onClick={onDeleteAccountClick}
+          testId="delete-account-button"
+        >
+          {t(I18nKey.SETTINGS$DELETE_ACCOUNT)}
+        </BrandButton>
+      </div>
+    </div>
+  );
+}
+
 function UserSettingsScreen() {
   const { t } = useTranslation();
+  const { data: config } = useConfig();
   const { data: settings, isLoading, refetch } = useSettings();
   const [email, setEmail] = useState("");
   const [originalEmail, setOriginalEmail] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const pollingIntervalRef = useRef<number | null>(null);
   const prevVerificationStatusRef = useRef<boolean | undefined>(undefined);
   const { resendEmailVerification, isResendingVerification } =
     useEmailVerification();
+
+  const showDangerZone =
+    config?.APP_MODE === "saas" && config?.FEATURE_FLAGS?.ENABLE_DELETE_ACCOUNT;
 
   useEffect(() => {
     if (settings?.email) {
@@ -191,6 +323,19 @@ function UserSettingsScreen() {
     resendEmailVerification({});
   };
 
+  const handleDeleteAccountClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteAccountConfirm = () => {
+    // TODO: Implement account deletion API call
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleDeleteAccountCancel = () => {
+    setIsDeleteModalOpen(false);
+  };
+
   const isEmailChanged = email !== originalEmail;
 
   return (
@@ -214,6 +359,19 @@ function UserSettingsScreen() {
           </EmailInputSection>
         )}
       </div>
+
+      {showDangerZone && (
+        <>
+          <DangerZone onDeleteAccountClick={handleDeleteAccountClick} />
+
+          <DeleteAccountModal
+            isOpen={isDeleteModalOpen}
+            onClose={handleDeleteAccountCancel}
+            onConfirm={handleDeleteAccountConfirm}
+            userEmail={originalEmail}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ export interface GetConfigResponse {
     ENABLE_JIRA: boolean;
     ENABLE_JIRA_DC: boolean;
     ENABLE_LINEAR: boolean;
+    ENABLE_DELETE_ACCOUNT: boolean;
   };
   MAINTENANCE?: {
     startTime: string;

@@ -79,6 +79,7 @@ export const SETTINGS_HANDLERS = [
         ENABLE_JIRA: false,
         ENABLE_JIRA_DC: false,
         ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: mockSaas,
       },
       // Uncomment the following to test the maintenance banner
       // MAINTENANCE: {

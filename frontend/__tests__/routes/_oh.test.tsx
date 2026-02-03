@@ -22,6 +22,7 @@ describe("frontend/routes/_oh", () => {
         ENABLE_JIRA: false,
         ENABLE_JIRA_DC: false,
         ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: false,
       };
 
       return {
@@ -139,6 +140,7 @@ describe("frontend/routes/_oh", () => {
         ENABLE_JIRA: false,
         ENABLE_JIRA_DC: false,
         ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: false,
       },
     });
 
@@ -177,6 +179,7 @@ describe("frontend/routes/_oh", () => {
         ENABLE_JIRA: false,
         ENABLE_JIRA_DC: false,
         ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: false,
       },
     });
     useConfigMock.mockReturnValue({
@@ -265,6 +268,7 @@ describe("frontend/routes/_oh", () => {
         ENABLE_JIRA: false,
         ENABLE_JIRA_DC: false,
         ENABLE_LINEAR: false,
+        ENABLE_DELETE_ACCOUNT: false,
       },
     });
     useConfigMock.mockReturnValue({
