@@ -2061,9 +2061,7 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.user_verifier') as mock_verifier,
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch(
-                'storage.org_service.OrgService.needs_onboarding', return_value=True
-            ),
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
             patch('server.routes.auth.posthog'),
         ):
             # Mock a new user who has accepted TOS but needs onboarding
@@ -2224,9 +2222,7 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.user_verifier') as mock_verifier,
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch(
-                'storage.org_service.OrgService.needs_onboarding', return_value=True
-            ),
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
             patch('server.routes.auth.posthog'),
         ):
             # Mock a new user who has NOT accepted TOS
@@ -2281,9 +2277,7 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.user_verifier') as mock_verifier,
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
-            patch(
-                'storage.org_service.OrgService.needs_onboarding', return_value=True
-            ),
+            patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
             patch('server.routes.auth.posthog'),
         ):
             mock_user = MagicMock()
