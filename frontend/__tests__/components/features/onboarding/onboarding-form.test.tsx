@@ -182,4 +182,43 @@ describe("OnboardingForm", () => {
     const progressBars = stepHeader.querySelectorAll(".bg-white");
     expect(progressBars).toHaveLength(3);
   });
+
+  it("should not render the Back button on the first step", () => {
+    renderOnboardingForm();
+
+    const backButton = screen.queryByRole("button", { name: /back/i });
+    expect(backButton).not.toBeInTheDocument();
+  });
+
+  it("should render the Back button on step 2", async () => {
+    const user = userEvent.setup();
+    renderOnboardingForm();
+
+    await user.click(screen.getByTestId("step-option-software_engineer"));
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    const backButton = screen.getByRole("button", { name: /back/i });
+    expect(backButton).toBeInTheDocument();
+  });
+
+  it("should go back to the previous step when Back is clicked", async () => {
+    const user = userEvent.setup();
+    renderOnboardingForm();
+
+    // Navigate to step 2
+    await user.click(screen.getByTestId("step-option-software_engineer"));
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    // Verify we're on step 2 (2 progress bars filled)
+    const stepHeader = screen.getByTestId("step-header");
+    let progressBars = stepHeader.querySelectorAll(".bg-white");
+    expect(progressBars).toHaveLength(2);
+
+    // Click Back
+    await user.click(screen.getByRole("button", { name: /back/i }));
+
+    // Verify we're back on step 1 (1 progress bar filled)
+    progressBars = stepHeader.querySelectorAll(".bg-white");
+    expect(progressBars).toHaveLength(1);
+  });
 });
