@@ -1,7 +1,8 @@
 import React from "react";
-
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useNavigate, redirect } from "react-router";
+import OptionService from "#/api/option-service/option-service.api";
+import { queryClient } from "#/query-client-config";
 import StepHeader from "#/components/features/onboarding/step-header";
 import { StepContent } from "#/components/features/onboarding/step-content";
 import { BrandButton } from "#/components/features/settings/brand-button";
@@ -9,6 +10,20 @@ import { I18nKey } from "#/i18n/declaration";
 import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
 import { useSubmitOnboarding } from "#/hooks/mutation/use-submit-onboarding";
 import { useTracking } from "#/hooks/use-tracking";
+
+export const clientLoader = async () => {
+  const config = await queryClient.ensureQueryData({
+    queryKey: ["config"],
+    queryFn: OptionService.getConfig,
+  });
+
+  // Only allow SaaS users to access onboarding
+  if (config.APP_MODE !== "saas") {
+    return redirect("/");
+  }
+
+  return null;
+};
 
 interface StepOption {
   id: string;
@@ -163,7 +178,7 @@ function OnboardingForm() {
   return (
     <div
       data-testid="onboarding-form"
-      className="w-[500px] mx-auto p-6 min-h-screen flex flex-col justify-center"
+      className="w-[500px] mx-auto p-6 h-full flex flex-col justify-center overflow-hidden"
     >
       <div className="flex flex-col items-center mb-4">
         <OpenHandsLogoWhite width={55} height={55} />
@@ -184,20 +199,21 @@ function OnboardingForm() {
       >
         <BrandButton
           type="button"
+          variant="secondary"
+          onClick={handleBack}
+          isDisabled={isFirstStep}
+          className="flex-1 px-6 py-2.5 bg-[050505] text-white border hover:bg-white border-[#242424] hover:text-black"
+        >
+          {t(I18nKey.ONBOARDING$BACK_BUTTON)}
+        </BrandButton>
+        <BrandButton
+          type="button"
           variant="primary"
           onClick={handleNext}
           isDisabled={!currentSelection}
           className="flex-1 px-6 py-2.5 bg-white text-black hover:bg-white/90"
         >
           {t(I18nKey.ONBOARDING$NEXT_BUTTON)}
-        </BrandButton>
-        <BrandButton
-          type="button"
-          variant="secondary"
-          onClick={handleBack}
-          className="flex-1 px-6 py-2.5 bg-[050505] text-white border hover:bg-white border-[#242424] hover:text-black"
-        >
-          {t(I18nKey.ONBOARDING$BACK_BUTTON)}
         </BrandButton>
       </div>
     </div>

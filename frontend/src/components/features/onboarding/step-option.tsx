@@ -22,7 +22,7 @@ export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
         }
       }}
       className={cn(
-        "h-10 w-full rounded-md border text-left px-4 transition-colors text-white",
+        "h-10 w-full rounded-md border text-left px-4 transition-colors text-white cursor-pointer",
         selected
           ? "border-white bg-[#3a3a3a]"
           : "border-[#3a3a3a] hover:bg-[#3a3a3a]",
