@@ -12,12 +12,12 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import SecretStr
 from server.auth.auth_utils import user_verifier
 from server.auth.constants import (
+    ENABLE_ONBOARDING,
     KEYCLOAK_CLIENT_ID,
     KEYCLOAK_REALM_NAME,
     KEYCLOAK_SERVER_URL_EXT,
     RECAPTCHA_SITE_KEY,
     ROLE_CHECK_ENABLED,
-    ENABLE_ONBOARDING,
 )
 from server.auth.domain_blocker import domain_blocker
 from server.auth.gitlab_sync import schedule_gitlab_repo_sync
