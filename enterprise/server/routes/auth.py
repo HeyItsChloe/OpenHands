@@ -17,6 +17,7 @@ from server.auth.constants import (
     KEYCLOAK_SERVER_URL_EXT,
     RECAPTCHA_SITE_KEY,
     ROLE_CHECK_ENABLED,
+    ENABLE_ONBOARDING,
 )
 from server.auth.domain_blocker import domain_blocker
 from server.auth.gitlab_sync import schedule_gitlab_repo_sync
@@ -385,8 +386,8 @@ async def keycloak_callback(
             f'{request.base_url}accept-tos?redirect_url={encoded_redirect_url}'
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
-    # if new user must complete onboarding, redirect to the onboarding-form
-    elif await OrgService.needs_onboarding(user):
+    # if new user must complete onboarding, redirect to the onboarding-form (only if enabled)
+    elif ENABLE_ONBOARDING and await OrgService.needs_onboarding(user):
         encoded_redirect_url = quote(redirect_url, safe='')
         onboarding_url = (
             f'{request.base_url}onboarding?redirect_url={encoded_redirect_url}'

@@ -1944,7 +1944,7 @@ class TestKeycloakCallbackRecaptcha:
 
 @pytest.mark.asyncio
 async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_request):
-    """Test that new users who need onboarding are redirected to /onboarding."""
+    """Test that new users who need onboarding are redirected to /onboarding when flag is enabled."""
     with (
         patch('server.routes.auth.token_manager') as mock_token_manager,
         patch('server.routes.auth.user_verifier') as mock_verifier,
@@ -1953,6 +1953,7 @@ async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_reque
         patch('storage.org_service.OrgService.needs_onboarding', return_value=False),
         patch('server.routes.auth.posthog'),
         patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
+        patch('server.routes.auth.ENABLE_ONBOARDING', True),
     ):
         # Mock user with accepted_tos (so we skip TOS page) but needs onboarding
         mock_user = MagicMock()
@@ -2054,7 +2055,7 @@ class TestOnboardingRedirectForSaasUsers:
 
         This is the primary SaaS-only behavior: new users who authenticate via
         Keycloak (SaaS auth) and have no personal org or memberships should be
-        shown the onboarding questions.
+        shown the onboarding questions when ENABLE_ONBOARDING flag is enabled.
         """
         with (
             patch('server.routes.auth.token_manager') as mock_token_manager,
@@ -2063,6 +2064,7 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
             # Mock a new user who has accepted TOS but needs onboarding
             mock_user = MagicMock()
@@ -2279,6 +2281,7 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('storage.org_service.OrgService.needs_onboarding', return_value=True),
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
             mock_user = MagicMock()
             mock_user.id = 'new_user_id'
