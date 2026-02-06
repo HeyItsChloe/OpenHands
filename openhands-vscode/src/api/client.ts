@@ -280,8 +280,30 @@ export class OpenHandsClient {
     });
   }
 
-  // Connect using native WebSocket for V1 conversations
+  // Connect using native WebSocket for V1 conversations with retry logic
   private async connectV1WebSocket(conversationId: string, sessionApiKey: string, conversationUrl: string): Promise<void> {
+    const maxRetries = 5;
+    const retryDelayMs = 3000;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.attemptV1WebSocketConnection(conversationId, sessionApiKey, conversationUrl);
+        return; // Success
+      } catch (error: any) {
+        const is503 = error.message?.includes('503') || error.message?.includes('Service Unavailable');
+        const isRetryable = is503 || error.message?.includes('ECONNREFUSED');
+        
+        if (isRetryable && attempt < maxRetries) {
+          this.log(`V1 WebSocket attempt ${attempt} failed (${error.message}), retrying in ${retryDelayMs/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  private async attemptV1WebSocketConnection(conversationId: string, sessionApiKey: string, conversationUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.log(`Connecting V1 WebSocket to conversation: ${conversationId}`);
       
@@ -336,13 +358,13 @@ export class OpenHandsClient {
         reject(error);
       });
       
-      // Timeout after 30 seconds
+      // Timeout after 15 seconds for this attempt
       setTimeout(() => {
         if (this.nativeWebSocket?.readyState !== WebSocket.OPEN) {
-          this.log('V1 WebSocket connection timeout');
+          this.log('V1 WebSocket connection timeout for this attempt');
           reject(new Error('V1 WebSocket connection timeout'));
         }
-      }, 30000);
+      }, 15000);
     });
   }
 
