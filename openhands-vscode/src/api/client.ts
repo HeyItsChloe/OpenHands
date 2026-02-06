@@ -664,15 +664,17 @@ export class OpenHandsClient {
       const conversation = await this.getV1AppConversation(conversationId);
       
       if (conversation) {
-        const executionStatus = conversation.execution_status;
-        const sandboxStatus = conversation.sandbox_status;
+        const executionStatus = conversation.execution_status?.toLowerCase();
+        const sandboxStatus = conversation.sandbox_status?.toUpperCase();
         this.log(`V1 Conversation: execution_status=${executionStatus}, sandbox_status=${sandboxStatus}, url=${conversation.conversation_url || 'none'}`);
         
-        // Ready when execution is running/awaiting input AND we have a conversation URL
+        // Ready when we have a conversation URL and session_api_key
+        // execution_status can be: running, awaiting_user_input, waiting_for_confirmation, etc.
+        const readyStatuses = ['running', 'awaiting_user_input', 'waiting_for_confirmation'];
         const isReady = 
-          (executionStatus === 'RUNNING' || executionStatus === 'AWAITING_USER_INPUT') &&
           conversation.conversation_url && 
-          conversation.session_api_key;
+          conversation.session_api_key &&
+          (readyStatuses.includes(executionStatus) || sandboxStatus === 'RUNNING');
         
         if (isReady) {
           return conversation;
