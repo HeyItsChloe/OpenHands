@@ -293,45 +293,60 @@ export class OpenHandsClient {
 
   // Fetch events from the runtime server (useful for getting missed events)
   async fetchEvents(conversationId: string, startId: number = 0): Promise<AgentEvent[]> {
-    if (!this.runtimeUrl || !this.sessionApiKey) {
-      this.log('No runtime URL or session_api_key available for fetching events');
-      return [];
-    }
-    
+    // Try main API first (works for all conversations, including stopped ones)
     try {
-      // The events endpoint is at /api/conversations/{id}/events
-      // Include session_api_key for runtime server auth
-      const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events?start_id=${startId}&limit=50`;
-      this.log(`Fetching events from: ${url}`);
+      const url = `${this.baseUrl}/api/events?conversation_id=${conversationId}&start_id=${startId}&limit=100`;
+      this.log(`Fetching events from main API: ${url}`);
       
       const headers = await this.authService.getAuthHeadersAsync();
       const response = await fetch(url, {
         headers: {
           ...headers,
           'Content-Type': 'application/json',
-          'X-Session-API-Key': this.sessionApiKey,
         },
       });
       
-      if (!response.ok) {
-        const text = await response.text();
-        this.log(`Failed to fetch events: ${response.status} - ${text.substring(0, 200)}`);
-        return [];
+      if (response.ok) {
+        const result = await response.json() as { events: AgentEvent[], has_more: boolean };
+        this.log(`Fetched ${result.events?.length || 0} events from main API`);
+        return result.events || [];
       }
       
-      const result = await response.json() as { events: AgentEvent[], has_more: boolean };
-      this.log(`Fetched ${result.events?.length || 0} events`);
-      
-      // Log each event in full for debugging
-      for (const event of result.events || []) {
-        this.log(`Fetched event: ${JSON.stringify(event).substring(0, 500)}`);
-      }
-      
-      return result.events || [];
+      this.log(`Main API failed: ${response.status}`);
     } catch (error) {
-      this.log(`Error fetching events: ${error}`);
-      return [];
+      this.log(`Error fetching from main API: ${error}`);
     }
+    
+    // Fallback to runtime URL if available (for running conversations)
+    if (this.runtimeUrl && this.sessionApiKey) {
+      try {
+        const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events?start_id=${startId}&limit=100`;
+        this.log(`Fetching events from runtime: ${url}`);
+        
+        const headers = await this.authService.getAuthHeadersAsync();
+        const response = await fetch(url, {
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            'X-Session-API-Key': this.sessionApiKey,
+          },
+        });
+        
+        if (response.ok) {
+          const result = await response.json() as { events: AgentEvent[], has_more: boolean };
+          this.log(`Fetched ${result.events?.length || 0} events from runtime`);
+          return result.events || [];
+        }
+        
+        const text = await response.text();
+        this.log(`Runtime API failed: ${response.status} - ${text.substring(0, 200)}`);
+      } catch (error) {
+        this.log(`Error fetching from runtime: ${error}`);
+      }
+    }
+    
+    this.log('Could not fetch events from any source');
+    return [];
   }
 
   private runtimeUrl: string | null = null;

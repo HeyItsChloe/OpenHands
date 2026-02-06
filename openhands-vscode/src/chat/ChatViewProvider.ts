@@ -563,32 +563,37 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     // Clean up current connection
     this.cleanup();
 
-    // Load conversation from storage
+    // Set conversation ID first so fetchEvents works
+    this.currentConversationId = conversationId;
+
+    // Load conversation from storage (this now fetches from main API)
     if (this.conversationStorage) {
       try {
         const conversation = await this.conversationStorage.loadConversation(conversationId);
-        if (conversation) {
+        if (conversation && conversation.messages.length > 0) {
           // Convert stored messages to chat messages
           this.messages = conversation.messages.map(m => ({
             role: m.role,
             content: m.content,
             timestamp: new Date(m.timestamp),
           }));
-          this.currentConversationId = conversationId;
           this.syncMessages();
           this.syncConversationList();
-
-          // Try to reconnect to the conversation
-          try {
-            await this.client.reconnectToConversation(conversationId);
-            this.outputChannel.appendLine(`Reconnected to conversation: ${conversationId}`);
-          } catch (error) {
-            this.outputChannel.appendLine(`Could not reconnect (may need to restart): ${error}`);
-          }
+          this.outputChannel.appendLine(`Loaded ${this.messages.length} messages from conversation history`);
+        } else {
+          this.outputChannel.appendLine(`No messages found for conversation ${conversationId}`);
+          this.messages = [];
+          this.syncMessages();
+          this.syncConversationList();
         }
+
+        // Don't automatically try to restart stopped conversations
+        // User can start a new message if they want to continue
+        // This prevents long waits and potential failures
+        
       } catch (error) {
         this.outputChannel.appendLine(`Error loading conversation: ${error}`);
-        vscode.window.showErrorMessage('Failed to load conversation');
+        vscode.window.showErrorMessage('Failed to load conversation history');
       }
     }
   }
