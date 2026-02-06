@@ -555,23 +555,77 @@ export class OpenHandsClient {
     this.log(`Deleted conversation: ${conversationId}`);
   }
 
-  // Reconnect to an existing conversation
+  // Get V1 app conversation data
+  private async getV1AppConversation(conversationId: string): Promise<any | null> {
+    try {
+      const response = await this.fetch(`/api/v1/app-conversations?ids=${conversationId}`);
+      const conversations = await response.json() as any[];
+      return conversations[0] || null;
+    } catch (error) {
+      this.log(`Failed to get V1 conversation: ${error}`);
+      return null;
+    }
+  }
+
+  // Resume a V1 sandbox
+  private async resumeV1Sandbox(sandboxId: string): Promise<void> {
+    this.log(`Resuming V1 sandbox: ${sandboxId}`);
+    await this.fetch(`/api/v1/sandboxes/${sandboxId}/resume`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  // Reconnect to an existing conversation (supports both V0 and V1)
   async reconnectToConversation(conversationId: string): Promise<any> {
     this.log(`Reconnecting to conversation: ${conversationId}`);
     
-    // Get conversation info (returns full details including session_api_key and url)
+    // First, try to get V1 app conversation data
+    const v1Conversation = await this.getV1AppConversation(conversationId);
+    
+    if (v1Conversation) {
+      // This is a V1 conversation
+      this.log(`V1 conversation found. Status: ${v1Conversation.status}, sandbox_id: ${v1Conversation.sandbox_id}`);
+      
+      if (v1Conversation.status === 'STOPPED' || v1Conversation.status === 'PAUSED') {
+        // Resume the sandbox first
+        if (v1Conversation.sandbox_id) {
+          await this.resumeV1Sandbox(v1Conversation.sandbox_id);
+        }
+        
+        // Wait for conversation to be ready
+        const readyConversation = await this.waitForV1ConversationReady(conversationId);
+        await this.connectSocket(
+          conversationId,
+          readyConversation?.session_api_key,
+          readyConversation?.conversation_url
+        );
+        return readyConversation;
+      } else if (v1Conversation.status === 'RUNNING') {
+        // Already running, just connect
+        await this.connectSocket(
+          conversationId,
+          v1Conversation.session_api_key,
+          v1Conversation.conversation_url
+        );
+        return v1Conversation;
+      }
+      
+      return v1Conversation;
+    }
+    
+    // Fall back to V0 API
+    this.log('Trying V0 API...');
     const response = await this.fetch(`/api/conversations/${conversationId}`);
     const conversation = await response.json() as any;
     
-    // Check if it's running
     if (conversation.status === 'STOPPED' || conversation.status === 'FINISHED') {
-      // Need to restart it
+      // Need to restart it (V0 style)
       await this.fetch(`/api/conversations/${conversationId}/start`, {
         method: 'POST',
         body: JSON.stringify({ providers_set: [] }),
       });
       
-      // Wait for it to be ready
       const readyConversation = await this.waitForConversationReady(conversationId);
       await this.connectSocket(
         conversationId,
@@ -580,7 +634,6 @@ export class OpenHandsClient {
       );
       return readyConversation;
     } else if (conversation.status === 'RUNNING') {
-      // Already running, just connect
       await this.connectSocket(
         conversationId,
         conversation.session_api_key,
@@ -590,5 +643,31 @@ export class OpenHandsClient {
     }
     
     return conversation;
+  }
+
+  // Wait for V1 conversation to be ready
+  private async waitForV1ConversationReady(conversationId: string, maxWaitMs: number = 120000): Promise<any> {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < maxWaitMs) {
+      const conversation = await this.getV1AppConversation(conversationId);
+      
+      if (conversation) {
+        this.log(`V1 Conversation status: ${conversation.status}, url: ${conversation.conversation_url || 'none'}`);
+        
+        if (conversation.status === 'RUNNING' && conversation.conversation_url && conversation.session_api_key) {
+          return conversation;
+        }
+        
+        if (conversation.status === 'ERROR' || conversation.status === 'FAILED') {
+          throw new Error(`Conversation failed to start: ${conversation.status}`);
+        }
+      }
+      
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    throw new Error('Timeout waiting for conversation to be ready');
   }
 }
