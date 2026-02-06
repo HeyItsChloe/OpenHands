@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { io, Socket } from 'socket.io-client';
+import WebSocket from 'ws';
 import { AuthService } from '../auth';
 import { 
   Conversation, 
@@ -14,6 +15,7 @@ export class OpenHandsClient {
   private currentConversationId: string | null = null;
   private eventSource: EventSource | null = null;
   private socket: Socket | null = null;
+  private nativeWebSocket: WebSocket | null = null;  // For V1 conversations
   private eventHandlers: ((event: AgentEvent) => void)[] = [];
 
   constructor(authService: AuthService, outputChannel: vscode.OutputChannel) {
@@ -278,6 +280,72 @@ export class OpenHandsClient {
     });
   }
 
+  // Connect using native WebSocket for V1 conversations
+  private async connectV1WebSocket(conversationId: string, sessionApiKey: string, conversationUrl: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.log(`Connecting V1 WebSocket to conversation: ${conversationId}`);
+      
+      // Disconnect existing connections
+      if (this.nativeWebSocket) {
+        this.nativeWebSocket.close();
+        this.nativeWebSocket = null;
+      }
+      if (this.socket) {
+        this.socket.disconnect();
+        this.socket = null;
+      }
+      
+      // Extract host from conversation URL
+      const u = new URL(conversationUrl);
+      const host = u.host;
+      
+      // Store runtime info
+      this.runtimeUrl = `https://${host}`;
+      this.sessionApiKey = sessionApiKey;
+      
+      // Build WebSocket URL: wss://host/sockets/events/{conversationId}?session_api_key=...
+      const wsProtocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${wsProtocol}//${host}/sockets/events/${conversationId}?session_api_key=${sessionApiKey}`;
+      
+      this.log(`V1 WebSocket URL: ${wsUrl.replace(sessionApiKey, 'xxx')}`);
+      
+      this.nativeWebSocket = new WebSocket(wsUrl);
+      
+      this.nativeWebSocket.on('open', () => {
+        this.log('V1 WebSocket connected!');
+        resolve();
+      });
+      
+      this.nativeWebSocket.on('message', (data: WebSocket.Data) => {
+        try {
+          const message = data.toString();
+          const event = JSON.parse(message) as AgentEvent;
+          this.log(`V1 WS event: ${event.action || event.observation || 'unknown'}`);
+          this.eventHandlers.forEach(handler => handler(event));
+        } catch (error) {
+          this.log(`Failed to parse V1 WS message: ${error}`);
+        }
+      });
+      
+      this.nativeWebSocket.on('close', (code: number, reason: Buffer) => {
+        this.log(`V1 WebSocket closed: code=${code}, reason=${reason.toString()}`);
+      });
+      
+      this.nativeWebSocket.on('error', (error: Error) => {
+        this.log(`V1 WebSocket error: ${error.message}`);
+        reject(error);
+      });
+      
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        if (this.nativeWebSocket?.readyState !== WebSocket.OPEN) {
+          this.log('V1 WebSocket connection timeout');
+          reject(new Error('V1 WebSocket connection timeout'));
+        }
+      }, 30000);
+    });
+  }
+
   onEvent(handler: (event: AgentEvent) => void): void {
     this.eventHandlers.push(handler);
   }
@@ -362,9 +430,10 @@ export class OpenHandsClient {
     this.sessionApiKey = key;
   }
 
-  // Check if Socket.IO is connected
+  // Check if Socket.IO or native WebSocket is connected
   isConnected(): boolean {
-    return this.socket?.connected ?? false;
+    return (this.socket?.connected ?? false) || 
+           (this.nativeWebSocket?.readyState === WebSocket.OPEN);
   }
 
   async sendMessage(
@@ -378,15 +447,14 @@ export class OpenHandsClient {
       fullMessage = this.buildContextualMessage(message, context);
     }
 
-    if (!this.socket?.connected) {
-      throw new Error('Socket.IO not connected. Please start a conversation first.');
+    if (!this.isConnected()) {
+      throw new Error('Not connected. Please start a conversation first.');
     }
 
     // Wait a moment for the agent to be fully ready
-    // This helps avoid the first-message-not-processed issue
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Send message via Socket.IO using oh_user_action event
+    // Build message event
     const messageEvent = {
       action: 'message',
       args: {
@@ -394,22 +462,42 @@ export class OpenHandsClient {
       },
     };
     
-    this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
-    this.socket.emit('oh_user_action', messageEvent);
-    
-    // Small delay before triggering run
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // After sending message, trigger agent to run
-    // This is needed because the agent starts in AWAITING_USER_INPUT state
-    const runEvent = {
-      action: 'change_agent_state',
-      args: {
-        agent_state: 'running',
-      },
-    };
-    this.log(`Triggering agent to run...`);
-    this.socket.emit('oh_user_action', runEvent);
+    // Send via appropriate connection type
+    if (this.nativeWebSocket?.readyState === WebSocket.OPEN) {
+      // V1 conversations use native WebSocket
+      this.log(`Sending message via V1 WebSocket: ${fullMessage.substring(0, 50)}...`);
+      this.nativeWebSocket.send(JSON.stringify(messageEvent));
+      
+      // Small delay before triggering run
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger agent to run
+      const runEvent = {
+        action: 'change_agent_state',
+        args: {
+          agent_state: 'running',
+        },
+      };
+      this.log(`Triggering agent to run...`);
+      this.nativeWebSocket.send(JSON.stringify(runEvent));
+    } else if (this.socket?.connected) {
+      // V0 conversations use Socket.IO
+      this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
+      this.socket.emit('oh_user_action', messageEvent);
+      
+      // Small delay before triggering run
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger agent to run
+      const runEvent = {
+        action: 'change_agent_state',
+        args: {
+          agent_state: 'running',
+        },
+      };
+      this.log(`Triggering agent to run...`);
+      this.socket.emit('oh_user_action', runEvent);
+    }
     
     this.log(`Sent message to conversation ${conversationId}`);
   }
@@ -606,15 +694,17 @@ export class OpenHandsClient {
         
         // Wait for conversation to be ready
         const readyConversation = await this.waitForV1ConversationReady(conversationId);
-        await this.connectSocket(
+        
+        // Use native WebSocket for V1 conversations
+        await this.connectV1WebSocket(
           conversationId,
           readyConversation?.session_api_key,
           readyConversation?.conversation_url
         );
         return readyConversation;
       } else if (executionStatus === 'RUNNING' || executionStatus === 'AWAITING_USER_INPUT') {
-        // Already running, just connect
-        await this.connectSocket(
+        // Already running, just connect with native WebSocket
+        await this.connectV1WebSocket(
           conversationId,
           v1Conversation.session_api_key,
           v1Conversation.conversation_url
