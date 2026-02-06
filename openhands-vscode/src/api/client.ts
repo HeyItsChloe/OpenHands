@@ -486,22 +486,8 @@ export class OpenHandsClient {
     
     // Send via appropriate connection type
     if (this.nativeWebSocket?.readyState === WebSocket.OPEN) {
-      // V1 conversations use native WebSocket
-      this.log(`Sending message via V1 WebSocket: ${fullMessage.substring(0, 50)}...`);
-      this.nativeWebSocket.send(JSON.stringify(messageEvent));
-      
-      // Small delay before triggering run
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Trigger agent to run
-      const runEvent = {
-        action: 'change_agent_state',
-        args: {
-          agent_state: 'running',
-        },
-      };
-      this.log(`Triggering agent to run...`);
-      this.nativeWebSocket.send(JSON.stringify(runEvent));
+      // V1 conversations use HTTP POST to send messages, WebSocket is for receiving
+      await this.sendV1Message(conversationId, fullMessage);
     } else if (this.socket?.connected) {
       // V0 conversations use Socket.IO
       this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
@@ -538,6 +524,39 @@ export class OpenHandsClient {
     }
 
     return message + contextStr;
+  }
+
+  // Send message to V1 conversation via HTTP POST
+  private async sendV1Message(conversationId: string, message: string): Promise<void> {
+    if (!this.runtimeUrl || !this.sessionApiKey) {
+      throw new Error('V1 runtime not configured');
+    }
+    
+    // V1 message format
+    const v1Message = {
+      role: 'user',
+      content: [{ type: 'text', text: message }],
+    };
+    
+    const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events`;
+    this.log(`Sending V1 message via HTTP POST: ${url}`);
+    this.log(`Message: ${message.substring(0, 50)}...`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Session-API-Key': this.sessionApiKey,
+      },
+      body: JSON.stringify(v1Message),
+    });
+    
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to send V1 message: ${response.status} - ${text}`);
+    }
+    
+    this.log(`V1 message sent successfully`);
   }
 
   streamEvents(
