@@ -139,17 +139,29 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         isStreaming: true
       };
 
-      // Set up event handler for Socket.IO events
+      // Set up event handler for WebSocket events
       const eventHandler = async (event: AgentEvent) => {
         this.handleAgentEvent(event, assistantMessage);
         
-        // Check if agent finished
-        if (event.observation === 'agent_state_changed' && 
-            event.extras?.agent_state === 'awaiting_user_input') {
+        // Check if agent finished - multiple ways this can happen:
+        // 1. agent_state_changed observation with awaiting_user_input
+        // 2. full_state event where agent is already awaiting_user_input
+        // 3. finish action
+        
+        const isAgentStateChanged = event.observation === 'agent_state_changed' && 
+            event.extras?.agent_state === 'awaiting_user_input';
+        
+        const isFullStateAwaitingInput = (event as any).key === 'full_state' &&
+            (event as any).value?.agent_state === 'awaiting_user_input';
+        
+        const isFinishAction = event.action === 'finish';
+        
+        if (isAgentStateChanged || isFullStateAwaitingInput || isFinishAction) {
+          this.outputChannel.appendLine(`Agent finished: state_changed=${isAgentStateChanged}, full_state=${isFullStateAwaitingInput}, finish=${isFinishAction}`);
           
           // If we still have no content, try fetching events from REST API
           if (!assistantMessage.content && this.currentConversationId) {
-            this.outputChannel.appendLine('No content received via Socket.IO, fetching from REST...');
+            this.outputChannel.appendLine('No content received via WebSocket, fetching from REST...');
             const events = await this.client.fetchEvents(this.currentConversationId, 0);
             for (const e of events) {
               if (e.source === 'agent' && (e.action === 'message' || e.action === 'finish')) {
