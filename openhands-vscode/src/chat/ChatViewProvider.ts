@@ -186,6 +186,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           this.isProcessing = false;
           this.updateWebviewState();
           this.client.offEvent(eventHandler);
+          
+          // Refresh conversation list to get auto-generated title
+          setTimeout(() => this.loadConversationList(true), 2000);
         }
         
         // For full_state, just log it - don't finish processing immediately
