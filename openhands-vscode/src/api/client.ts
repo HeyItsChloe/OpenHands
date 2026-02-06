@@ -696,19 +696,15 @@ export class OpenHandsClient {
     if (v1Conversation) {
       // This is a V1 conversation
       // V1 uses execution_status (not status) and sandbox_status
-      const executionStatus = v1Conversation.execution_status;
-      const sandboxStatus = v1Conversation.sandbox_status;
+      // Note: execution_status is lowercase, sandbox_status is uppercase
+      const executionStatus = (v1Conversation.execution_status || '').toLowerCase();
+      const sandboxStatus = (v1Conversation.sandbox_status || '').toUpperCase();
       this.log(`V1 conversation found. execution_status: ${executionStatus}, sandbox_status: ${sandboxStatus}, sandbox_id: ${v1Conversation.sandbox_id}`);
       
-      // Need to resume if execution is stopped/paused OR sandbox is not running
-      const needsResume = 
-        executionStatus === 'STOPPED' || 
-        executionStatus === 'PAUSED' ||
-        executionStatus === 'FINISHED' ||
-        sandboxStatus === 'STOPPED' ||
-        sandboxStatus === 'PAUSED';
+      // Need to resume sandbox if it's not running
+      const sandboxNeedsResume = sandboxStatus === 'STOPPED' || sandboxStatus === 'PAUSED';
       
-      if (needsResume) {
+      if (sandboxNeedsResume) {
         // Resume the sandbox first
         if (v1Conversation.sandbox_id) {
           await this.resumeV1Sandbox(v1Conversation.sandbox_id);
@@ -724,17 +720,26 @@ export class OpenHandsClient {
           readyConversation?.conversation_url
         );
         return readyConversation;
-      } else if (executionStatus === 'RUNNING' || executionStatus === 'AWAITING_USER_INPUT') {
-        // Already running, just connect with native WebSocket
+      } else if (sandboxStatus === 'RUNNING' && v1Conversation.conversation_url && v1Conversation.session_api_key) {
+        // Sandbox is running and we have connection info - connect directly
+        this.log(`Sandbox already running, connecting WebSocket directly`);
         await this.connectV1WebSocket(
           conversationId,
           v1Conversation.session_api_key,
           v1Conversation.conversation_url
         );
         return v1Conversation;
+      } else {
+        // Edge case: sandbox might be in a transitional state, try waiting
+        this.log(`Sandbox in transitional state (${sandboxStatus}), waiting for it to be ready...`);
+        const readyConversation = await this.waitForV1ConversationReady(conversationId);
+        await this.connectV1WebSocket(
+          conversationId,
+          readyConversation?.session_api_key,
+          readyConversation?.conversation_url
+        );
+        return readyConversation;
       }
-      
-      return v1Conversation;
     }
     
     // Fall back to V0 API
