@@ -362,6 +362,11 @@ export class OpenHandsClient {
     this.sessionApiKey = key;
   }
 
+  // Check if Socket.IO is connected
+  isConnected(): boolean {
+    return this.socket?.connected ?? false;
+  }
+
   async sendMessage(
     conversationId: string, 
     message: string, 

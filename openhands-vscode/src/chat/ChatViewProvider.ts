@@ -173,8 +173,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this.client.offEvent(eventHandler);
       };
 
-      // Create conversation if needed (this also connects Socket.IO)
+      // Create conversation if needed, or resume if stopped
       if (!this.currentConversationId) {
+        // No conversation selected - create a new one
         const conversation = await this.client.createConversation();
         this.currentConversationId = conversation.conversation_id;
         
@@ -189,6 +190,35 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             cloudId: conversation.conversation_id,
           });
           this.syncConversationList();
+        }
+      } else if (!this.client.isConnected()) {
+        // Conversation exists but Socket.IO not connected - need to resume/reconnect
+        this.outputChannel.appendLine(`Resuming conversation: ${this.currentConversationId}`);
+        
+        // Show status update
+        this.addMessage({
+          role: 'system',
+          content: '⏳ Resuming conversation...',
+          timestamp: new Date()
+        });
+        
+        try {
+          await this.client.reconnectToConversation(this.currentConversationId);
+          this.outputChannel.appendLine('Conversation resumed successfully');
+          
+          // Remove the "resuming" message
+          this.messages = this.messages.filter(m => m.content !== '⏳ Resuming conversation...');
+          
+          // Also remove the "stopped conversation" placeholder
+          this.messages = this.messages.filter(m => 
+            !m.content.includes('This conversation is currently stopped')
+          );
+          this.syncMessages();
+        } catch (error) {
+          this.outputChannel.appendLine(`Failed to resume: ${error}`);
+          // Remove the status message
+          this.messages = this.messages.filter(m => m.content !== '⏳ Resuming conversation...');
+          throw new Error(`Failed to resume conversation: ${error instanceof Error ? error.message : error}`);
         }
       }
 
