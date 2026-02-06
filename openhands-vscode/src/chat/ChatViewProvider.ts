@@ -86,6 +86,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         case 'refreshConversations':
           await this.loadConversationList(true);
           break;
+        case 'startConversation':
+          await this.handleStartConversation();
+          break;
       }
     });
 
@@ -651,6 +654,38 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     this.outputChannel.appendLine('Created new conversation (will connect on first message)');
   }
 
+  private async handleStartConversation(): Promise<void> {
+    // Check authentication
+    if (!await this.authService.ensureAuthenticated()) {
+      return;
+    }
+
+    try {
+      // Create and start a new conversation (this also connects)
+      const conversation = await this.client.createConversation();
+      const conversationId = conversation.conversation_id;
+      this.currentConversationId = conversationId;
+      
+      // Refresh conversation list
+      await this.loadConversationList(true);
+      
+      // Clear messages and sync - this will trigger the UI to show the input
+      this.messages = [];
+      this.syncMessages();
+      
+      // Send state update to show input
+      this._view?.webview.postMessage({
+        type: 'conversationStarted',
+        conversationId,
+      });
+      
+      this.outputChannel.appendLine(`Conversation ${conversationId} started and ready`);
+    } catch (error) {
+      this.outputChannel.appendLine(`Error starting conversation: ${error}`);
+      vscode.window.showErrorMessage(`Failed to start conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   private async handleSelectConversation(conversationId: string): Promise<void> {
     if (conversationId === this.currentConversationId) {
       return;
@@ -916,13 +951,53 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
     
     .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       text-align: center;
       color: var(--vscode-descriptionForeground);
       padding: 40px 20px;
     }
     
+    .welcome-content {
+      max-width: 300px;
+    }
+    
     .empty-state h3 {
       margin-bottom: 8px;
+      color: var(--vscode-foreground);
+    }
+    
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+    
+    .start-btn {
+      padding: 12px 32px;
+      font-size: 14px;
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .start-btn:hover {
+      background-color: var(--vscode-button-hoverBackground);
+    }
+    
+    .start-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .ready-message {
+      text-align: center;
+      color: var(--vscode-descriptionForeground);
+      padding: 40px 20px;
+      font-style: italic;
     }
     
     .file-change {
@@ -1057,12 +1132,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
   <div class="chat-container" id="chatContainer">
     <div class="empty-state" id="emptyState">
-      <h3>👋 Welcome to OpenHands</h3>
-      <p>Start a conversation to get help with your code</p>
+      <div class="welcome-content">
+        <h3>👋 Welcome to OpenHands</h3>
+        <p>Your AI software development assistant</p>
+        <button class="start-btn" id="startBtn">Start Conversation</button>
+      </div>
     </div>
   </div>
   
-  <div class="input-container">
+  <div class="input-container" id="inputContainer" style="display: none;">
     <div class="input-wrapper">
       <textarea 
         id="messageInput" 
@@ -1081,9 +1159,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     
     const chatContainer = document.getElementById('chatContainer');
     const emptyState = document.getElementById('emptyState');
+    const inputContainer = document.getElementById('inputContainer');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const stopBtn = document.getElementById('stopBtn');
+    const startBtn = document.getElementById('startBtn');
     
     // Conversation selector elements
     const newChatBtn = document.getElementById('newChatBtn');
@@ -1097,9 +1177,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     let pendingFileChanges = [];
     let currentConversationId = null;
     let conversations = [];
+    let conversationStarted = false;
 
     // Send ready signal
     vscode.postMessage({ type: 'ready' });
+
+    // Start button handler
+    startBtn.addEventListener('click', () => {
+      startBtn.disabled = true;
+      startBtn.textContent = 'Starting...';
+      vscode.postMessage({ type: 'startConversation' });
+    });
 
     // Conversation selector event handlers
     newChatBtn.addEventListener('click', () => {
@@ -1158,6 +1246,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         case 'updateConversations':
           updateConversationList(data.conversations, data.currentConversationId);
           break;
+        case 'conversationStarted':
+          // Conversation is ready - show input
+          conversationStarted = true;
+          currentConversationId = data.conversationId;
+          emptyState.style.display = 'none';
+          inputContainer.style.display = 'block';
+          chatContainer.innerHTML = '<div class="ready-message">Ready! Send a message to start.</div>';
+          messageInput.focus();
+          break;
       }
     });
 
@@ -1190,14 +1287,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     function renderMessages(messages) {
-      if (messages.length === 0) {
-        emptyState.style.display = 'block';
+      if (messages.length === 0 && !conversationStarted) {
+        // Show welcome screen with start button
+        emptyState.style.display = 'flex';
+        inputContainer.style.display = 'none';
         chatContainer.innerHTML = '';
         chatContainer.appendChild(emptyState);
+        // Reset start button
+        startBtn.disabled = false;
+        startBtn.textContent = 'Start Conversation';
         return;
       }
 
+      // Hide welcome, show input
       emptyState.style.display = 'none';
+      inputContainer.style.display = 'block';
+      conversationStarted = true;
+
+      if (messages.length === 0) {
+        chatContainer.innerHTML = '<div class="ready-message">Ready! Send a message to start.</div>';
+        return;
+      }
+
       chatContainer.innerHTML = messages.map((msg, idx) => {
         let content = escapeHtml(msg.content);
         content = formatCodeBlocks(content);
