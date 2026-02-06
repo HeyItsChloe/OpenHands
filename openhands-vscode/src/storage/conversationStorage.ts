@@ -94,19 +94,28 @@ export class ConversationStorageService {
 
   // List all conversations (hybrid: try cloud, fallback to cache)
   async listConversations(forceRefresh = false): Promise<ConversationSummary[]> {
+    this.log(`listConversations called, forceRefresh=${forceRefresh}, cacheStale=${this.isCacheStale()}`);
+    
     // Return cache if fresh and not forcing refresh
     if (!forceRefresh && !this.isCacheStale() && this.cache?.conversations.length) {
-      this.log('Returning cached conversation list');
+      this.log(`Returning ${this.cache.conversations.length} cached conversations`);
       return this.cache.conversations;
     }
 
     // Try to fetch from cloud
     try {
+      this.log('Fetching conversations from cloud API...');
       const cloudConversations = await this.client.getConversations();
+      this.log(`Cloud API returned: ${JSON.stringify(cloudConversations).substring(0, 500)}`);
+      
+      if (!Array.isArray(cloudConversations)) {
+        this.log(`ERROR: cloudConversations is not an array, got: ${typeof cloudConversations}`);
+        return this.cache?.conversations || [];
+      }
       
       const conversations: ConversationSummary[] = cloudConversations.map((conv: any) => ({
         id: conv.conversation_id,
-        title: conv.title || `Conversation ${conv.conversation_id.substring(0, 5)}`,
+        title: conv.title || `Conversation ${conv.conversation_id?.substring(0, 5) || 'unknown'}`,
         createdAt: conv.created_at,
         updatedAt: conv.last_updated_at,
         status: conv.status,
@@ -125,14 +134,14 @@ export class ConversationStorageService {
         await this.saveLocalCache();
       }
 
-      this.log(`Fetched ${conversations.length} conversations from cloud`);
+      this.log(`Processed ${conversations.length} conversations from cloud`);
       return conversations;
 
     } catch (error) {
       this.log(`Error fetching from cloud: ${error}`);
       // Return cached conversations as fallback
       if (this.cache?.conversations.length) {
-        this.log('Returning cached conversations as fallback');
+        this.log(`Returning ${this.cache.conversations.length} cached conversations as fallback`);
         return this.cache.conversations;
       }
       return [];

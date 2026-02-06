@@ -511,16 +511,20 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   // ============= Conversation Management Methods =============
 
   private async loadConversationList(forceRefresh = false): Promise<void> {
+    this.outputChannel.appendLine(`[Chat] loadConversationList called, forceRefresh=${forceRefresh}`);
+    
     if (!this.conversationStorage) {
-      this.outputChannel.appendLine('No conversation storage available');
+      this.outputChannel.appendLine('[Chat] ERROR: No conversation storage available (context not passed?)');
       return;
     }
 
     try {
+      this.outputChannel.appendLine('[Chat] Fetching conversations from storage...');
       this.conversations = await this.conversationStorage.listConversations(forceRefresh);
+      this.outputChannel.appendLine(`[Chat] Got ${this.conversations.length} conversations`);
       this.syncConversationList();
     } catch (error) {
-      this.outputChannel.appendLine(`Error loading conversations: ${error}`);
+      this.outputChannel.appendLine(`[Chat] Error loading conversations: ${error}`);
     }
   }
 
