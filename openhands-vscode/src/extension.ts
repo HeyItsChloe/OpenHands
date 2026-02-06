@@ -23,13 +23,14 @@ export function activate(context: vscode.ExtensionContext) {
   fileOps = new FileOperationsService(outputChannel);
   diagnosticsService = new DiagnosticsService(outputChannel);
 
-  // Initialize chat view provider
+  // Initialize chat view provider with context for conversation storage
   chatViewProvider = new ChatViewProvider(
     context.extensionUri,
     client,
     authService,
     fileOps,
-    outputChannel
+    outputChannel,
+    context  // Pass context for conversation storage
   );
 
   // Register chat view

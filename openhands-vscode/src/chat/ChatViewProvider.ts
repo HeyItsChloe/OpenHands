@@ -3,6 +3,7 @@ import * as path from 'path';
 import { OpenHandsClient, AgentEvent, FileContext } from '../api';
 import { AuthService } from '../auth';
 import { FileOperationsService } from '../files';
+import { ConversationStorageService, ConversationSummary, StoredMessage } from '../storage';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -19,14 +20,26 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private currentConversationId: string | null = null;
   private isProcessing = false;
   private streamCleanup: (() => void) | null = null;
+  private conversationStorage: ConversationStorageService | null = null;
+  private conversations: ConversationSummary[] = [];
 
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly client: OpenHandsClient,
     private readonly authService: AuthService,
     private readonly fileOps: FileOperationsService,
-    private readonly outputChannel: vscode.OutputChannel
-  ) {}
+    private readonly outputChannel: vscode.OutputChannel,
+    private readonly context?: vscode.ExtensionContext
+  ) {
+    // Initialize storage if context is provided
+    if (context) {
+      this.conversationStorage = new ConversationStorageService(
+        context,
+        client,
+        outputChannel
+      );
+    }
+  }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -59,6 +72,19 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'ready':
           this.syncMessages();
+          await this.loadConversationList();
+          break;
+        case 'newConversation':
+          await this.handleNewConversation();
+          break;
+        case 'selectConversation':
+          await this.handleSelectConversation(data.conversationId);
+          break;
+        case 'deleteConversation':
+          await this.handleDeleteConversation(data.conversationId);
+          break;
+        case 'refreshConversations':
+          await this.loadConversationList(true);
           break;
       }
     });
@@ -151,6 +177,19 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (!this.currentConversationId) {
         const conversation = await this.client.createConversation();
         this.currentConversationId = conversation.conversation_id;
+        
+        // Add to conversation storage
+        if (this.conversationStorage) {
+          await this.conversationStorage.addConversation({
+            id: conversation.conversation_id,
+            title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            status: 'RUNNING',
+            cloudId: conversation.conversation_id,
+          });
+          this.syncConversationList();
+        }
       }
 
       // Add assistant message placeholder after conversation is ready
@@ -448,13 +487,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  public clearChat() {
-    this.messages = [];
-    this.currentConversationId = null;
-    this.syncMessages();
-    vscode.window.showInformationMessage('Chat history cleared');
-  }
-
   public async sendMessageWithContext(message: string, context?: FileContext) {
     // Reveal the chat panel
     if (this._view) {
@@ -475,6 +507,131 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this.streamCleanup = null;
     }
   }
+
+  // ============= Conversation Management Methods =============
+
+  private async loadConversationList(forceRefresh = false): Promise<void> {
+    if (!this.conversationStorage) {
+      this.outputChannel.appendLine('No conversation storage available');
+      return;
+    }
+
+    try {
+      this.conversations = await this.conversationStorage.listConversations(forceRefresh);
+      this.syncConversationList();
+    } catch (error) {
+      this.outputChannel.appendLine(`Error loading conversations: ${error}`);
+    }
+  }
+
+  private syncConversationList(): void {
+    this._view?.webview.postMessage({
+      type: 'updateConversations',
+      conversations: this.conversations.map(c => ({
+        id: c.id,
+        title: c.title,
+        updatedAt: c.updatedAt,
+        status: c.status,
+      })),
+      currentConversationId: this.currentConversationId,
+    });
+  }
+
+  private async handleNewConversation(): Promise<void> {
+    // Clear current chat
+    this.messages = [];
+    this.currentConversationId = null;
+    this.syncMessages();
+    
+    // Update UI
+    this.syncConversationList();
+    
+    this.outputChannel.appendLine('Created new conversation (will connect on first message)');
+  }
+
+  private async handleSelectConversation(conversationId: string): Promise<void> {
+    if (conversationId === this.currentConversationId) {
+      return;
+    }
+
+    this.outputChannel.appendLine(`Switching to conversation: ${conversationId}`);
+
+    // Clean up current connection
+    this.cleanup();
+
+    // Load conversation from storage
+    if (this.conversationStorage) {
+      try {
+        const conversation = await this.conversationStorage.loadConversation(conversationId);
+        if (conversation) {
+          // Convert stored messages to chat messages
+          this.messages = conversation.messages.map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+          }));
+          this.currentConversationId = conversationId;
+          this.syncMessages();
+          this.syncConversationList();
+
+          // Try to reconnect to the conversation
+          try {
+            await this.client.reconnectToConversation(conversationId);
+            this.outputChannel.appendLine(`Reconnected to conversation: ${conversationId}`);
+          } catch (error) {
+            this.outputChannel.appendLine(`Could not reconnect (may need to restart): ${error}`);
+          }
+        }
+      } catch (error) {
+        this.outputChannel.appendLine(`Error loading conversation: ${error}`);
+        vscode.window.showErrorMessage('Failed to load conversation');
+      }
+    }
+  }
+
+  private async handleDeleteConversation(conversationId: string): Promise<void> {
+    const confirm = await vscode.window.showWarningMessage(
+      'Delete this conversation?',
+      { modal: true },
+      'Delete'
+    );
+
+    if (confirm !== 'Delete') {
+      return;
+    }
+
+    if (this.conversationStorage) {
+      try {
+        await this.conversationStorage.deleteConversation(conversationId);
+        
+        // If we deleted the current conversation, clear the chat
+        if (conversationId === this.currentConversationId) {
+          this.messages = [];
+          this.currentConversationId = null;
+          this.syncMessages();
+        }
+
+        // Refresh the list
+        await this.loadConversationList(true);
+        
+        vscode.window.showInformationMessage('Conversation deleted');
+      } catch (error) {
+        this.outputChannel.appendLine(`Error deleting conversation: ${error}`);
+        vscode.window.showErrorMessage('Failed to delete conversation');
+      }
+    }
+  }
+
+  // Update clearChat to also handle storage
+  public clearChat() {
+    this.messages = [];
+    this.currentConversationId = null;
+    this.syncMessages();
+    this.syncConversationList();
+    vscode.window.showInformationMessage('Chat history cleared');
+  }
+
+  // ============= End Conversation Management =============
 
   private getHtmlForWebview(webview: vscode.Webview): string {
     return `<!DOCTYPE html>
@@ -667,9 +824,112 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       padding: 2px 8px;
       font-size: 0.85em;
     }
+
+    /* Conversation Selector Styles */
+    .conversation-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--vscode-widget-border);
+      background-color: var(--vscode-sideBar-background);
+    }
+
+    .new-chat-btn {
+      padding: 4px 8px;
+      font-size: 14px;
+      min-width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .conversation-select {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid var(--vscode-input-border);
+      background-color: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border-radius: 4px;
+      font-size: var(--vscode-font-size);
+      cursor: pointer;
+    }
+
+    .conversation-select:focus {
+      outline: 1px solid var(--vscode-focusBorder);
+    }
+
+    .menu-btn {
+      padding: 4px 8px;
+      font-size: 14px;
+      min-width: 32px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--vscode-foreground);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .menu-btn:hover {
+      background-color: var(--vscode-toolbar-hoverBackground);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      right: 12px;
+      top: 40px;
+      background-color: var(--vscode-menu-background);
+      border: 1px solid var(--vscode-menu-border);
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 100;
+      display: none;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--vscode-menu-foreground);
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--vscode-menu-selectionBackground);
+      color: var(--vscode-menu-selectionForeground);
+    }
+
+    .dropdown-item.danger {
+      color: var(--vscode-errorForeground);
+    }
+
+    .dropdown-item.danger:hover {
+      background-color: var(--vscode-inputValidation-errorBackground);
+    }
+
+    .header-wrapper {
+      position: relative;
+    }
   </style>
 </head>
 <body>
+  <div class="header-wrapper">
+    <div class="conversation-header">
+      <button class="new-chat-btn primary" id="newChatBtn" title="New Chat">+</button>
+      <select class="conversation-select" id="conversationSelect">
+        <option value="">New Conversation</option>
+      </select>
+      <button class="menu-btn" id="menuBtn" title="More options">⋮</button>
+    </div>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <div class="dropdown-item" id="refreshBtn">↻ Refresh</div>
+      <div class="dropdown-item danger" id="deleteBtn">🗑 Delete</div>
+    </div>
+  </div>
+
   <div class="chat-container" id="chatContainer">
     <div class="empty-state" id="emptyState">
       <h3>👋 Welcome to OpenHands</h3>
@@ -700,11 +960,60 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const sendBtn = document.getElementById('sendBtn');
     const stopBtn = document.getElementById('stopBtn');
     
+    // Conversation selector elements
+    const newChatBtn = document.getElementById('newChatBtn');
+    const conversationSelect = document.getElementById('conversationSelect');
+    const menuBtn = document.getElementById('menuBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
     let isProcessing = false;
     let pendingFileChanges = [];
+    let currentConversationId = null;
+    let conversations = [];
 
     // Send ready signal
     vscode.postMessage({ type: 'ready' });
+
+    // Conversation selector event handlers
+    newChatBtn.addEventListener('click', () => {
+      vscode.postMessage({ type: 'newConversation' });
+      dropdownMenu.classList.remove('show');
+    });
+
+    conversationSelect.addEventListener('change', (e) => {
+      const conversationId = e.target.value;
+      if (conversationId && conversationId !== currentConversationId) {
+        vscode.postMessage({ type: 'selectConversation', conversationId });
+      } else if (!conversationId) {
+        vscode.postMessage({ type: 'newConversation' });
+      }
+    });
+
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      vscode.postMessage({ type: 'refreshConversations' });
+      dropdownMenu.classList.remove('show');
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (currentConversationId) {
+        vscode.postMessage({ type: 'deleteConversation', conversationId: currentConversationId });
+      }
+      dropdownMenu.classList.remove('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
 
     // Handle messages from extension
     window.addEventListener('message', event => {
@@ -721,8 +1030,39 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         case 'fileChange':
           pendingFileChanges.push({ path: data.path, content: data.content });
           break;
+        case 'updateConversations':
+          updateConversationList(data.conversations, data.currentConversationId);
+          break;
       }
     });
+
+    function updateConversationList(convos, currentId) {
+      conversations = convos || [];
+      currentConversationId = currentId;
+      
+      // Clear and rebuild select options
+      conversationSelect.innerHTML = '<option value="">New Conversation</option>';
+      
+      conversations.forEach(conv => {
+        const option = document.createElement('option');
+        option.value = conv.id;
+        option.textContent = truncateTitle(conv.title, 40);
+        option.title = conv.title; // Full title on hover
+        if (conv.id === currentId) {
+          option.selected = true;
+        }
+        conversationSelect.appendChild(option);
+      });
+
+      // Enable/disable delete button based on selection
+      deleteBtn.style.opacity = currentConversationId ? '1' : '0.5';
+      deleteBtn.style.pointerEvents = currentConversationId ? 'auto' : 'none';
+    }
+
+    function truncateTitle(title, maxLength) {
+      if (title.length <= maxLength) return title;
+      return title.substring(0, maxLength - 3) + '...';
+    }
 
     function renderMessages(messages) {
       if (messages.length === 0) {
