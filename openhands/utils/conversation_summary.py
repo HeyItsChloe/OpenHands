@@ -43,11 +43,11 @@ async def generate_conversation_title(
         messages = [
             {
                 'role': 'system',
-                'content': 'You are a helpful assistant that generates concise, descriptive titles for conversations with OpenHands. OpenHands is a helpful AI agent that can interact with a computer to solve tasks using bash terminal, file editor, and browser. Given a user message (which may be truncated), generate a concise, descriptive title for the conversation. Return only the title, with no additional text, quotes, or explanations.',
+                'content': 'You are a helpful assistant that generates concise, descriptive titles for conversations with OpenHands. OpenHands is a helpful AI agent that can interact with a computer to solve tasks using bash terminal, file editor, and browser. Given a user message (which may be truncated), generate a concise, descriptive title for the conversation. Start the title with a relevant emoji. Return only the title, with no additional text, quotes, or explanations.',
             },
             {
                 'role': 'user',
-                'content': f'Generate a title (maximum {max_length} characters) for a conversation that starts with this message:\n\n{truncated_message}',
+                'content': f'Generate a title (maximum {max_length} characters, starting with an emoji) for a conversation that starts with this message:\n\n{truncated_message}',
             },
         ]
 
@@ -74,7 +74,7 @@ def get_default_conversation_title(conversation_id: str) -> str:
     Returns:
         A default title string
     """
-    return f'Conversation {conversation_id[:5]}'
+    return f'💬 Conversation {conversation_id[:5]}'
 
 
 async def auto_generate_title(
@@ -138,9 +138,11 @@ async def auto_generate_title(
 
             # Fall back to simple truncation if LLM generation fails or is unavailable
             first_user_message = first_user_message.strip()
-            title = first_user_message[:30]
-            if len(first_user_message) > 30:
+            title = first_user_message[:28]
+            if len(first_user_message) > 28:
                 title += '...'
+            # Add emoji prefix for fallback titles
+            title = f'💬 {title}'
             logger.info(f'Generated title using truncation: {title}')
             return title
     except Exception as e:
