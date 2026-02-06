@@ -585,9 +585,20 @@ export class OpenHandsClient {
     
     if (v1Conversation) {
       // This is a V1 conversation
-      this.log(`V1 conversation found. Status: ${v1Conversation.status}, sandbox_id: ${v1Conversation.sandbox_id}`);
+      // V1 uses execution_status (not status) and sandbox_status
+      const executionStatus = v1Conversation.execution_status;
+      const sandboxStatus = v1Conversation.sandbox_status;
+      this.log(`V1 conversation found. execution_status: ${executionStatus}, sandbox_status: ${sandboxStatus}, sandbox_id: ${v1Conversation.sandbox_id}`);
       
-      if (v1Conversation.status === 'STOPPED' || v1Conversation.status === 'PAUSED') {
+      // Need to resume if execution is stopped/paused OR sandbox is not running
+      const needsResume = 
+        executionStatus === 'STOPPED' || 
+        executionStatus === 'PAUSED' ||
+        executionStatus === 'FINISHED' ||
+        sandboxStatus === 'STOPPED' ||
+        sandboxStatus === 'PAUSED';
+      
+      if (needsResume) {
         // Resume the sandbox first
         if (v1Conversation.sandbox_id) {
           await this.resumeV1Sandbox(v1Conversation.sandbox_id);
@@ -601,7 +612,7 @@ export class OpenHandsClient {
           readyConversation?.conversation_url
         );
         return readyConversation;
-      } else if (v1Conversation.status === 'RUNNING') {
+      } else if (executionStatus === 'RUNNING' || executionStatus === 'AWAITING_USER_INPUT') {
         // Already running, just connect
         await this.connectSocket(
           conversationId,
@@ -653,14 +664,23 @@ export class OpenHandsClient {
       const conversation = await this.getV1AppConversation(conversationId);
       
       if (conversation) {
-        this.log(`V1 Conversation status: ${conversation.status}, url: ${conversation.conversation_url || 'none'}`);
+        const executionStatus = conversation.execution_status;
+        const sandboxStatus = conversation.sandbox_status;
+        this.log(`V1 Conversation: execution_status=${executionStatus}, sandbox_status=${sandboxStatus}, url=${conversation.conversation_url || 'none'}`);
         
-        if (conversation.status === 'RUNNING' && conversation.conversation_url && conversation.session_api_key) {
+        // Ready when execution is running/awaiting input AND we have a conversation URL
+        const isReady = 
+          (executionStatus === 'RUNNING' || executionStatus === 'AWAITING_USER_INPUT') &&
+          conversation.conversation_url && 
+          conversation.session_api_key;
+        
+        if (isReady) {
           return conversation;
         }
         
-        if (conversation.status === 'ERROR' || conversation.status === 'FAILED') {
-          throw new Error(`Conversation failed to start: ${conversation.status}`);
+        // Check for errors
+        if (sandboxStatus === 'ERROR' || sandboxStatus === 'FAILED') {
+          throw new Error(`Sandbox failed to start: ${sandboxStatus}`);
         }
       }
       
