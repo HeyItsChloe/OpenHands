@@ -508,4 +508,65 @@ export class OpenHandsClient {
       return false;
     }
   }
+
+  // Get list of all conversations
+  async getConversations(limit: number = 50): Promise<any[]> {
+    try {
+      const response = await this.fetch(`/api/conversations?limit=${limit}`);
+      const data = await response.json() as any;
+      
+      // API returns { results: [...], next_page_id: ... }
+      const conversations = data.results || data || [];
+      this.log(`Fetched ${conversations.length} conversations`);
+      return conversations;
+    } catch (error) {
+      this.log(`Error fetching conversations: ${error}`);
+      throw error;
+    }
+  }
+
+  // Delete a conversation
+  async deleteConversation(conversationId: string): Promise<void> {
+    await this.fetch(`/api/conversations/${conversationId}`, {
+      method: 'DELETE',
+    });
+    this.log(`Deleted conversation: ${conversationId}`);
+  }
+
+  // Reconnect to an existing conversation
+  async reconnectToConversation(conversationId: string): Promise<any> {
+    this.log(`Reconnecting to conversation: ${conversationId}`);
+    
+    // Get conversation info (returns full details including session_api_key and url)
+    const response = await this.fetch(`/api/conversations/${conversationId}`);
+    const conversation = await response.json() as any;
+    
+    // Check if it's running
+    if (conversation.status === 'STOPPED' || conversation.status === 'FINISHED') {
+      // Need to restart it
+      await this.fetch(`/api/conversations/${conversationId}/start`, {
+        method: 'POST',
+        body: JSON.stringify({ providers_set: [] }),
+      });
+      
+      // Wait for it to be ready
+      const readyConversation = await this.waitForConversationReady(conversationId);
+      await this.connectSocket(
+        conversationId,
+        readyConversation?.session_api_key,
+        readyConversation?.url
+      );
+      return readyConversation;
+    } else if (conversation.status === 'RUNNING') {
+      // Already running, just connect
+      await this.connectSocket(
+        conversationId,
+        conversation.session_api_key,
+        conversation.url
+      );
+      return conversation;
+    }
+    
+    return conversation;
+  }
 }
