@@ -291,6 +291,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // Skip environment events that don't have content
+    const eventAny = event as any;
+    if (eventAny.source === 'environment') {
+      // Skip state updates, stats, etc.
+      if (eventAny.key === 'execution_status' || eventAny.key === 'stats' || eventAny.key === 'full_state') {
+        return;
+      }
+    }
+
     // Skip agent state changes (no displayable content)
     if (event.observation === 'agent_state_changed') {
       return;
@@ -298,10 +307,30 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     let content: string | undefined;
 
-    // Try various ways to extract content from agent events
+    // V1 FORMAT HANDLING
+    
+    // V1: Agent thought/reasoning
+    if (!content && eventAny.reasoning_content) {
+      content = `*Thinking: ${eventAny.reasoning_content}*`;
+    }
+    
+    // V1: Agent action with tool call
+    if (!content && eventAny.action?.command) {
+      content = `Running: \`${eventAny.action.command}\``;
+    }
+    
+    // V1: Tool observation result
+    if (!content && eventAny.observation?.content) {
+      const obsContent = eventAny.observation.content;
+      if (Array.isArray(obsContent) && obsContent[0]?.text) {
+        content = `\`\`\`\n${obsContent[0].text}\n\`\`\``;
+      }
+    }
+
+    // V0 FORMAT HANDLING
     
     // 1. AgentFinishAction with outputs.content
-    if (event.action === 'finish' && event.args?.outputs) {
+    if (!content && event.action === 'finish' && event.args?.outputs) {
       const outputs = event.args.outputs as Record<string, any>;
       content = outputs.content || event.args.final_thought as string;
     }
