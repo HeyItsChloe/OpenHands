@@ -325,9 +325,9 @@ export class OpenHandsClient {
       this.runtimeUrl = `https://${host}`;
       this.sessionApiKey = sessionApiKey;
       
-      // Build WebSocket URL: wss://host/sockets/events/{conversationId}?session_api_key=...
+      // Build WebSocket URL: wss://host/sockets/events/{conversationId}?session_api_key=...&resend_all=true
       const wsProtocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${host}/sockets/events/${conversationId}?session_api_key=${sessionApiKey}`;
+      const wsUrl = `${wsProtocol}//${host}/sockets/events/${conversationId}?session_api_key=${sessionApiKey}&resend_all=true`;
       
       this.log(`V1 WebSocket URL: ${wsUrl.replace(sessionApiKey, 'xxx')}`);
       
@@ -486,10 +486,15 @@ export class OpenHandsClient {
     
     // Send via appropriate connection type
     if (this.nativeWebSocket?.readyState === WebSocket.OPEN) {
-      // V1 conversations use HTTP POST to send messages, WebSocket is for receiving
-      await this.sendV1Message(conversationId, fullMessage);
+      // V1 conversations send via WebSocket with V1 message format
+      const v1Message = {
+        role: 'user',
+        content: [{ type: 'text', text: fullMessage }],
+      };
+      this.log(`Sending V1 message via WebSocket: ${fullMessage.substring(0, 50)}...`);
+      this.nativeWebSocket.send(JSON.stringify(v1Message));
     } else if (this.socket?.connected) {
-      // V0 conversations use Socket.IO
+      // V0 conversations use Socket.IO with V0 event format
       this.log(`Sending message via Socket.IO: ${fullMessage.substring(0, 50)}...`);
       this.socket.emit('oh_user_action', messageEvent);
       
@@ -524,39 +529,6 @@ export class OpenHandsClient {
     }
 
     return message + contextStr;
-  }
-
-  // Send message to V1 conversation via HTTP POST
-  private async sendV1Message(conversationId: string, message: string): Promise<void> {
-    if (!this.runtimeUrl || !this.sessionApiKey) {
-      throw new Error('V1 runtime not configured');
-    }
-    
-    // V1 message format
-    const v1Message = {
-      role: 'user',
-      content: [{ type: 'text', text: message }],
-    };
-    
-    const url = `${this.runtimeUrl}/api/conversations/${conversationId}/events`;
-    this.log(`Sending V1 message via HTTP POST: ${url}`);
-    this.log(`Message: ${message.substring(0, 50)}...`);
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-API-Key': this.sessionApiKey,
-      },
-      body: JSON.stringify(v1Message),
-    });
-    
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Failed to send V1 message: ${response.status} - ${text}`);
-    }
-    
-    this.log(`V1 message sent successfully`);
   }
 
   streamEvents(
