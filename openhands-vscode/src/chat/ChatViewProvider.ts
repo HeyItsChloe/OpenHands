@@ -140,33 +140,41 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       };
 
       // Set up event handler for WebSocket events
+      let eventReceived = false;
       const eventHandler = async (event: AgentEvent) => {
+        eventReceived = true;
         this.handleAgentEvent(event, assistantMessage);
         
         // Check if agent finished - multiple ways this can happen:
         // 1. agent_state_changed observation with awaiting_user_input
-        // 2. full_state event where agent is already awaiting_user_input
+        // 2. full_state event (initial connection state)
         // 3. finish action
         
         const isAgentStateChanged = event.observation === 'agent_state_changed' && 
-            event.extras?.agent_state === 'awaiting_user_input';
+            (event.extras?.agent_state === 'awaiting_user_input' || 
+             event.extras?.agent_state === 'stopped' ||
+             event.extras?.agent_state === 'finished');
         
-        const isFullStateAwaitingInput = (event as any).key === 'full_state' &&
-            (event as any).value?.agent_state === 'awaiting_user_input';
+        // full_state events are sent on connection - they contain the current state
+        const isFullState = (event as any).key === 'full_state';
         
         const isFinishAction = event.action === 'finish';
         
-        if (isAgentStateChanged || isFullStateAwaitingInput || isFinishAction) {
-          this.outputChannel.appendLine(`Agent finished: state_changed=${isAgentStateChanged}, full_state=${isFullStateAwaitingInput}, finish=${isFinishAction}`);
+        if (isAgentStateChanged || isFinishAction) {
+          this.outputChannel.appendLine(`Agent finished: state_changed=${isAgentStateChanged}, finish=${isFinishAction}`);
           
           // If we still have no content, try fetching events from REST API
           if (!assistantMessage.content && this.currentConversationId) {
             this.outputChannel.appendLine('No content received via WebSocket, fetching from REST...');
-            const events = await this.client.fetchEvents(this.currentConversationId, 0);
-            for (const e of events) {
-              if (e.source === 'agent' && (e.action === 'message' || e.action === 'finish')) {
-                this.handleAgentEvent(e, assistantMessage);
+            try {
+              const events = await this.client.fetchEvents(this.currentConversationId, 0);
+              for (const e of events) {
+                if (e.source === 'agent' && (e.action === 'message' || e.action === 'finish')) {
+                  this.handleAgentEvent(e, assistantMessage);
+                }
               }
+            } catch (e) {
+              this.outputChannel.appendLine(`Failed to fetch events: ${e}`);
             }
           }
           
@@ -176,9 +184,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           this.updateWebviewState();
           this.client.offEvent(eventHandler);
         }
+        
+        // For full_state, just log it - don't finish processing immediately
+        // The agent needs to run first
+        if (isFullState) {
+          this.outputChannel.appendLine(`Received full_state event on connection`);
+        }
       };
       
       this.client.onEvent(eventHandler);
+      
+      // Timeout: if no meaningful response after 60 seconds, reset processing state
+      setTimeout(() => {
+        if (this.isProcessing && assistantMessage.isStreaming) {
+          this.outputChannel.appendLine('Timeout waiting for agent response, resetting processing state');
+          assistantMessage.content = assistantMessage.content || 'No response received. The agent may still be processing.';
+          assistantMessage.isStreaming = false;
+          this.syncMessages();
+          this.isProcessing = false;
+          this.updateWebviewState();
+          this.client.offEvent(eventHandler);
+        }
+      }, 60000);
       
       // Store cleanup function
       this.streamCleanup = () => {
