@@ -563,15 +563,36 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     // Clean up current connection
     this.cleanup();
 
-    // Set conversation ID first so fetchEvents works
+    // Set conversation ID first
     this.currentConversationId = conversationId;
+    
+    // Get conversation info from the cached list
+    const cachedConversations = await this.conversationStorage?.listConversations(false);
+    const conversationInfo = cachedConversations?.find(c => c.id === conversationId);
+    const status = conversationInfo?.status || 'UNKNOWN';
+    
+    this.outputChannel.appendLine(`Conversation status: ${status}`);
 
-    // Load conversation from storage (this now fetches from main API)
+    // For stopped conversations, we need to resume to see history
+    // The cloud doesn't expose event history for stopped V1 conversations
+    if (status === 'STOPPED' || status === 'FINISHED') {
+      // Show a placeholder message explaining the situation
+      this.messages = [{
+        role: 'system',
+        content: `📋 **Conversation: ${conversationInfo?.title || 'Untitled'}**\n\nThis conversation is currently stopped. Send a message to resume it and see the history.`,
+        timestamp: new Date(),
+      }];
+      this.syncMessages();
+      this.syncConversationList();
+      this.outputChannel.appendLine('Conversation is stopped - send a message to resume');
+      return;
+    }
+
+    // For running conversations, try to load events
     if (this.conversationStorage) {
       try {
         const conversation = await this.conversationStorage.loadConversation(conversationId);
         if (conversation && conversation.messages.length > 0) {
-          // Convert stored messages to chat messages
           this.messages = conversation.messages.map(m => ({
             role: m.role,
             content: m.content,
@@ -586,14 +607,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           this.syncMessages();
           this.syncConversationList();
         }
-
-        // Don't automatically try to restart stopped conversations
-        // User can start a new message if they want to continue
-        // This prevents long waits and potential failures
-        
       } catch (error) {
         this.outputChannel.appendLine(`Error loading conversation: ${error}`);
-        vscode.window.showErrorMessage('Failed to load conversation history');
+        this.messages = [];
+        this.syncMessages();
+        this.syncConversationList();
       }
     }
   }
