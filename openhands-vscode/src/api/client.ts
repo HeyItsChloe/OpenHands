@@ -294,8 +294,9 @@ export class OpenHandsClient {
   // Fetch events from the runtime server (useful for getting missed events)
   async fetchEvents(conversationId: string, startId: number = 0): Promise<AgentEvent[]> {
     // Try main API first (works for all conversations, including stopped ones)
+    // Endpoint is /api/conversations/{id}/events
     try {
-      const url = `${this.baseUrl}/api/events?conversation_id=${conversationId}&start_id=${startId}&limit=100`;
+      const url = `${this.baseUrl}/api/conversations/${conversationId}/events?start_id=${startId}&limit=100`;
       this.log(`Fetching events from main API: ${url}`);
       
       const headers = await this.authService.getAuthHeadersAsync();
@@ -312,7 +313,8 @@ export class OpenHandsClient {
         return result.events || [];
       }
       
-      this.log(`Main API failed: ${response.status}`);
+      const errorText = await response.text();
+      this.log(`Main API failed: ${response.status} - ${errorText.substring(0, 100)}`);
     } catch (error) {
       this.log(`Error fetching from main API: ${error}`);
     }
