@@ -14,6 +14,10 @@ export const useSubmitOnboarding = () => {
       // TODO: persist user responses
       selections,
     onSuccess: () => {
+      // Delete onboarding cookie
+      document.cookie =
+        "is_new_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
       navigate("/");
     },
     onError: (error) => {

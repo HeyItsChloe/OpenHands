@@ -179,8 +179,15 @@ async def keycloak_callback(
     email = user_info.get('email')
     user_id = user_info['sub']
     user = await UserStore.get_user_by_id_async(user_id)
+
+    # Track if this is a new user
+    is_new_user = False
     if not user:
         user = await UserStore.create_user(user_id, user_info)
+        is_new_user = True
+    else:
+        # Check cookie for users returning after TOS acceptance
+        is_new_user = request.cookies.get('is_new_user') == 'true'
 
     if not user:
         logger.error(f'Failed to authenticate user {user_info["preferred_username"]}')
@@ -387,7 +394,7 @@ async def keycloak_callback(
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
     # if new user must complete onboarding, redirect to the onboarding-form (only if enabled)
-    elif ENABLE_ONBOARDING and await OrgService.needs_onboarding(user):
+    elif ENABLE_ONBOARDING and is_new_user:
         encoded_redirect_url = quote(redirect_url, safe='')
         onboarding_url = (
             f'{request.base_url}onboarding?redirect_url={encoded_redirect_url}'
@@ -404,6 +411,18 @@ async def keycloak_callback(
         secure=True if scheme == 'https' else False,
         accepted_tos=has_accepted_tos,
     )
+
+    # Set onboarding cookie for new users
+    if is_new_user:
+        response.set_cookie(
+            key='is_new_user',
+            value='true',
+            domain=get_cookie_domain(request),
+            httponly=False,
+            secure=True if scheme == 'https' else False,
+            samesite=get_cookie_samesite(request),
+            max_age=86400,
+        )
 
     # Sync GitLab repos & set up webhooks
     # Use Keycloak access token (first-time users lack offline token at this stage)
