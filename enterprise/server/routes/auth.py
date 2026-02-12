@@ -186,7 +186,9 @@ async def keycloak_callback(
         user = await UserStore.create_user(user_id, user_info)
         is_new_user = True
     else:
-        # Check cookie for users returning after TOS acceptance
+        # Existing user — gradually backfill contact_name if it still has a username-style value
+        await UserStore.backfill_contact_name(user_id, user_info)
+        # Check cookie for existing users who havent completed onboarding
         is_new_user = request.cookies.get('is_new_user') == 'true'
 
     if not user:
@@ -228,6 +230,7 @@ async def keycloak_callback(
                 user_ip=user_ip,
                 user_agent=user_agent,
                 email=email,
+                user_id=user_id,
             )
 
             if not result.allowed:

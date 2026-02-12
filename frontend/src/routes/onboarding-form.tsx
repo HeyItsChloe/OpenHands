@@ -19,7 +19,7 @@ export const clientLoader = async () => {
   });
 
   // Only allow SaaS users to access onboarding when the feature flag is enabled
-  if (config.APP_MODE !== "saas" || !ENABLE_ONBOARDING()) {
+  if (config.app_mode !== "saas" || !ENABLE_ONBOARDING()) {
     return redirect("/");
   }
 
