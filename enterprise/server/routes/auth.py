@@ -28,7 +28,6 @@ from server.config import sign_token
 from server.constants import IS_FEATURE_ENV
 from server.routes.event_webhook import _get_session_api_key, _get_user_id
 from storage.database import session_maker
-from storage.org_service import OrgService
 from storage.user import User
 from storage.user_store import UserStore
 
