@@ -1,4 +1,4 @@
-import { cn } from "@heroui/react";
+import { cn } from "#/utils/utils";
 import { Typography } from "#/ui/typography";
 
 interface StepOptionProps {

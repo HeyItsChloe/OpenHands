@@ -1,4 +1,5 @@
 import { Typography } from "#/ui/typography";
+import { cn } from "#/utils/utils";
 
 interface StepHeaderProps {
   title: string;
@@ -13,9 +14,10 @@ function StepHeader({ title, currentStep, totalSteps }: StepHeaderProps) {
         {Array.from({ length: totalSteps }).map((_, index) => (
           <div
             key={index}
-            className={`w-[6px] h-[4px] rounded-full transition-colors ${
-              index < currentStep ? "bg-white" : "bg-neutral-600"
-            }`}
+            className={cn(
+              `w-[6px] h-[4px] rounded-full transition-colors
+              ${index < currentStep ? "bg-white" : "bg-neutral-600"}`,
+            )}
           />
         ))}
       </div>
