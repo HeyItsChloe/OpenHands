@@ -15,12 +15,6 @@ export function StepOption({ id, label, selected, onClick }: StepOptionProps) {
       type="button"
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
       className={cn(
         "h-10 w-full rounded-md border text-left px-4 transition-colors text-white cursor-pointer",
         selected

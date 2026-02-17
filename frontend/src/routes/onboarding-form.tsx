@@ -156,11 +156,15 @@ function OnboardingForm() {
   const handleNext = () => {
     if (isLastStep) {
       submitOnboarding({ selections });
-      trackOnboardingCompleted({
-        role: selections.step1,
-        orgSize: selections.step2,
-        useCase: selections.step3,
-      });
+      try {
+        trackOnboardingCompleted({
+          role: selections.step1,
+          orgSize: selections.step2,
+          useCase: selections.step3,
+        });
+      } catch (error) {
+        console.error("Failed to track onboarding:", error);
+      }
     } else {
       setCurrentStepIndex((prev) => prev + 1);
     }

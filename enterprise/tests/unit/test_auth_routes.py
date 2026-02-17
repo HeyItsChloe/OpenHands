@@ -1931,11 +1931,12 @@ async def test_keycloak_callback_redirects_to_onboarding_for_new_user(mock_reque
         patch('server.routes.auth.posthog'),
         patch('server.routes.auth.ENABLE_ONBOARDING', True),
     ):
-        # Mock user with accepted_tos (skip TOS page)
+        # Mock user with accepted_tos (skip TOS page) but not completed onboarding
         mock_user = MagicMock()
         mock_user.id = 'test_user_id'
         mock_user.current_org_id = 'test_org_id'
         mock_user.accepted_tos = '2025-01-01'
+        mock_user.completed_onboarding = None  # Not completed
 
         # Setup UserStore mocks - new user
         mock_user_store.get_user_by_id_async = AsyncMock(return_value=None)
