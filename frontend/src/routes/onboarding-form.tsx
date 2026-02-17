@@ -10,7 +10,6 @@ import { I18nKey } from "#/i18n/declaration";
 import OpenHandsLogoWhite from "#/assets/branding/openhands-logo-white.svg?react";
 import { useSubmitOnboarding } from "#/hooks/mutation/use-submit-onboarding";
 import { useTracking } from "#/hooks/use-tracking";
-import { ENABLE_ONBOARDING } from "#/utils/feature-flags";
 
 export const clientLoader = async () => {
   const config = await queryClient.ensureQueryData({
@@ -18,8 +17,8 @@ export const clientLoader = async () => {
     queryFn: OptionService.getConfig,
   });
 
-  // Only allow SaaS users to access onboarding when the feature flag is enabled
-  if (config.app_mode !== "saas" || !ENABLE_ONBOARDING()) {
+  // Only allow SaaS users to access onboarding
+  if (config.app_mode !== "saas") {
     return redirect("/");
   }
 

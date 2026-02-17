@@ -1980,11 +1980,12 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
         patch('server.routes.auth.UserStore') as mock_user_store,
         patch('server.routes.auth.posthog'),
     ):
-        # Mock existing user with accepted_tos - no is_new_user cookie
+        # Mock existing user with accepted_tos and completed_onboarding
         mock_user = MagicMock()
         mock_user.id = 'test_user_id'
         mock_user.current_org_id = 'test_org_id'
         mock_user.accepted_tos = '2025-01-01'
+        mock_user.completed_onboarding = '2025-01-01'
 
         # Setup UserStore mocks - existing user
         mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
@@ -2009,7 +2010,6 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
         mock_verifier.is_active.return_value = True
         mock_verifier.is_user_allowed.return_value = True
 
-        # No is_new_user cookie
         mock_request.cookies = {}
 
         redirect_url = 'http://localhost:8000/conversations'
@@ -2026,14 +2026,25 @@ async def test_keycloak_callback_skips_onboarding_for_existing_user(mock_request
 
 
 class TestOnboardingRedirectForSaasUsers:
-    @pytest.mark.asyncio
-    async def test_new_saas_user_redirects_to_onboarding(self, mock_request):
-        """
-        Test that a brand new SaaS user without any org is redirected to onboarding.
+    """
+    Tests for DB-based onboarding tracking.
 
-        This is the primary SaaS-only behavior: new users who authenticate via
-        Keycloak (SaaS auth) and have no personal org or memberships should be
-        shown the onboarding questions when ENABLE_ONBOARDING flag is enabled.
+    Onboarding is tracked via the `completed_onboarding` column in the user table.
+    Users are redirected to onboarding when:
+    - ENABLE_ONBOARDING is True
+    - User has accepted TOS (accepted_tos is not None)
+    - User has NOT completed onboarding (completed_onboarding is None)
+    """
+
+    @pytest.mark.asyncio
+    async def test_new_user_without_completed_onboarding_redirects_to_onboarding(
+        self, mock_request
+    ):
+        """
+        Test that a new user who hasn't completed onboarding is redirected.
+
+        When ENABLE_ONBOARDING is True and user.completed_onboarding is None,
+        the user should be redirected to /onboarding after accepting TOS.
         """
         with (
             patch('server.routes.auth.token_manager') as mock_token_manager,
@@ -2043,13 +2054,13 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.posthog'),
             patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
-            # Mock a brand new user
+            # Mock a new user with TOS accepted but onboarding not completed
             mock_user = MagicMock()
             mock_user.id = 'new_user_id'
-            mock_user.current_org_id = None
+            mock_user.current_org_id = 'personal_org_id'
             mock_user.accepted_tos = '2025-01-01'
+            mock_user.completed_onboarding = None  # Not completed
 
-            # New user: get_user_by_id_async returns None, create_user creates the user
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=None)
             mock_user_store.create_user = AsyncMock(return_value=mock_user)
             mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
@@ -2083,12 +2094,12 @@ class TestOnboardingRedirectForSaasUsers:
             assert 'onboarding' in result.headers['location']
 
     @pytest.mark.asyncio
-    async def test_saas_user_with_personal_org_skips_onboarding(self, mock_request):
+    async def test_user_with_completed_onboarding_skips_onboarding(self, mock_request):
         """
-        Test that SaaS users with an existing personal org skip onboarding.
+        Test that users who have completed onboarding skip it.
 
-        Users who have already completed signup and have a personal org
-        should not see the onboarding questions again.
+        When user.completed_onboarding is set, the user should go directly
+        to their destination without being redirected to onboarding.
         """
         with (
             patch('server.routes.auth.token_manager') as mock_token_manager,
@@ -2096,11 +2107,13 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
             mock_user = MagicMock()
             mock_user.id = 'existing_user_id'
             mock_user.current_org_id = 'personal_org_id'
             mock_user.accepted_tos = '2025-01-01'
+            mock_user.completed_onboarding = '2025-01-01'  # Completed
 
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
             mock_user_store.create_user = AsyncMock(return_value=mock_user)
@@ -2135,12 +2148,12 @@ class TestOnboardingRedirectForSaasUsers:
             assert result.headers['location'] == redirect_url
 
     @pytest.mark.asyncio
-    async def test_saas_user_with_org_membership_skips_onboarding(self, mock_request):
+    async def test_onboarding_disabled_skips_onboarding(self, mock_request):
         """
-        Test that SaaS users with any org membership skip onboarding.
+        Test that onboarding is skipped when ENABLE_ONBOARDING is False.
 
-        Users who have been invited to or joined an organization should not
-        see onboarding, even if they don't have a personal org.
+        Even if user.completed_onboarding is None, the user should go directly
+        to their destination when the feature flag is disabled.
         """
         with (
             patch('server.routes.auth.token_manager') as mock_token_manager,
@@ -2148,11 +2161,13 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', False),
         ):
             mock_user = MagicMock()
-            mock_user.id = 'member_user_id'
-            mock_user.current_org_id = 'company_org_id'
+            mock_user.id = 'user_id'
+            mock_user.current_org_id = 'personal_org_id'
             mock_user.accepted_tos = '2025-01-01'
+            mock_user.completed_onboarding = None  # Not completed, but flag is off
 
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
             mock_user_store.create_user = AsyncMock(return_value=mock_user)
@@ -2164,8 +2179,8 @@ class TestOnboardingRedirectForSaasUsers:
             )
             mock_token_manager.get_user_info = AsyncMock(
                 return_value={
-                    'sub': 'member_user_id',
-                    'preferred_username': 'member_user',
+                    'sub': 'user_id',
+                    'preferred_username': 'user',
                     'identity_provider': 'github',
                     'email_verified': True,
                 }
@@ -2200,11 +2215,13 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
             # Mock a new user who has NOT accepted TOS
             mock_user = MagicMock()
             mock_user.id = 'new_user_id'
             mock_user.current_org_id = None
+            mock_user.completed_onboarding = None
             mock_user.accepted_tos = None  # TOS not accepted
 
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
@@ -2261,6 +2278,7 @@ class TestOnboardingRedirectForSaasUsers:
             mock_user.id = 'new_user_id'
             mock_user.current_org_id = None
             mock_user.accepted_tos = '2025-01-01'
+            mock_user.completed_onboarding = None  # Not completed
 
             # New user: get_user_by_id_async returns None, create_user creates the user
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=None)
@@ -2304,66 +2322,12 @@ class TestOnboardingRedirectForSaasUsers:
             assert encoded_dest in result.headers['location']
 
     @pytest.mark.asyncio
-    async def test_onboarding_check_called_only_after_tos_accepted(self, mock_request):
+    async def test_returning_user_with_completed_onboarding_skips(self, mock_request):
         """
-        Test that needs_onboarding is only evaluated after TOS is accepted.
+        Test that returning users who have completed onboarding skip it.
 
-        The onboarding check should be skipped entirely for users who
-        haven't accepted TOS yet.
-        """
-        with (
-            patch('server.routes.auth.token_manager') as mock_token_manager,
-            patch('server.routes.auth.user_verifier') as mock_verifier,
-            patch('server.routes.auth.set_response_cookie'),
-            patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('server.routes.auth.posthog'),
-        ):
-            # User who hasn't accepted TOS
-            mock_user = MagicMock()
-            mock_user.id = 'new_user_id'
-            mock_user.current_org_id = None
-            mock_user.accepted_tos = None
-
-            mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
-            mock_user_store.create_user = AsyncMock(return_value=mock_user)
-            mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
-            mock_user_store.backfill_contact_name = AsyncMock()
-
-            mock_token_manager.get_keycloak_tokens = AsyncMock(
-                return_value=('test_access_token', 'test_refresh_token')
-            )
-            mock_token_manager.get_user_info = AsyncMock(
-                return_value={
-                    'sub': 'new_user_id',
-                    'preferred_username': 'new_user',
-                    'identity_provider': 'github',
-                    'email_verified': True,
-                }
-            )
-            mock_token_manager.store_idp_tokens = AsyncMock()
-            mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
-
-            mock_verifier.is_active.return_value = True
-            mock_verifier.is_user_allowed.return_value = True
-
-            result = await keycloak_callback(
-                code='test_code',
-                state='http://localhost:8000/',
-                request=mock_request,
-            )
-
-            # Should redirect to TOS
-            assert 'accept-tos' in result.headers['location']
-            # needs_onboarding should not have been called (or if called,
-            # its result wasn't used because TOS takes precedence)
-
-    @pytest.mark.asyncio
-    async def test_returning_saas_user_goes_directly_to_app(self, mock_request):
-        """
-        Test that returning SaaS users bypass both TOS and onboarding.
-
-        Users who have already accepted TOS and completed onboarding should
-        go directly to the requested destination (no is_new_user cookie).
+        Users who have already completed onboarding (completed_onboarding is set)
+        should go directly to their destination.
         """
         with (
             patch('server.routes.auth.token_manager') as mock_token_manager,
@@ -2371,12 +2335,13 @@ class TestOnboardingRedirectForSaasUsers:
             patch('server.routes.auth.set_response_cookie'),
             patch('server.routes.auth.UserStore') as mock_user_store,
             patch('server.routes.auth.posthog'),
+            patch('server.routes.auth.ENABLE_ONBOARDING', True),
         ):
-            # Returning user with everything set up
             mock_user = MagicMock()
             mock_user.id = 'returning_user_id'
             mock_user.current_org_id = 'personal_org_id'
             mock_user.accepted_tos = '2024-06-15'
+            mock_user.completed_onboarding = '2024-06-15'  # Already completed
 
             mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
             mock_user_store.create_user = AsyncMock(return_value=mock_user)
@@ -2400,9 +2365,6 @@ class TestOnboardingRedirectForSaasUsers:
             mock_verifier.is_active.return_value = True
             mock_verifier.is_user_allowed.return_value = True
 
-            # No is_new_user cookie
-            mock_request.cookies = {}
-
             destination = 'http://localhost:8000/settings'
             result = await keycloak_callback(
                 code='test_code',
@@ -2415,178 +2377,6 @@ class TestOnboardingRedirectForSaasUsers:
             assert result.headers['location'] == destination
             assert 'accept-tos' not in result.headers['location']
             assert 'onboarding' not in result.headers['location']
-
-    @pytest.mark.asyncio
-    async def test_existing_user_with_new_user_cookie_redirects_to_onboarding(
-        self, mock_request
-    ):
-        """
-        Test that existing users with is_new_user cookie are redirected to onboarding.
-
-        This handles the case where a user was created, redirected to TOS, accepted TOS,
-        and is now returning to complete onboarding. The is_new_user cookie persists
-        their "new user" status across the TOS flow.
-        """
-        with (
-            patch('server.routes.auth.token_manager') as mock_token_manager,
-            patch('server.routes.auth.user_verifier') as mock_verifier,
-            patch('server.routes.auth.set_response_cookie'),
-            patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('server.routes.auth.posthog'),
-            patch('server.routes.auth.ENABLE_ONBOARDING', True),
-        ):
-            # User exists (newly created) & has the is_new_user cookie from initial creation
-            mock_user = MagicMock()
-            mock_user.id = 'new_user_id'
-            mock_user.current_org_id = 'personal_org_id'
-            mock_user.accepted_tos = '2025-01-01'  # TOS accepted
-
-            mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
-            mock_user_store.create_user = AsyncMock(return_value=mock_user)
-            mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
-            mock_user_store.backfill_contact_name = AsyncMock()
-
-            mock_token_manager.get_keycloak_tokens = AsyncMock(
-                return_value=('test_access_token', 'test_refresh_token')
-            )
-            mock_token_manager.get_user_info = AsyncMock(
-                return_value={
-                    'sub': 'new_user_id',
-                    'preferred_username': 'new_user',
-                    'identity_provider': 'github',
-                    'email_verified': True,
-                }
-            )
-            mock_token_manager.store_idp_tokens = AsyncMock()
-            mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
-
-            mock_verifier.is_active.return_value = True
-            mock_verifier.is_user_allowed.return_value = True
-
-            # Set is_new_user cookie (user returning after TOS)
-            mock_request.cookies = {'is_new_user': 'true'}
-
-            result = await keycloak_callback(
-                code='test_code',
-                state='http://localhost:8000/',
-                request=mock_request,
-            )
-
-            assert isinstance(result, RedirectResponse)
-            assert result.status_code == 302
-            assert 'onboarding' in result.headers['location']
-
-    @pytest.mark.asyncio
-    async def test_existing_user_with_new_user_cookie_but_no_tos_goes_to_tos(
-        self, mock_request
-    ):
-        """
-        Test that users with is_new_user cookie but no TOS still go to TOS first.
-
-        TOS acceptance always takes precedence over onboarding.
-        """
-        with (
-            patch('server.routes.auth.token_manager') as mock_token_manager,
-            patch('server.routes.auth.user_verifier') as mock_verifier,
-            patch('server.routes.auth.set_response_cookie'),
-            patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('server.routes.auth.posthog'),
-            patch('server.routes.auth.ENABLE_ONBOARDING', True),
-        ):
-            mock_user = MagicMock()
-            mock_user.id = 'new_user_id'
-            mock_user.current_org_id = 'personal_org_id'
-            mock_user.accepted_tos = None  # TOS not accepted
-
-            mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
-            mock_user_store.create_user = AsyncMock(return_value=mock_user)
-            mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
-            mock_user_store.backfill_contact_name = AsyncMock()
-
-            mock_token_manager.get_keycloak_tokens = AsyncMock(
-                return_value=('test_access_token', 'test_refresh_token')
-            )
-            mock_token_manager.get_user_info = AsyncMock(
-                return_value={
-                    'sub': 'new_user_id',
-                    'preferred_username': 'new_user',
-                    'identity_provider': 'github',
-                    'email_verified': True,
-                }
-            )
-            mock_token_manager.store_idp_tokens = AsyncMock()
-            mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
-
-            mock_verifier.is_active.return_value = True
-            mock_verifier.is_user_allowed.return_value = True
-
-            mock_request.cookies = {'is_new_user': 'true'}
-
-            result = await keycloak_callback(
-                code='test_code',
-                state='http://localhost:8000/',
-                request=mock_request,
-            )
-
-            assert isinstance(result, RedirectResponse)
-            assert result.status_code == 302
-            # TOS takes precedence
-            assert 'accept-tos' in result.headers['location']
-            assert 'onboarding' not in result.headers['location']
-
-    @pytest.mark.asyncio
-    async def test_existing_user_with_false_cookie_skips_onboarding(self, mock_request):
-        """
-        Test that users with is_new_user cookie set to non-true value skip onboarding.
-        """
-        with (
-            patch('server.routes.auth.token_manager') as mock_token_manager,
-            patch('server.routes.auth.user_verifier') as mock_verifier,
-            patch('server.routes.auth.set_response_cookie'),
-            patch('server.routes.auth.UserStore') as mock_user_store,
-            patch('server.routes.auth.posthog'),
-            patch('server.routes.auth.ENABLE_ONBOARDING', True),
-        ):
-            mock_user = MagicMock()
-            mock_user.id = 'user_id'
-            mock_user.current_org_id = 'personal_org_id'
-            mock_user.accepted_tos = '2025-01-01'
-
-            mock_user_store.get_user_by_id_async = AsyncMock(return_value=mock_user)
-            mock_user_store.create_user = AsyncMock(return_value=mock_user)
-            mock_user_store.migrate_user = AsyncMock(return_value=mock_user)
-            mock_user_store.backfill_contact_name = AsyncMock()
-
-            mock_token_manager.get_keycloak_tokens = AsyncMock(
-                return_value=('test_access_token', 'test_refresh_token')
-            )
-            mock_token_manager.get_user_info = AsyncMock(
-                return_value={
-                    'sub': 'user_id',
-                    'preferred_username': 'user',
-                    'identity_provider': 'github',
-                    'email_verified': True,
-                }
-            )
-            mock_token_manager.store_idp_tokens = AsyncMock()
-            mock_token_manager.validate_offline_token = AsyncMock(return_value=True)
-
-            mock_verifier.is_active.return_value = True
-            mock_verifier.is_user_allowed.return_value = True
-
-            mock_request.cookies = {'is_new_user': 'false'}
-
-            redirect_url = 'http://localhost:8000/conversations'
-            result = await keycloak_callback(
-                code='test_code',
-                state=redirect_url,
-                request=mock_request,
-            )
-
-            assert isinstance(result, RedirectResponse)
-            assert result.status_code == 302
-            assert 'onboarding' not in result.headers['location']
-            assert result.headers['location'] == redirect_url
 
 
 class TestOnboardingNotAvailableInOSS:

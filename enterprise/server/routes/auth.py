@@ -179,16 +179,11 @@ async def keycloak_callback(
     user_id = user_info['sub']
     user = await UserStore.get_user_by_id_async(user_id)
 
-    # Track if this is a new user
-    is_new_user = False
     if not user:
         user = await UserStore.create_user(user_id, user_info)
-        is_new_user = True
     else:
         # Existing user — gradually backfill contact_name if it still has a username-style value
         await UserStore.backfill_contact_name(user_id, user_info)
-        # Check cookie for existing users who havent completed onboarding
-        is_new_user = request.cookies.get('is_new_user') == 'true'
 
     if not user:
         logger.error(f'Failed to authenticate user {user_info["preferred_username"]}')
@@ -388,6 +383,11 @@ async def keycloak_callback(
         )
 
     has_accepted_tos = user.accepted_tos is not None
+    has_completed_onboarding = user.completed_onboarding is not None
+    needs_onboarding = (
+        ENABLE_ONBOARDING and has_accepted_tos and not has_completed_onboarding
+    )
+
     # If the user hasn't accepted the TOS, redirect to the TOS page
     if not has_accepted_tos:
         encoded_redirect_url = quote(redirect_url, safe='')
@@ -395,8 +395,8 @@ async def keycloak_callback(
             f'{request.base_url}accept-tos?redirect_url={encoded_redirect_url}'
         )
         response = RedirectResponse(tos_redirect_url, status_code=302)
-    # if new user must complete onboarding, redirect to the onboarding-form (only if enabled)
-    elif ENABLE_ONBOARDING and is_new_user:
+    # If user needs to complete onboarding, redirect to onboarding page
+    elif needs_onboarding:
         encoded_redirect_url = quote(redirect_url, safe='')
         onboarding_url = (
             f'{request.base_url}onboarding?redirect_url={encoded_redirect_url}'
@@ -413,18 +413,6 @@ async def keycloak_callback(
         secure=True if scheme == 'https' else False,
         accepted_tos=has_accepted_tos,
     )
-
-    # Set onboarding cookie for new users
-    if is_new_user:
-        response.set_cookie(
-            key='is_new_user',
-            value='true',
-            domain=get_cookie_domain(request),
-            httponly=False,
-            secure=True if scheme == 'https' else False,
-            samesite=get_cookie_samesite(request),
-            max_age=86400,
-        )
 
     # Sync GitLab repos & set up webhooks
     # Use Keycloak access token (first-time users lack offline token at this stage)
@@ -521,10 +509,11 @@ async def accept_tos(request: Request):
 
     # Get redirect URL from request body
     body = await request.json()
-    redirect_url = body.get('redirect_url', str(request.base_url))
+    redirect_url = body.get('redirect_url', '/')
 
     # Update user settings with TOS acceptance
-    accepted_tos: datetime = datetime.now(timezone.utc)
+    accepted_tos_time: datetime = datetime.now(timezone.utc)
+    final_redirect_url = redirect_url
     with session_maker() as session:
         user = session.query(User).filter(User.id == uuid.UUID(user_id)).first()
         if not user:
@@ -534,13 +523,19 @@ async def accept_tos(request: Request):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={'error': 'User does not exist'},
             )
-        user.accepted_tos = accepted_tos
-        session.commit()
 
+        # Check if user needs onboarding before committing TOS acceptance
+        has_completed_onboarding = user.completed_onboarding is not None
+        if ENABLE_ONBOARDING and not has_completed_onboarding:
+            encoded_redirect_url = quote(redirect_url, safe='')
+            final_redirect_url = f'/onboarding?redirect_url={encoded_redirect_url}'
+
+        user.accepted_tos = accepted_tos_time
+        session.commit()
         logger.info(f'User {user_id} accepted TOS')
 
     response = JSONResponse(
-        status_code=status.HTTP_200_OK, content={'redirect_url': redirect_url}
+        status_code=status.HTTP_200_OK, content={'redirect_url': final_redirect_url}
     )
 
     set_response_cookie(
@@ -552,6 +547,52 @@ async def accept_tos(request: Request):
         accepted_tos=True,
     )
     return response
+
+
+@api_router.post('/complete_onboarding')
+async def complete_onboarding(request: Request):
+    """Mark user's onboarding as complete.
+
+    This endpoint is called after the user completes the onboarding flow.
+    It sets the `completed_onboarding` timestamp in the database, which
+    prevents the user from being redirected to onboarding again.
+
+    The flow is:
+    1. User logs in via Keycloak
+    2. If TOS not accepted -> redirect to /accept-tos
+    3. If TOS accepted but onboarding not complete -> redirect to /onboarding
+    4. User completes onboarding -> POST /api/complete_onboarding
+    5. User is redirected to their original destination
+    """
+    user_auth: SaasUserAuth = await get_user_auth(request)
+    user_id = await user_auth.get_user_id()
+
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={'error': 'User is not authenticated'},
+        )
+
+    # Get redirect URL from request body
+    body = await request.json()
+    redirect_url = body.get('redirect_url', '/')
+
+    with session_maker() as session:
+        user = session.query(User).filter(User.id == uuid.UUID(user_id)).first()
+        if not user:
+            session.rollback()
+            logger.error(f'User {user_id} not found.')
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={'error': 'User does not exist'},
+            )
+        user.completed_onboarding = datetime.now(timezone.utc)
+        session.commit()
+        logger.info(f'User {user_id} completed onboarding')
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK, content={'redirect_url': redirect_url}
+    )
 
 
 @api_router.post('/logout')
