@@ -15,7 +15,7 @@ export const useSubmitOnboarding = () => {
     mutationFn: async ({ selections }: SubmitOnboardingArgs) => {
       const searchParams = new URLSearchParams(location.search);
       const redirectUrl = searchParams.get("redirect_url") || "/";
-      // Mark onboarding as complete
+      // TODO: mark onboarding as complete
       const response = await AuthService.completeOnboarding(redirectUrl);
       // TODO: persist user responses
       return { selections, redirect_url: response.redirect_url };
