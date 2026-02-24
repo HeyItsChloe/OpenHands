@@ -187,7 +187,7 @@ function OnboardingForm() {
   return (
     <div
       data-testid="onboarding-form"
-      className="w-[500px] mx-auto p-6 h-full flex flex-col justify-center overflow-hidden"
+      className="w-full max-w-[500px] mx-auto p-4 sm:p-6 h-full flex flex-col justify-center overflow-hidden"
     >
       <div className="flex flex-col items-center mb-4">
         <OpenHandsLogoWhite width={55} height={55} />
@@ -211,7 +211,7 @@ function OnboardingForm() {
             type="button"
             variant="secondary"
             onClick={handleBack}
-            className="flex-1 px-6 py-2.5 bg-[050505] text-white border hover:bg-white border-[#242424] hover:text-black"
+            className="flex-1 px-4 sm:px-6 py-2.5 bg-[050505] text-white border hover:bg-white border-[#242424] hover:text-black"
           >
             {t(I18nKey.ONBOARDING$BACK_BUTTON)}
           </BrandButton>
@@ -222,7 +222,7 @@ function OnboardingForm() {
           onClick={handleNext}
           isDisabled={!currentSelection}
           className={cn(
-            "px-6 py-2.5 bg-white text-black hover:bg-white/90",
+            "px-4 sm:px-6 py-2.5 bg-white text-black hover:bg-white/90",
             isFirstStep ? "w-1/2" : "flex-1", // keep "Next" button to the right. Even if "Back" button is not rendered
           )}
         >
