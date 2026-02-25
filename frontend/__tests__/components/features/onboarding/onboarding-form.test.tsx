@@ -117,7 +117,7 @@ describe("OnboardingForm", () => {
 
     // Step 3 - select use case
     await user.click(screen.getByTestId("step-option-new_features"));
-    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /finish/i }));
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
     expect(mockMutate).toHaveBeenCalledWith({
@@ -154,7 +154,7 @@ describe("OnboardingForm", () => {
 
     // Select use case on step 3
     await user.click(screen.getByTestId("step-option-fixing_bugs"));
-    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /finish/i }));
 
     // Verify all selections were preserved
     expect(mockMutate).toHaveBeenCalledWith({
