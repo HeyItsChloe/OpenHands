@@ -2663,37 +2663,29 @@ docker run -it --rm -p 8000:8000 \\
     sections: [
       {
         type: 'diagram',
-        caption: 'Diagram 1 — C4 Container diagram: all repos and their connections',
-        content: `flowchart TB
-  subgraph OSS["Open Source"]
-    OH["OpenHands App"]
-    SDK["software-agent-sdk + Agent Server"]
-    AC["Agent Canvas"]
-    EXT["Extensions"]
-  end
-  subgraph INT["Internal"]
-    AUTO["Automation Service"]
-    ARCH["Architecture Repo"]
-  end
-  subgraph CLOUD["OpenHands Cloud"]
-    CAPI["Cloud APIs"]
-  end
-  subgraph EXT2["External"]
-    LLM["LLM Providers"]
-    GH["GitHub / Slack / Datadog"]
-  end
+        caption: 'Diagram 1 — All repos and their connections (solid = depends on, dashed = informs)',
+        content: `flowchart LR
+  OH["OpenHands App\\nPython + React"]
+  SDK["software-agent-sdk\\n+ Agent Server"]
+  AC["Agent Canvas\\nTypeScript / React"]
+  EXT["Extensions\\nMarkdown skills"]
+  AUTO["Automation Service\\nPython / FastAPI"]
+  ARCH["Architecture Repo\\nADRs + PDs"]
+  CAPI["OpenHands Cloud\\nAPIs"]
+  LLM["LLM Providers\\nOpenAI / Anthropic / Gemini"]
+  GH["GitHub / Slack\\n/ Datadog"]
 
-  OH -->|"pip install openhands-sdk"| SDK
-  AC -->|"HTTP REST + WebSocket"| SDK
-  AUTO -->|"HTTP REST"| SDK
-  AUTO -->|"sandbox + key APIs"| CAPI
-  AC -.->|"cloud workspace optional"| CAPI
-  SDK -->|"LiteLLM"| LLM
-  GH -->|"webhooks"| AUTO
-  EXT -.->|"SKILL.md runtime"| SDK
-  EXT -.->|"SKILL.md startup"| AC
-  ARCH -.->|"ADRs inform"| OH
-  ARCH -.->|"ADRs inform"| SDK`,
+  OH -->|pip install| SDK
+  AC -->|HTTP REST + WS| SDK
+  AUTO -->|HTTP REST| SDK
+  AUTO -->|sandbox + keys| CAPI
+  AC -.->|cloud workspace| CAPI
+  SDK -->|LiteLLM| LLM
+  GH -->|webhooks| AUTO
+  EXT -.->|SKILL.md| SDK
+  EXT -.->|SKILL.md| AC
+  ARCH -.->|informs| OH
+  ARCH -.->|informs| SDK`,
       },
       {
         type: 'heading',
