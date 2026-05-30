@@ -25,7 +25,8 @@ export const repos: Repo[] = [
   { id: 'openhands', title: 'OpenHands', defaultTab: 'introduction' },
   { id: 'deploy',    title: 'Deploy',    defaultTab: 'deploy-overview' },
   { id: 'sdk',           title: 'SDK',          defaultTab: 'sdk-introduction' },
-  { id: 'agent-canvas', title: 'Agent Canvas', defaultTab: 'ac-introduction' },
+  { id: 'agent-canvas',  title: 'Agent Canvas',  defaultTab: 'ac-introduction' },
+  { id: 'architecture',  title: 'Architecture',  defaultTab: 'arch-introduction' },
 ];
 
 // ── Level 2: Sub-tabs per repo ───────────────────────────────────────────────
@@ -74,6 +75,14 @@ export const tabsByRepo: Record<string, TopTab[]> = {
     { id: 'ac-integrations',  title: 'Integrations',     slug: '/agent-canvas/integrations' },
     { id: 'ac-contributing',  title: 'Contributing',     slug: '/agent-canvas/contributing' },
     { id: 'ac-changelog',     title: 'Changelog',        slug: '/agent-canvas/changelog' },
+  ],
+  architecture: [
+    { id: 'arch-introduction', title: 'Introduction',       slug: '/arch-repo' },
+    { id: 'arch-decisions',    title: 'Decision Records',   slug: '/arch-repo/decisions' },
+    { id: 'arch-design',       title: 'Product Design (PD)', slug: '/arch-repo/product-design' },
+    { id: 'arch-research',     title: 'Research (PR)',       slug: '/arch-repo/research' },
+    { id: 'arch-process',      title: 'Process',             slug: '/arch-repo/process' },
+    { id: 'arch-diagrams',     title: 'Diagrams',            slug: '/arch-repo/diagrams' },
   ],
 };
 
@@ -1340,5 +1349,58 @@ export const navigationByTab: Record<string, NavItem[]> = {
 
   'ac-changelog': [
     { id: 'ac-changelog', title: 'Changelog', route: '/agent-canvas/changelog' },
+  ],
+
+  // ── Architecture ──────────────────────────────────────────────────────────
+
+  'arch-introduction': [
+    { id: 'arch-what-is',       title: 'What is This Repo?',          route: '/arch-repo' },
+    { id: 'arch-doc-types',     title: 'Three Document Types',         route: '/arch-repo/document-types' },
+    { id: 'arch-scope',         title: 'Scope: Private vs OSS',        route: '/arch-repo/scope' },
+    { id: 'arch-tooling',       title: 'Tooling (MADR + madr-tools)', route: '/arch-repo/tooling' },
+  ],
+
+  'arch-decisions': [
+    { id: 'arch-adr-what',      title: 'What are ADRs?',              route: '/arch-repo/decisions' },
+    { id: 'arch-adr-creating',  title: 'How to Create an ADR',        route: '/arch-repo/decisions/creating' },
+    { id: 'arch-adr-template',  title: 'ADR Template Reference',      route: '/arch-repo/decisions/template' },
+    { id: 'arch-adr-0000',      title: 'ADR-0000 · Developer Workstation Setup', route: '/arch-repo/decisions/0000-workstation-setup' },
+    { id: 'arch-adr-0001',      title: 'ADR-0001 · Runtime API Next Steps',      route: '/arch-repo/decisions/0001-runtime-api' },
+    {
+      id: 'arch-adr-0002',
+      title: 'ADR-0002 · Automations Service',
+      route: '/arch-repo/decisions/0002-automations-service',
+      children: [
+        { id: 'arch-adr-0002-context',   title: 'Context & Problem',          route: '/arch-repo/decisions/0002-automations-service/context' },
+        { id: 'arch-adr-0002-phase1',    title: 'Phase 1: Cron Triggers',     route: '/arch-repo/decisions/0002-automations-service/phase-1-cron' },
+        { id: 'arch-adr-0002-phase1-5',  title: 'Phase 1.5: Preset Automations', route: '/arch-repo/decisions/0002-automations-service/phase-1-5-presets' },
+        { id: 'arch-adr-0002-phase2',    title: 'Phase 2: Event-Driven Triggers', route: '/arch-repo/decisions/0002-automations-service/phase-2-events' },
+        { id: 'arch-adr-0002-decisions', title: '5 Key Design Decisions',     route: '/arch-repo/decisions/0002-automations-service/design-decisions' },
+        { id: 'arch-adr-0002-impl',      title: 'Reference Implementation',   route: '/arch-repo/decisions/0002-automations-service/implementation' },
+      ],
+    },
+  ],
+
+  'arch-design': [
+    { id: 'arch-pd-what',      title: 'What are Product Design Projects?', route: '/arch-repo/product-design' },
+    { id: 'arch-pd-workflow',  title: 'PD Workflow',                       route: '/arch-repo/product-design/workflow' },
+    { id: 'arch-pd-review',    title: 'Review Requirements',               route: '/arch-repo/product-design/review-requirements' },
+    { id: 'arch-pd-template',  title: 'Design Template Reference',         route: '/arch-repo/product-design/template' },
+    { id: 'arch-pd-creating',  title: 'How to Create a New Design Project', route: '/arch-repo/product-design/creating' },
+  ],
+
+  'arch-research': [
+    { id: 'arch-pr-what',      title: 'What are Research Projects?',       route: '/arch-repo/research' },
+    { id: 'arch-pr-workflow',  title: 'PR Workflow',                       route: '/arch-repo/research/workflow' },
+    { id: 'arch-pr-template',  title: 'Research Template Reference',       route: '/arch-repo/research/template' },
+    { id: 'arch-pr-creating',  title: 'How to Create a New Research Project', route: '/arch-repo/research/creating' },
+  ],
+
+  'arch-process': [
+    { id: 'arch-process-overview', title: 'Engineering Processes Overview', route: '/arch-repo/process' },
+  ],
+
+  'arch-diagrams': [
+    { id: 'arch-diagrams-overview', title: 'Diagrams Overview', route: '/arch-repo/diagrams' },
   ],
 };

@@ -2168,6 +2168,1199 @@ python 01_hello_world.py`,
     ],
   },
 
+  // ── Architecture Pages ────────────────────────────────────────────────────
+
+  '/arch-repo': {
+    title: 'What is This Repo?',
+    description: 'Capturing technical design decisions at OpenHands using ADRs, Product Design documents, and Research projects.',
+    route: '/arch-repo',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '> Architecture represents the significant design decisions that shape a system, where significant is measured by cost of change. — Grady Booch',
+      },
+      {
+        type: 'paragraph',
+        content: 'This repository captures technical design decisions at OpenHands. It is the canonical home for ADRs, product design specs, and research projects that inform how the platform is built.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Three Document Types',
+      },
+      {
+        type: 'table',
+        headers: ['Type', 'Naming', 'Tool', 'Purpose'],
+        rows: [
+          ['ADR', '0000-slug.md', 'madr-tools', 'Accepted or rejected architectural decisions'],
+          ['Product Design', 'PD-XXX-slug/', 'Manual template', 'Approved, implementation-ready designs'],
+          ['Research', 'PR-XXX-slug/', 'Manual template', 'Open-ended technical exploration and findings'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Folder Structure',
+      },
+      {
+        type: 'table',
+        headers: ['Folder', 'Contents'],
+        rows: [
+          ['docs/decisions/', 'Architecture Decision Records (ADRs) — indexed in index.md'],
+          ['docs/process/', 'Engineering process documentation'],
+          ['docs/diagrams/', 'Diagrams referenced from other docs'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Setup',
+        code: `bun install
+alias madr="bun x madr"`,
+      },
+      {
+        language: 'bash',
+        label: 'Create a new ADR',
+        code: `madr new "Deprecate Frobnobble API"
+# Then edit the generated file in docs/decisions/
+madr index  # regenerates index.md`,
+      },
+    ],
+  },
+
+  '/arch-repo/document-types': {
+    title: 'Three Document Types',
+    description: 'ADRs, Product Design projects, and Research projects — when to use each.',
+    route: '/arch-repo/document-types',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Architecture Decision Records (ADRs)',
+      },
+      {
+        type: 'paragraph',
+        content: 'ADRs record significant technical decisions — their context, the options considered, and the outcome. Once accepted they are immutable; superseded ADRs link to their replacement. Use ADRs for cross-cutting decisions that affect multiple teams or repos.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Product Design Projects (PD-XXX)',
+      },
+      {
+        type: 'paragraph',
+        content: 'PD documents describe a concrete implementation plan with problem statement, proposed solution, technical design, and milestone-based implementation plan. A merged PD PR means the approach is approved and ready to build. PDs require committer approval from each impacted repository.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Research Projects (PR-XXX)',
+      },
+      {
+        type: 'paragraph',
+        content: 'PR documents capture open-ended exploration — research questions, findings, analysis, and recommendations. They can be merged without formal approval when a research chapter is complete. A merged PR often leads to a follow-up PD.',
+      },
+      {
+        type: 'table',
+        headers: ['Dimension', 'ADR', 'Product Design (PD)', 'Research (PR)'],
+        rows: [
+          ['Scope', 'Technical decision', 'Feature/system design', 'Investigation'],
+          ['Approval required?', 'Implicit (merged = accepted)', 'Yes — committers from each impacted repo', 'No'],
+          ['Naming', '0000-slug.md', 'PD-XXX-slug/', 'PR-XXX-slug/'],
+          ['Tool', 'madr new', 'new-design-project skill', 'new-research-project skill'],
+          ['Typical output', 'One markdown file', 'README + optional specs/diagrams', 'README + findings'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/scope': {
+    title: 'Scope: Private vs OSS',
+    description: 'What belongs in this repo and what belongs in the public OpenHands repositories.',
+    route: '/arch-repo/scope',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: 'This repository is private and exists to support internal decision-making. It should not become a silo for context that belongs in public view.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What belongs here',
+      },
+      {
+        type: 'list',
+        items: [
+          'Decisions that involve sensitive internal context (cost, vendor contracts, team headcount)',
+          'Cross-repo decisions that span multiple OSS and internal repositories',
+          'Research projects that explore proprietary approaches',
+          'Internal process documentation',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What belongs in OSS repos',
+      },
+      {
+        type: 'list',
+        items: [
+          'Decisions that fall within the scope of an individual open-source repo (OpenHands, software-agent-sdk, etc.)',
+          'These should use the standard GitHub Issues and Pull Requests workflow of that repo',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Cross-linking',
+      },
+      {
+        type: 'paragraph',
+        content: 'Because OSS decisions often overlap with internal ones, cross-link from private ADRs/PDs to the relevant public GitHub issues or PRs whenever applicable. This maintains transparency while keeping sensitive internal context in the right place.',
+      },
+    ],
+  },
+
+  '/arch-repo/tooling': {
+    title: 'Tooling — MADR + madr-tools',
+    description: 'How to use the MADR tool to create and index Architecture Decision Records.',
+    route: '/arch-repo/tooling',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'MADR',
+      },
+      {
+        type: 'paragraph',
+        content: 'MADR (Markdown Architectural Decision Records) is a lightweight format for capturing decisions in plain Markdown. Each ADR lives in docs/decisions/ with a zero-padded 4-digit prefix and a kebab-case slug.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'madr-tools',
+      },
+      {
+        type: 'paragraph',
+        content: 'The `madr-tools` npm package (configured in `.madrrc.json`) provides a CLI for scaffolding new ADRs and regenerating the index.',
+      },
+      {
+        type: 'table',
+        headers: ['Command', 'What it does'],
+        rows: [
+          ['madr new "Title"', 'Scaffold a new ADR file with the next available number'],
+          ['madr index', 'Regenerate docs/decisions/index.md from all ADR files'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Configuration',
+      },
+      {
+        type: 'table',
+        headers: ['File', 'Purpose'],
+        rows: [
+          ['.madrrc.json', 'Points madr at docs/decisions/ and sets the index filename'],
+          ['package.json', 'Declares madr-tools as a dev dependency (run via bun x madr)'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Install & alias',
+        code: `bun install
+alias madr="bun x madr"`,
+      },
+      {
+        language: 'json',
+        label: '.madrrc.json',
+        code: `{
+  "madrDirectory": "docs/decisions",
+  "indexFileName": "index.md"
+}`,
+      },
+    ],
+  },
+
+  '/arch-repo/decisions': {
+    title: 'What are ADRs?',
+    description: 'Architecture Decision Records — capturing the significant decisions that shape the OpenHands system.',
+    route: '/arch-repo/decisions',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'An ADR records a significant technical decision: the context that led to it, the options considered, and the outcome. ADRs are immutable once accepted — if a decision is reversed, a new ADR supersedes the old one.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Log',
+      },
+      {
+        type: 'table',
+        headers: ['ADR', 'Title', 'Status', 'Date'],
+        rows: [
+          ['ADR-0000', 'Developer Workstation Setup', 'Accepted', '2025-12-12'],
+          ['ADR-0001', 'Runtime API Next Steps', 'Accepted', '2026-01-05'],
+          ['ADR-0002', 'Automations Service Architecture', 'Accepted', '2026-03-06'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'ADR Statuses',
+      },
+      {
+        type: 'table',
+        headers: ['Status', 'Meaning'],
+        rows: [
+          ['proposed', 'Under discussion, not yet decided'],
+          ['accepted', 'Decision made and in effect'],
+          ['rejected', 'Considered and explicitly not chosen'],
+          ['deprecated', 'No longer relevant'],
+          ['superseded by ADR-XXXX', 'Replaced by a newer decision'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/creating': {
+    title: 'How to Create an ADR',
+    description: 'Use madr-tools to scaffold a new Architecture Decision Record.',
+    route: '/arch-repo/decisions/creating',
+    sections: [
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Install dependencies', content: 'bun install — installs madr-tools' },
+          { title: 'Scaffold the ADR', content: 'madr new "Short title of the decision" — creates the next numbered file in docs/decisions/' },
+          { title: 'Fill in the template', content: 'Edit the generated file: status, deciders, context, options, outcome, consequences, links' },
+          { title: 'Update the index', content: 'madr index — regenerates docs/decisions/index.md' },
+          { title: 'Open a PR', content: 'Branch name: decision/XXXX-slug — request review from relevant deciders' },
+          { title: 'Merge = accepted', content: 'Merging the PR signals the decision is accepted. Update status from "proposed" to "accepted" before merge.' },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 ADRs that are rejected should still be merged with status: rejected — knowing what was *not* chosen and why is as valuable as knowing what was.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Create & index',
+        code: `madr new "Migrate from Flask to FastAPI"
+# Edit docs/decisions/0003-migrate-from-flask-to-fastapi.md
+madr index`,
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/template': {
+    title: 'ADR Template Reference',
+    description: 'The MADR template used for all Architecture Decision Records.',
+    route: '/arch-repo/decisions/template',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Every ADR follows the MADR (Markdown Architectural Decision Records) template. The required sections are title, context & problem statement, considered options, and decision outcome. All other sections are optional.',
+      },
+      {
+        type: 'table',
+        headers: ['Section', 'Required?', 'Purpose'],
+        rows: [
+          ['Title', 'Yes', 'Short description of the decision made'],
+          ['Status', 'Optional', 'proposed | accepted | rejected | deprecated | superseded by ADR-XXXX'],
+          ['Deciders', 'Optional', 'Everyone involved in the decision'],
+          ['Date', 'Optional', 'YYYY-MM-DD of last update'],
+          ['Technical Story', 'Optional', 'Linked ticket or description'],
+          ['Context and Problem Statement', 'Yes', '2-3 sentences describing the problem'],
+          ['Decision Drivers', 'Optional', 'Forces and concerns shaping the decision'],
+          ['Considered Options', 'Yes', 'All options that were on the table'],
+          ['Decision Outcome', 'Yes', 'The chosen option with justification'],
+          ['Positive Consequences', 'Optional', 'Benefits of the chosen option'],
+          ['Negative Consequences', 'Optional', 'Trade-offs and downsides'],
+          ['Pros and Cons of the Options', 'Optional', 'Detailed comparison of each option'],
+          ['Links', 'Optional', 'Related ADRs, issues, or documentation'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'markdown',
+        label: 'Template',
+        code: `# [short title of solved problem and solution]
+
+- Status: [proposed | accepted | rejected | deprecated | superseded by ADR-XXXX]
+- Deciders: [list everyone involved]
+- Date: [YYYY-MM-DD]
+
+Technical Story: [description | ticket/issue URL]
+
+## Context and Problem Statement
+
+[2-3 sentences describing the problem as a question]
+
+## Considered Options
+
+- [option 1]
+- [option 2]
+- [option 3]
+
+## Decision Outcome
+
+Chosen option: "[option 1]", because [justification].
+
+### Positive Consequences
+
+- [benefit 1]
+
+### Negative Consequences
+
+- [trade-off 1]
+
+## Pros and Cons of the Options
+
+### [option 1]
+
+- Good, because [argument a]
+- Bad, because [argument b]
+
+## Links
+
+- [Link type] [Link to ADR]`,
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0000-workstation-setup': {
+    title: 'ADR-0000 · Developer Workstation Setup',
+    description: 'How we provision the development setup on company-issued laptops.',
+    route: '/arch-repo/decisions/0000-workstation-setup',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['Status', 'Accepted'],
+          ['Date', '2025-12-12'],
+          ['Technical Story', 'APP-249'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Context and Problem Statement',
+      },
+      {
+        type: 'paragraph',
+        content: 'How will we provision the development setup on company-issued laptops? Historically everyone set up manually, creating friction ("do you have kubectl installed?"). With faster headcount growth and standard hardware, there is an opportunity to address this systematically.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Considered Options',
+      },
+      {
+        type: 'list',
+        items: ['Ansible', 'Nix', 'Manual / Documented', 'Homebrew Bundle + glue scripts', 'Shell scripts'],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Outcome',
+      },
+      {
+        type: 'paragraph',
+        content: 'Chosen option: **Homebrew Bundle + glue scripts** — Homebrew is well-supported for developer packages on macOS and is already familiar to the team. A private `onboarding` repo holds README, scripts, and Brewfile. All scripts must be idempotent.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Options Compared',
+      },
+      {
+        type: 'table',
+        headers: ['Option', 'Pros', 'Cons'],
+        rows: [
+          ['Ansible', 'Flexible, idempotent, multi-platform', 'Complex, optimized for remote servers, unfamiliar'],
+          ['Nix', 'Highly reproducible, flexible', 'Complex, all-encompassing, many surprises'],
+          ['Homebrew Bundle', 'Simple, well-known, optimized for macOS', 'Only handles package installs'],
+          ['Manual', 'Zero overhead', 'Inconsistent, breaks at unexpected times'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0001-runtime-api': {
+    title: 'ADR-0001 · Runtime API Next Steps',
+    description: 'Incremental improvements to Runtime API to reduce incidents and improve maintainability.',
+    route: '/arch-repo/decisions/0001-runtime-api',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['Status', 'Accepted'],
+          ['Deciders', 'Application Team'],
+          ['Date', '2026-01-05'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Context and Problem Statement',
+      },
+      {
+        type: 'paragraph',
+        content: 'Runtime API manages agent sandboxes for SaaS and enterprise. It has been the center of numerous production incidents (INC-51, INC-52, INC-57, INC-61) and is considered high-risk with an unclear future direction.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Drivers',
+      },
+      {
+        type: 'list',
+        items: ['Testability', 'Observability', 'Fitting our ecosystem', 'Cost / Roadmap time'],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Considered Options',
+      },
+      {
+        type: 'table',
+        headers: ['Option', 'Notes'],
+        rows: [
+          ['Status Quo', 'Default — led to continued incidents'],
+          ['Incremental improvements', '✅ Chosen — high-value quality-of-life improvements within normal work flow'],
+          ['Major re-architecture — Roll into OSS', 'Not feasible on current roadmap'],
+          ['Major re-architecture — Kubernetes Operator', 'Likely future direction but too soon'],
+          ['Replace with vendor solution', 'Not considered seriously yet'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Outcome',
+      },
+      {
+        type: 'paragraph',
+        content: '**Incremental improvements.** Major re-architecture is not feasible with V1 so recent. Instead, a series of targeted improvements are identified that fit naturally into the existing work flow.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Approved Improvements',
+      },
+      {
+        type: 'table',
+        headers: ['Area', 'Improvement'],
+        rows: [
+          ['Project setup', 'Streamline local running ✅ · Introduce UV ✅'],
+          ['API', 'APP-286: Migrate from Flask to FastAPI'],
+          ['Testing', 'Track coverage ✅ · Unit test folder structure · Improve testability · Add more tests'],
+          ['Documentation', 'Document service contracts and behaviors'],
+          ['Troubleshooting', 'Monitor conversation start steps · Better runtime status reporting · OpenTelemetry'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service': {
+    title: 'ADR-0002 · Automations Service Architecture',
+    description: 'First-class automation service for scheduled and event-driven agent runs in OpenHands Cloud.',
+    route: '/arch-repo/decisions/0002-automations-service',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['Status', 'Accepted'],
+          ['Proposer', 'Xingyao Wang'],
+          ['Date', '2026-03-06'],
+          ['Last Updated', '2026-04-09'],
+          ['Technical Story', 'RFC #13275'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Problem',
+      },
+      {
+        type: 'paragraph',
+        content: 'Users want scheduled and event-driven automations in OpenHands Cloud — "Every Friday at 9am, summarize open PRs" or "When a PR is labeled review-this, run code review." Today this requires external orchestration (GitHub Actions, cron jobs). We need a first-class automation service integrated into the SaaS platform.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Drivers',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Operational simplicity** — minimize new infrastructure; the team already operates PostgreSQL, not Redis/Kafka/NATS',
+          '**Transactional safety** — automation creation and event processing must be ACID with the rest of application state',
+          '**SDK alignment** — automation scripts should use the same openhands.sdk API as GitHub Actions workflows',
+          '**Extensibility** — the same execution path must work for prompts, plugins, and custom scripts',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Phases',
+      },
+      {
+        type: 'table',
+        headers: ['Phase', 'Title', 'Status'],
+        rows: [
+          ['Phase 1', 'Cron-Triggered Automations', 'Shipped ✅'],
+          ['Phase 1.5', 'Preset-Based Automations (prompt & plugin presets)', 'Shipped ✅'],
+          ['Phase 2', 'Event-Driven Triggers (GitHub, generic webhooks)', 'Designed'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/context': {
+    title: 'ADR-0002 · Context & Problem',
+    description: 'Why the Automations Service was built and what problem it solves.',
+    route: '/arch-repo/decisions/0002-automations-service/context',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Users want scheduled and event-driven automations in OpenHands Cloud — "Every Friday at 9am, summarize open PRs" or "When a PR is labeled review-this, run code review." Today this requires external orchestration (GitHub Actions, cron jobs) calling the SDK or API manually.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Drivers',
+      },
+      {
+        type: 'table',
+        headers: ['Driver', 'Details'],
+        rows: [
+          ['Operational simplicity', 'Team already operates PostgreSQL — no Redis/Kafka/NATS'],
+          ['Transactional safety', 'ACID consistency between automations and application state'],
+          ['SDK alignment', 'Scripts use openhands.sdk — same as GitHub Actions and standalone workflows'],
+          ['Extensibility', 'Same execution path for prompts, plugins, and custom scripts'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Core Architecture',
+      },
+      {
+        type: 'paragraph',
+        content: 'All services run in-process in a FastAPI app. No separate broker. The automation_runs table + a polling dispatcher acts as the event queue. PostgreSQL FOR UPDATE SKIP LOCKED provides multi-worker safety.',
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/phase-1-cron': {
+    title: 'ADR-0002 · Phase 1: Cron Triggers',
+    description: 'How cron-triggered automations work end-to-end.',
+    route: '/arch-repo/decisions/0002-automations-service/phase-1-cron',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Phase 1 delivers cron-scheduled automations. An automation is created via API, stored in PostgreSQL, polled every 60 seconds by the scheduler, and dispatched to an OpenHands sandbox.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'End-to-End Flow',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Create automation', content: 'POST /api/automation/v1 — validates API key, stores user_id/org_id, trigger config, and tarball path in DB. Key is never stored.' },
+          { title: 'Scheduler (every 60s)', content: 'Polls DB for enabled cron automations where next fire time ≤ now. Uses FOR UPDATE SKIP LOCKED for multi-worker safety. Inserts an automation_run row (status=PENDING).' },
+          { title: 'Dispatcher (every 10s)', content: 'Picks up PENDING runs, marks as RUNNING, fires asyncio background task.' },
+          { title: 'Sandbox execution', content: 'Fetches per-user API key on demand, creates sandbox on SaaS, resolves tarball (internal GCS or external HTTPS), starts entrypoint via agent-server /api/bash/start_bash_command. Returns immediately — does not wait for completion.' },
+          { title: 'Completion callback', content: 'When entrypoint exits, SDK sends POST /api/automation/v1/runs/<id>/complete. Run is marked COMPLETED or FAILED. Sandbox is deleted (fire-and-forget) unless keep_alive=true.' },
+          { title: 'Staleness watchdog (every 60s)', content: 'Scans for RUNNING entries where timeout_at < now. Queries sandbox exit code to determine actual outcome before marking FAILED.' },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 The API key that was passed into the sandbox doubles as the completion callback auth credential — no separate token needed.',
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/phase-1-5-presets': {
+    title: 'ADR-0002 · Phase 1.5: Preset Automations',
+    description: 'Prompt and plugin presets — pre-built templates where users provide arguments instead of writing SDK scripts.',
+    route: '/arch-repo/decisions/0002-automations-service/phase-1-5-presets',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Presets allow users to create automations without writing SDK code. The service generates the SDK boilerplate, packages it into a tarball, and runs it through the same dispatch pipeline as Phase 1.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Preset Types',
+      },
+      {
+        type: 'table',
+        headers: ['Preset', 'Endpoint', 'What user provides', 'What service generates'],
+        rows: [
+          ['Prompt', 'POST /api/automation/v1/preset/prompt', 'name, prompt text, trigger', 'main.py (SDK boilerplate), prompt.txt, setup.sh — packaged into a tarball'],
+          ['Plugin', 'POST /api/automation/v1/preset/plugin', 'name, plugins (PluginSource[]), prompt, trigger', 'main.py (loads plugins + runs conversation), plugins_config.json, prompt.txt, setup.sh'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Generated Tarball Contents',
+      },
+      {
+        type: 'table',
+        headers: ['File', 'Purpose'],
+        rows: [
+          ['main.py', 'SDK boilerplate — fetches LLM config, secrets, MCP config; creates Conversation; executes prompt'],
+          ['prompt.txt', 'User\'s prompt text'],
+          ['plugins_config.json', '(Plugin preset only) — serialized PluginSource list'],
+          ['setup.sh', 'SDK installation script'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Presets are the primary public-facing API. Custom SDK script uploads are supported but not prominently exposed while the infrastructure is being validated.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'json',
+        label: 'Plugin preset request',
+        code: `{
+  "name": "PR Review Bot",
+  "plugins": [
+    {"source": "github:OpenHands/pr-review-plugin", "ref": "v1.0.0"}
+  ],
+  "prompt": "Review all Python files for code quality",
+  "trigger": {"type": "cron", "schedule": "0 9 * * 1"}
+}`,
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/phase-2-events': {
+    title: 'ADR-0002 · Phase 2: Event-Driven Triggers',
+    description: 'GitHub webhooks and generic event triggers for automations.',
+    route: '/arch-repo/decisions/0002-automations-service/phase-2-events',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Phase 2 adds event-driven triggers. The SaaS server acts as an event proxy for GitHub App webhooks — it enriches the payload and forwards to the automation service. Generic webhooks go directly to the automation service.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'GitHub Webhook Flow',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'GitHub App → SaaS', content: 'GitHub sends webhook to SaaS server, which already handles GitHub events for the resolver bot.' },
+          { title: 'SaaS preprocesses', content: 'Resolves GitHub org ID → OpenHands org_id (mapping only on SaaS side), looks up integration_id, checks access control (e.g. PR author is org member), injects metadata.' },
+          { title: 'SaaS forwards to automation service', content: 'POST /api/automation/v1/events/{org_id}/{integration_id} with enriched payload.' },
+          { title: 'Automation service matches', content: 'Queries DB for event-triggered automations in the org. Evaluates each automation\'s JMESPath conditions against the payload. For each match, inserts automation_run (PENDING).' },
+          { title: 'Dispatcher', content: 'Same as Phase 1 — picks up PENDING run, dispatches to sandbox with event payload as AUTOMATION_EVENT_PAYLOAD env var.' },
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Trigger Condition Format (JMESPath)',
+      },
+      {
+        type: 'paragraph',
+        content: 'Event trigger conditions use JMESPath — a declarative query language for JSON. Simple key-value conditions handle common patterns; filters handle complex nested matching. All conditions and filters must pass for the automation to trigger.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'json',
+        label: 'Event trigger config',
+        code: `{
+  "type": "event",
+  "integration_id": "550e8400-e29b-41d4-a716-446655440000",
+  "conditions": {
+    "event_type": "pull_request",
+    "action": ["opened", "synchronize", "ready_for_review"],
+    "author_is_org_member": true
+  },
+  "filters": [
+    "pull_request.base.ref == 'main'",
+    "contains(pull_request.labels[].name, 'review-this')"
+  ]
+}`,
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/design-decisions': {
+    title: 'ADR-0002 · 5 Key Design Decisions',
+    description: 'The core architectural choices made in the Automations Service design.',
+    route: '/arch-repo/decisions/0002-automations-service/design-decisions',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Decision', 'Choice', 'Why'],
+        rows: [
+          ['Scheduler location', 'In-process background task', 'No K8s CronJobs — spinning up a pod per trigger is wasteful. FOR UPDATE SKIP LOCKED provides multi-worker safety.'],
+          ['Event queue', 'Postgres automation_runs table + polling', 'No external broker (Redis/Kafka/NATS). If outgrown, only the ingestion/queue layer swaps out — dispatch and storage logic stay the same.'],
+          ['Run completion detection', 'Callback (push) not polling', 'SDK\'s OpenHandsCloudWorkspace sends POST …/runs/<id>/complete on exit. No per-run status polling needed. Staleness watchdog covers missed callbacks.'],
+          ['Event ingestion endpoint', 'Single /events/{org_id}/{integration_id}', 'Unified endpoint for all sources. Custom webhooks send directly; SaaS proxies GitHub. integration_id identifies the source without relying on payload body.'],
+          ['GitHub access control', 'SaaS server — not automation service', 'SaaS already has GitHub API credentials and org membership caches. Automation service stays clean and org-agnostic.'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Internal Tarball URL Scheme',
+      },
+      {
+        type: 'table',
+        headers: ['Scheme', 'How resolved'],
+        rows: [
+          ['oh-internal://uploads/{uuid}', 'Downloaded from GCS/S3 using TarballUpload record, then uploaded to sandbox via agent-server file API'],
+          ['https://', 'Passed into sandbox; downloaded inside it via curl with size and timeout limits — avoids pulling untrusted files on the automation service'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/decisions/0002-automations-service/implementation': {
+    title: 'ADR-0002 · Reference Implementation',
+    description: 'Key source files in the OpenHands/automation repo.',
+    route: '/arch-repo/decisions/0002-automations-service/implementation',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The automation service lives at github.com/OpenHands/automation. The implementation maps directly to the phases and design decisions described in this ADR.',
+      },
+      {
+        type: 'table',
+        headers: ['Component', 'Source file', 'Description'],
+        rows: [
+          ['FastAPI app & lifespan', 'automation/app.py', 'App startup, background task orchestration, route registration'],
+          ['API routes (CRUD + callback)', 'automation/router.py', 'Automation CRUD, dispatch, run completion callback'],
+          ['Preset routes', 'automation/preset_router.py', 'Prompt and plugin preset automation creation'],
+          ['Upload routes', 'automation/uploads.py', 'Tarball upload with streaming to GCS/S3'],
+          ['DB models', 'automation/models.py', 'Automation, AutomationRun, TarballUpload'],
+          ['Pydantic schemas', 'automation/schemas.py', 'Request/response schemas, CronTrigger validation'],
+          ['Scheduler', 'automation/scheduler.py', 'Cron polling with FOR UPDATE SKIP LOCKED'],
+          ['Dispatcher', 'automation/dispatcher.py', 'PENDING → RUNNING, fire-and-forget sandbox dispatch'],
+          ['Sandbox execution', 'automation/execution.py', 'Create sandbox → upload tarball → start entrypoint'],
+          ['Watchdog', 'automation/watchdog.py', 'Stale run detection with sandbox verification'],
+          ['Auth', 'automation/auth.py', 'API key validation with 20s in-memory TTL cache'],
+          ['Preset SDK scripts', 'automation/presets/', 'SDK boilerplate that runs inside sandboxes'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Repo',
+        code: 'git clone https://github.com/OpenHands/automation',
+      },
+    ],
+  },
+
+  '/arch-repo/product-design': {
+    title: 'What are Product Design Projects?',
+    description: 'PD-XXX documents — implementation-ready designs that require committer approval before merging.',
+    route: '/arch-repo/product-design',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Product Design projects (PD-XXX) are structured documents that describe a concrete feature or system change ready for implementation. A merged PD PR signals that the approach is approved — not necessarily that implementation has started.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'When to create a PD',
+      },
+      {
+        type: 'list',
+        items: [
+          'Significant new features or subsystems that need cross-team alignment',
+          'Changes that span multiple repositories and require committer sign-off',
+          'Work that follows a research project (PR-XXX) and is ready to specify concretely',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Naming convention',
+      },
+      {
+        type: 'table',
+        headers: ['Part', 'Format', 'Example'],
+        rows: [
+          ['Prefix', 'PD-{number}', 'PD-005'],
+          ['Name', '{descriptive-name} (lowercase, hyphens)', 'macos-remote-workspace'],
+          ['Full path', 'docs/product/design/PD-XXX-name/README.md', 'docs/product/design/PD-005-macos-remote-workspace/README.md'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/product-design/workflow': {
+    title: 'PD Workflow',
+    description: 'How to take a Product Design project from creation to approved merge.',
+    route: '/arch-repo/product-design/workflow',
+    sections: [
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Check existing numbers', content: 'ls docs/product/design/ — use the next available PD-XXX number.' },
+          { title: 'Create directory and copy template', content: 'mkdir -p docs/product/design/PD-XXX-name && cp .openhands/templates/design-template.md docs/product/design/PD-XXX-name/README.md' },
+          { title: 'Fill in the template', content: 'Title, Problem Statement, Proposed Solution, User Interface / New Concepts (optional), Technical Design, Implementation Plan (milestone-based).' },
+          { title: 'Identify reviewers', content: 'List required reviewers at the top — include committers from each impacted repository.' },
+          { title: 'Create branch and commit', content: 'git checkout -b design/PD-XXX-name && git add . && git commit -m "Start PD-XXX: Title\\n\\n..."' },
+          { title: 'Open a PR and request reviews', content: 'The design can be updated based on feedback. Merge only after approval from all required reviewers.' },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 PD PRs should be more polished than research PRs. The implementation plan should be detailed enough for contributors to execute independently.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Create a new PD',
+        code: `ls docs/product/design/   # find next number
+mkdir -p docs/product/design/PD-005-macos-remote-workspace
+cp .openhands/templates/design-template.md \\
+   docs/product/design/PD-005-macos-remote-workspace/README.md
+# Edit README.md — fill in all sections
+git checkout -b design/PD-005-macos-remote-workspace
+git add docs/product/design/PD-005-macos-remote-workspace/
+git commit -m "Start PD-005: macOS Remote Workspace Extension"
+git push -u origin design/PD-005-macos-remote-workspace`,
+      },
+    ],
+  },
+
+  '/arch-repo/product-design/review-requirements': {
+    title: 'Review Requirements',
+    description: 'Who must approve a Product Design PR before it can be merged.',
+    route: '/arch-repo/product-design/review-requirements',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Product Design PRs require approval from committers in each repository that will be impacted by the change. This ensures all stakeholders have agreed to the approach before implementation begins.',
+      },
+      {
+        type: 'table',
+        headers: ['Requirement', 'Details'],
+        rows: [
+          ['Committer approval', 'One approval from a committer in each impacted repository'],
+          ['Technical review', 'The approach and implementation plan must be sound'],
+          ['Consensus', 'Design is agreed upon before merging — no dissenting blockers'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Merging a design PR means the approach is approved, not that implementation is guaranteed to start immediately.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Reviewer section format',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'markdown',
+        label: 'Reviewers section at top of README',
+        code: `## Reviewers
+
+- [ ] @username1 (OpenHands committer)
+- [ ] @username2 (software-agent-sdk committer)
+- [ ] @username3 (automation committer)`,
+      },
+    ],
+  },
+
+  '/arch-repo/product-design/template': {
+    title: 'Design Template Reference',
+    description: 'The standard template for PD-XXX Product Design documents.',
+    route: '/arch-repo/product-design/template',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Section', 'Required?', 'Purpose'],
+        rows: [
+          ['1.1 Problem Statement', 'Yes', 'Factual, succinct description of the problem and its impact'],
+          ['1.2 Proposed Solution', 'Yes', 'How the beneficiary experiences the benefit; then the technical choices'],
+          ['2. User Interface / New Concepts', 'Optional', 'UX walkthrough or new system concepts; omit if not needed'],
+          ['3. Other Context', 'Optional', 'Background on new technology/techniques the implementor needs'],
+          ['4. Technical Design', 'Yes', 'Numbered subsections (4.1, 4.1.1…) with code examples, diagrams'],
+          ['5. Implementation Plan', 'Yes', 'Milestone-based plan (M1, M2…) with file paths and acceptance criteria'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Organize milestones iteratively — foundational elements first, then expand to be more robust, functional, flexible, and scalable in later milestones.',
+      },
+    ],
+  },
+
+  '/arch-repo/product-design/creating': {
+    title: 'How to Create a New Design Project',
+    description: 'Use the new-design-project skill or follow the steps manually.',
+    route: '/arch-repo/product-design/creating',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The fastest way to start a new PD is via the new-design-project OpenHands skill, which automates all the scaffolding steps. You can also follow the steps manually.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Using the OpenHands skill',
+      },
+      {
+        type: 'paragraph',
+        content: 'Trigger the skill with "create design project" or "new PD-XXX". It will check for the next available number, create the directory, copy the template, and prompt you to fill in the details.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Manual steps',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Find next number', content: 'ls docs/product/design/ — pick the next PD-XXX' },
+          { title: 'Create directory', content: 'mkdir -p docs/product/design/PD-XXX-{name}' },
+          { title: 'Copy template', content: 'cp .openhands/templates/design-template.md docs/product/design/PD-XXX-{name}/README.md' },
+          { title: 'Fill in template', content: 'Add reviewers section, Problem Statement, Proposed Solution, Technical Design, Implementation Plan' },
+          { title: 'Create branch & commit', content: 'git checkout -b design/PD-XXX-{name}' },
+          { title: 'Open PR for review', content: 'Request reviews from all listed committer reviewers' },
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/research': {
+    title: 'What are Research Projects?',
+    description: 'PR-XXX documents — open-ended technical exploration with findings and recommendations.',
+    route: '/arch-repo/research',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Research projects (PR-XXX) capture open-ended technical exploration. They document research questions, methodology, findings, and recommendations. A completed PR often leads to a follow-up Product Design (PD) or implementation PR.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key differences from PD',
+      },
+      {
+        type: 'table',
+        headers: ['Aspect', 'Research (PR)', 'Product Design (PD)'],
+        rows: [
+          ['Approval required?', 'No — optional reviewers', 'Yes — committer approval required'],
+          ['Maturity', 'Exploratory — questions may be open', 'Concrete — implementation-ready'],
+          ['Outcome', 'Findings + recommendations', 'Approved design + implementation plan'],
+          ['Often leads to', 'A PD or implementation PR', 'Implementation'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Naming convention',
+      },
+      {
+        type: 'table',
+        headers: ['Part', 'Format', 'Example'],
+        rows: [
+          ['Prefix', 'PR-{number}', 'PR-003'],
+          ['Name', '{descriptive-name} (lowercase, hyphens)', 'macos-account-pooling'],
+          ['Full path', 'docs/product/research/PR-XXX-name/README.md', 'docs/product/research/PR-003-macos-account-pooling/README.md'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/research/workflow': {
+    title: 'Research (PR) Workflow',
+    description: 'How to create, develop, and close a research project.',
+    route: '/arch-repo/research/workflow',
+    sections: [
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Find next number', content: 'ls docs/product/research/ — pick the next PR-XXX' },
+          { title: 'Create directory and copy template', content: 'mkdir -p docs/product/research/PR-XXX-name && cp .openhands/templates/research-template.md docs/product/research/PR-XXX-name/README.md' },
+          { title: 'Fill in the template', content: 'Title, Problem Statement, Research Questions, Scope, Methodology' },
+          { title: 'Create branch and commit', content: 'git checkout -b research/PR-XXX-name && git commit -m "Start PR-XXX: Title"' },
+          { title: 'Open a PR — update as research progresses', content: 'The PR can be updated as research progresses. Merge when the research "chapter" is complete.' },
+          { title: 'Link to follow-up work', content: 'After merging, update the README with links to any follow-up PD or implementation PRs.' },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Research PRs can be merged without formal approval. Merging signals completion of a research phase — not approval of a design.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Create a research project',
+        code: `ls docs/product/research/   # find next number
+mkdir -p docs/product/research/PR-003-macos-account-pooling
+cp .openhands/templates/research-template.md \\
+   docs/product/research/PR-003-macos-account-pooling/README.md
+# Edit README.md
+git checkout -b research/PR-003-macos-account-pooling
+git add docs/product/research/PR-003-macos-account-pooling/
+git commit -m "Start PR-003: macOS Account Pooling"
+git push -u origin research/PR-003-macos-account-pooling`,
+      },
+    ],
+  },
+
+  '/arch-repo/research/template': {
+    title: 'Research Template Reference',
+    description: 'The standard template for PR-XXX Research documents.',
+    route: '/arch-repo/research/template',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Section', 'Required?', 'Purpose'],
+        rows: [
+          ['Status', 'Yes', 'In Progress / Complete / Continued in [link]'],
+          ['Problem Statement', 'Yes', 'What gap in understanding or capability are we addressing?'],
+          ['Research Questions', 'Yes', 'Specific questions this research aims to answer'],
+          ['Scope — In/Out of Scope', 'Yes', 'What this research covers and explicitly does not cover'],
+          ['Methodology', 'Yes', 'Literature review / prototype / user interviews / competitive analysis'],
+          ['Findings', 'Yes', 'Document findings as research progresses — use subsections per finding with evidence'],
+          ['Analysis', 'Yes', 'Patterns, insights from findings'],
+          ['Recommendations', 'Yes', 'Primary recommendation + alternatives considered'],
+          ['Next Steps', 'Yes', 'Action items following the research'],
+          ['References', 'Optional', 'Related ADRs, issues, external docs, prototypes'],
+          ['Reviewers', 'Optional', 'Anyone who reviewed or contributed'],
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/research/creating': {
+    title: 'How to Create a New Research Project',
+    description: 'Use the new-research-project OpenHands skill or follow the steps manually.',
+    route: '/arch-repo/research/creating',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The fastest way to start a new research project is via the new-research-project OpenHands skill — trigger it with "create research project" or "new PR-XXX". It handles scaffolding automatically.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Manual steps',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Find next number', content: 'ls docs/product/research/' },
+          { title: 'Create directory', content: 'mkdir -p docs/product/research/PR-XXX-{name}' },
+          { title: 'Copy template', content: 'cp .openhands/templates/research-template.md docs/product/research/PR-XXX-{name}/README.md' },
+          { title: 'Fill in the template', content: 'Title (PR-XXX: descriptive), Problem Statement, Research Questions, Scope, Methodology' },
+          { title: 'Create branch & commit', content: 'git checkout -b research/PR-XXX-{name} && git commit -m "Start PR-XXX: Title"' },
+          { title: 'Open a PR', content: 'Update as research progresses; merge when the research chapter is complete' },
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/process': {
+    title: 'Engineering Processes',
+    description: 'Engineering process documentation — how the team works.',
+    route: '/arch-repo/process',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📂 The docs/process/ directory is the home for engineering process documentation. This section will grow as processes are documented.',
+      },
+      {
+        type: 'paragraph',
+        content: 'Engineering process docs capture the how of the team\'s work — workflows, standards, runbooks, and operating procedures that are not ADRs or design/research projects.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What belongs in docs/process/',
+      },
+      {
+        type: 'list',
+        items: [
+          'On-call and incident response processes',
+          'Release and deployment workflows',
+          'Code review guidelines',
+          'On-boarding and off-boarding checklists',
+          'Security and compliance procedures',
+          'Any team working agreement not captured in ADRs',
+        ],
+      },
+    ],
+  },
+
+  '/arch-repo/diagrams': {
+    title: 'Diagrams',
+    description: 'Architecture diagrams referenced from ADRs, Product Design, and Research documents.',
+    route: '/arch-repo/diagrams',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📂 The docs/diagrams/ directory holds diagrams that are referenced from other documents in this repo.',
+      },
+      {
+        type: 'paragraph',
+        content: 'Diagrams live in docs/diagrams/ and are referenced by relative path from ADRs, PD documents, and research documents. Keeping diagrams in a shared folder prevents duplication when the same diagram applies to multiple documents.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Recommended formats',
+      },
+      {
+        type: 'table',
+        headers: ['Format', 'Use case'],
+        rows: [
+          ['Mermaid (in-file)', 'Simple flowcharts and sequence diagrams — renders in GitHub and the docs site'],
+          ['.png / .svg', 'Complex diagrams from Figma, Excalidraw, or draw.io — commit the source file alongside the export'],
+          ['.drawio', 'Editable draw.io source — commit alongside the exported .png'],
+        ],
+      },
+    ],
+  },
+
   // ── Agent Canvas Pages ────────────────────────────────────────────────────
 
   '/agent-canvas': {
