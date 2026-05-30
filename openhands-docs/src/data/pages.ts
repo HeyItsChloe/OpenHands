@@ -1073,6 +1073,2118 @@ docker pull ghcr.io/all-handsmachinelearning/openhands:0.21.0`,
       },
     ],
   },
+
+  // ── SDK Pages ────────────────────────────────────────────────────────────
+
+  '/sdk': {
+    title: 'What is the OpenHands SDK?',
+    description: 'Build AI agents that write software. A clean, modular Python SDK with production-ready tools.',
+    route: '/sdk',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '🚀 The OpenHands SDK lets you build, compose, and deploy AI software agents with just a few lines of Python.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What is the SDK?',
+      },
+      {
+        type: 'paragraph',
+        content: 'The OpenHands Software Agent SDK is a Python library for building AI agents that autonomously write, edit, and execute code. It provides a clean, modular architecture with production-ready tools for terminal access, file editing, browser control, and more — all running in isolated sandboxes.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'When to use the SDK',
+      },
+      {
+        type: 'table',
+        headers: ['Use Case', 'Recommended Approach'],
+        rows: [
+          ['Automate code tasks programmatically', 'SDK — full programmatic control'],
+          ['Quick one-off agent tasks', 'CLI — no code required'],
+          ['Visual/interactive agent sessions', 'Local GUI or Cloud'],
+          ['Team-wide agent deployment', 'Enterprise or Cloud'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Core Capabilities',
+      },
+      {
+        type: 'list',
+        items: [
+          'Multi-LLM support via LiteLLM (GPT-4o, Claude, Gemini, Llama, and more)',
+          'Built-in tools: terminal, file editor, browser, task tracker',
+          'Isolated sandbox execution (local, Docker, Apptainer, or Cloud)',
+          'Async & sync conversation APIs',
+          'Agent delegation — spin up parallel sub-agents',
+          'Model Context Protocol (MCP) server integration',
+          'Skills & Plugins for reusable agent behaviors',
+          'Observability via OpenTelemetry (Laminar, MLflow, Honeycomb)',
+          'Streaming, pause/resume, persistence across sessions',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quick Install',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Install',
+        code: 'pip install openhands-sdk openhands-tools',
+      },
+      {
+        language: 'python',
+        label: 'Hello World',
+        code: `import os
+from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.tools.file_editor import FileEditorTool
+from openhands.tools.terminal import TerminalTool
+
+llm = LLM(model="gpt-4o", api_key=os.getenv("OPENAI_API_KEY"))
+
+agent = Agent(
+    llm=llm,
+    tools=[Tool(name=TerminalTool.name), Tool(name=FileEditorTool.name)],
+)
+
+conversation = Conversation(agent=agent, workspace=os.getcwd())
+conversation.send_message("Write 3 facts about Python into facts.txt")
+conversation.run()
+print("Done!")`,
+      },
+    ],
+  },
+
+  '/sdk/concepts': {
+    title: 'Key Concepts',
+    description: 'Core concepts and terminology used throughout the OpenHands SDK.',
+    route: '/sdk/concepts',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Core Concepts',
+      },
+      {
+        type: 'table',
+        headers: ['Concept', 'Description'],
+        rows: [
+          ['Agent', 'The reasoning-action loop — decides what to do, calls tools, and observes results'],
+          ['LLM', 'Provider-agnostic language model interface (wraps LiteLLM)'],
+          ['Conversation', 'Orchestrates an agent session; manages state, events, and workspace'],
+          ['Tool', 'A capability the agent can invoke (terminal, file editor, browser, etc.)'],
+          ['Workspace', 'The execution environment — local, Docker, Apptainer, or Cloud'],
+          ['Event', 'Typed message in the agent event stream (actions, observations, messages)'],
+          ['Condenser', 'Compresses conversation history to manage context window limits'],
+          ['Skill', 'Reusable prompt behavior injected into the agent system prompt'],
+          ['Plugin', 'Bundle of skills, hooks, MCP servers, and tools packaged together'],
+          ['SecurityAnalyzer', 'Validates agent actions against a configurable security policy'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'The Agent Loop',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'User sends a message', content: 'conversation.send_message("...") adds a MessageAction to the event stream' },
+          { title: 'Agent thinks', content: 'The LLM receives the event history and system prompt, then responds with a tool call or message' },
+          { title: 'Tool executes', content: 'The requested tool runs in the workspace sandbox and returns an observation' },
+          { title: 'Observation recorded', content: 'The result is added to the event stream for the next LLM call' },
+          { title: 'Repeat until done', content: 'The loop continues until the agent emits a FinishAction or max iterations is reached' },
+        ],
+      },
+    ],
+  },
+
+  '/sdk/getting-started/install': {
+    title: 'Installation',
+    description: 'Install the OpenHands SDK and set up your environment.',
+    route: '/sdk/getting-started/install',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Requirements',
+      },
+      {
+        type: 'list',
+        items: [
+          'Python 3.11 or later',
+          'An API key for a supported LLM provider (OpenAI, Anthropic, Google, etc.)',
+          'Docker (optional, required for sandboxed remote server mode)',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Install',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Environment Variables',
+      },
+      {
+        type: 'table',
+        headers: ['Variable', 'Required', 'Description'],
+        rows: [
+          ['LLM_MODEL', 'Yes', 'Model name e.g. gpt-4o, claude-sonnet-4-5'],
+          ['LLM_API_KEY', 'Yes', 'API key for your LLM provider'],
+          ['LLM_BASE_URL', 'No', 'Custom base URL (for Azure, local Ollama, etc.)'],
+          ['WORKSPACE_DIR', 'No', 'Default workspace directory for agents'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'pip',
+        code: 'pip install openhands-sdk openhands-tools',
+      },
+      {
+        language: 'bash',
+        label: 'uv',
+        code: 'uv add openhands-sdk openhands-tools',
+      },
+      {
+        language: 'bash',
+        label: '.env',
+        code: `LLM_MODEL=gpt-4o
+LLM_API_KEY=sk-...
+# Optional: for remote sandbox
+SANDBOX_API_KEY=...`,
+      },
+    ],
+  },
+
+  '/sdk/getting-started/hello-world': {
+    title: 'Hello World',
+    description: 'The simplest possible OpenHands agent — configure an LLM, create an agent, and complete a task.',
+    route: '/sdk/getting-started/hello-world',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'This is the minimal working example. It creates an agent backed by GPT-4o, runs it in your current directory, and asks it to write a file.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What happens',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'LLM is configured', content: 'LLM() wraps any LiteLLM-supported model with your API key' },
+          { title: 'Agent is created', content: 'Agent() gets the LLM and a tool set (terminal + file editor)' },
+          { title: 'Conversation starts', content: 'Conversation() binds the agent to a workspace directory' },
+          { title: 'Message is sent', content: 'send_message() queues the task for the agent' },
+          { title: 'Agent runs', content: 'run() executes the agent loop until the task is complete' },
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'hello_world.py',
+        code: `import os
+from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.tools.file_editor import FileEditorTool
+from openhands.tools.terminal import TerminalTool
+
+llm = LLM(
+    model=os.getenv("LLM_MODEL", "gpt-4o"),
+    api_key=os.getenv("LLM_API_KEY"),
+)
+
+agent = Agent(
+    llm=llm,
+    tools=[
+        Tool(name=TerminalTool.name),
+        Tool(name=FileEditorTool.name),
+    ],
+)
+
+conversation = Conversation(agent=agent, workspace=os.getcwd())
+conversation.send_message("Write 3 facts about Python into facts.txt")
+conversation.run()
+print("Done!")`,
+      },
+      {
+        language: 'bash',
+        label: 'Run',
+        code: `export LLM_MODEL=gpt-4o
+export LLM_API_KEY=sk-...
+python hello_world.py`,
+      },
+    ],
+  },
+
+  '/sdk/getting-started/quickstart': {
+    title: 'Your First Agent',
+    description: 'Build a complete agent with custom tools, task tracking, and conversation inspection.',
+    route: '/sdk/getting-started/quickstart',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'This quickstart walks through building a more complete agent that uses multiple tools, inspects the event stream, and handles the result.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Built-in Tools',
+      },
+      {
+        type: 'table',
+        headers: ['Tool', 'Import', 'What it does'],
+        rows: [
+          ['TerminalTool', 'openhands.tools.terminal', 'Run bash commands in the sandbox'],
+          ['FileEditorTool', 'openhands.tools.file_editor', 'Read, write, and edit files'],
+          ['TaskTrackerTool', 'openhands.tools.task_tracker', 'Track tasks as a checklist'],
+          ['BrowserTool', 'openhands.tools.browser', 'Control a headless browser'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Inspecting Results',
+      },
+      {
+        type: 'paragraph',
+        content: 'After run() completes, you can inspect the conversation events to see every action and observation the agent performed.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'first_agent.py',
+        code: `import os
+from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.tools.file_editor import FileEditorTool
+from openhands.tools.terminal import TerminalTool
+from openhands.tools.task_tracker import TaskTrackerTool
+
+llm = LLM(model=os.getenv("LLM_MODEL", "gpt-4o"), api_key=os.getenv("LLM_API_KEY"))
+
+agent = Agent(
+    llm=llm,
+    tools=[
+        Tool(name=TerminalTool.name),
+        Tool(name=FileEditorTool.name),
+        Tool(name=TaskTrackerTool.name),
+    ],
+    system_prompt="You are a helpful coding assistant. Be concise and efficient.",
+)
+
+cwd = os.getcwd()
+conversation = Conversation(agent=agent, workspace=cwd)
+
+conversation.send_message(
+    "1. Create a hello.py that prints Hello, OpenHands! "
+    "2. Run it and show me the output."
+)
+
+conversation.run()
+
+# Inspect what the agent did
+for event in conversation.get_events():
+    print(f"[{event.type}] {str(event)[:120]}")`,
+      },
+    ],
+  },
+
+  '/sdk/arch/agent': {
+    title: 'Agent',
+    description: 'The Agent class implements the core reasoning-action loop of the OpenHands SDK.',
+    route: '/sdk/arch/agent',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Overview',
+      },
+      {
+        type: 'paragraph',
+        content: 'The Agent class is the central component of the SDK. It contains the reasoning-action loop: it receives events, calls the LLM to decide what to do, dispatches tool calls, and processes observations. Agents are stateless between conversations — all state lives in the Conversation object.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Constructor',
+      },
+      {
+        type: 'table',
+        headers: ['Parameter', 'Type', 'Required', 'Description'],
+        rows: [
+          ['llm', 'LLM', 'Yes', 'The language model powering this agent'],
+          ['tools', 'list[Tool]', 'Yes', 'Tools the agent can invoke'],
+          ['system_prompt', 'str', 'No', 'Override the default system prompt'],
+          ['max_iterations', 'int', 'No', 'Maximum agent loop iterations (default: 100)'],
+          ['condenser', 'Condenser', 'No', 'History condenser to manage context length'],
+          ['security_analyzer', 'SecurityAnalyzer', 'No', 'Validates actions before execution'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key Methods',
+      },
+      {
+        type: 'table',
+        headers: ['Method', 'Description'],
+        rows: [
+          ['step(events)', 'Run one iteration of the agent loop'],
+          ['get_settings()', 'Return serializable agent configuration'],
+          ['from_settings(settings)', 'Reconstruct agent from saved configuration'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Usage',
+        code: `from openhands.sdk import LLM, Agent, Tool
+from openhands.tools.terminal import TerminalTool
+from openhands.tools.file_editor import FileEditorTool
+
+agent = Agent(
+    llm=LLM(model="gpt-4o", api_key="sk-..."),
+    tools=[
+        Tool(name=TerminalTool.name),
+        Tool(name=FileEditorTool.name),
+    ],
+    max_iterations=50,
+    system_prompt="You are a Python expert. Write clean, tested code.",
+)`,
+      },
+    ],
+  },
+
+  '/sdk/arch/llm': {
+    title: 'LLM',
+    description: 'Provider-agnostic language model interface powered by LiteLLM.',
+    route: '/sdk/arch/llm',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The LLM class wraps LiteLLM to provide a unified interface for all major model providers. You configure it once and the SDK handles token counting, retries, streaming, and error normalization.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Supported Providers',
+      },
+      {
+        type: 'table',
+        headers: ['Provider', 'Model prefix', 'Example model'],
+        rows: [
+          ['OpenAI', '(none)', 'gpt-4o, gpt-4o-mini, o1'],
+          ['Anthropic', 'anthropic/', 'anthropic/claude-sonnet-4-5'],
+          ['Google', 'gemini/', 'gemini/gemini-2.0-flash'],
+          ['Azure OpenAI', 'azure/', 'azure/gpt-4o'],
+          ['Ollama (local)', 'ollama/', 'ollama/llama3'],
+          ['AWS Bedrock', 'bedrock/', 'bedrock/anthropic.claude-3-5'],
+          ['Any OpenAI-compat', 'openai/', 'openai/my-model'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Constructor Parameters',
+      },
+      {
+        type: 'table',
+        headers: ['Parameter', 'Type', 'Description'],
+        rows: [
+          ['model', 'str', 'LiteLLM model string'],
+          ['api_key', 'str', 'API key for the provider'],
+          ['base_url', 'str | None', 'Custom base URL (Azure, Ollama, etc.)'],
+          ['temperature', 'float', 'Sampling temperature (default: 0.0)'],
+          ['max_tokens', 'int | None', 'Max output tokens'],
+          ['timeout', 'float', 'Request timeout in seconds'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Multiple providers',
+        code: `from openhands.sdk import LLM
+
+# OpenAI
+llm_openai = LLM(model="gpt-4o", api_key="sk-...")
+
+# Anthropic
+llm_claude = LLM(model="anthropic/claude-sonnet-4-5", api_key="sk-ant-...")
+
+# Local Ollama
+llm_local = LLM(model="ollama/llama3", base_url="http://localhost:11434")
+
+# Azure
+llm_azure = LLM(
+    model="azure/gpt-4o",
+    api_key="...",
+    base_url="https://my-resource.openai.azure.com",
+)`,
+      },
+    ],
+  },
+
+  '/sdk/arch/conversation': {
+    title: 'Conversation',
+    description: 'Orchestrates agent sessions — manages state, event stream, and workspace lifecycle.',
+    route: '/sdk/arch/conversation',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'A Conversation binds an Agent to a Workspace and manages the full lifecycle of an agent session. It holds the event stream, exposes send_message() and run(), and supports pause/resume, async execution, and persistence.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Constructor Parameters',
+      },
+      {
+        type: 'table',
+        headers: ['Parameter', 'Type', 'Description'],
+        rows: [
+          ['agent', 'Agent', 'The agent to run'],
+          ['workspace', 'str | Workspace', 'Working directory or Workspace object'],
+          ['sid', 'str | None', 'Session ID for persistence/resume'],
+          ['on_event', 'Callable | None', 'Callback for each new event'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key Methods',
+      },
+      {
+        type: 'table',
+        headers: ['Method', 'Description'],
+        rows: [
+          ['send_message(text)', 'Queue a user message for the agent'],
+          ['run()', 'Execute the agent loop synchronously until done'],
+          ['run_async()', 'Execute asynchronously (returns coroutine)'],
+          ['pause()', 'Pause the running agent'],
+          ['resume()', 'Resume a paused agent'],
+          ['get_events()', 'Return all events in the conversation'],
+          ['save()', 'Persist conversation state to disk'],
+          ['load(sid)', 'Restore conversation from saved state'],
+          ['fork()', 'Create an independent copy of this conversation'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Basic usage',
+        code: `from openhands.sdk import Conversation
+
+conv = Conversation(agent=agent, workspace="/tmp/my-project")
+conv.send_message("Refactor the main.py file for readability")
+conv.run()
+
+# All events
+for event in conv.get_events():
+    print(event)`,
+      },
+      {
+        language: 'python',
+        label: 'Async usage',
+        code: `import asyncio
+
+async def main():
+    conv = Conversation(agent=agent, workspace="/tmp/project")
+    conv.send_message("Write unit tests for utils.py")
+    await conv.run_async()
+
+asyncio.run(main())`,
+      },
+    ],
+  },
+
+  '/sdk/arch/tool-system': {
+    title: 'Tool / ToolDefinition',
+    description: 'Tools define what agents can do. Built-in and custom tool framework.',
+    route: '/sdk/arch/tool-system',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Tools are the actions an agent can take. The SDK ships with production-ready built-in tools and a clean interface for building custom tools. Each tool call produces an observation that goes back into the agent event stream.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Built-in Tools',
+      },
+      {
+        type: 'table',
+        headers: ['Tool', 'Import path', 'Capability'],
+        rows: [
+          ['TerminalTool', 'openhands.tools.terminal', 'Execute bash commands'],
+          ['FileEditorTool', 'openhands.tools.file_editor', 'Read, write, patch files'],
+          ['ApplyPatchTool', 'openhands.tools.apply_patch', 'Apply unified diffs (GPT-5 optimized)'],
+          ['BrowserTool', 'openhands.tools.browser', 'Headless browser control'],
+          ['TaskTrackerTool', 'openhands.tools.task_tracker', 'Checklist-style task tracking'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Creating a Custom Tool',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Custom tool',
+        code: `from openhands.sdk import Tool, ToolDefinition
+
+class WeatherTool:
+    name = "get_weather"
+
+    definition = ToolDefinition(
+        name="get_weather",
+        description="Get current weather for a city",
+        parameters={
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "City name"},
+            },
+            "required": ["city"],
+        },
+    )
+
+    def __call__(self, city: str) -> str:
+        # Your implementation here
+        return f"It is sunny in {city}, 22°C"
+
+# Register with agent
+agent = Agent(
+    llm=llm,
+    tools=[
+        Tool(name=TerminalTool.name),
+        Tool(definition=WeatherTool.definition, handler=WeatherTool()),
+    ],
+)`,
+      },
+    ],
+  },
+
+  '/sdk/arch/workspace': {
+    title: 'Workspace',
+    description: 'Execution environment abstraction — local, Docker, Apptainer, or Cloud.',
+    route: '/sdk/arch/workspace',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The Workspace abstracts where agent code runs. Agents write files, run commands, and browse the web inside the workspace. By swapping the workspace backend you can go from local development to Docker-isolated production without changing agent code.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Workspace Backends',
+      },
+      {
+        type: 'table',
+        headers: ['Backend', 'Use Case', 'How'],
+        rows: [
+          ['Local (default)', 'Development, trusted environments', 'Pass a directory path to Conversation()'],
+          ['Docker', 'Isolated production sandbox', 'Use RemoteConversation with DockerSandbox'],
+          ['Apptainer', 'HPC/shared computing environments', 'Use RemoteConversation with ApptainerSandbox'],
+          ['API Sandbox', 'Hosted managed sandbox', 'Use RemoteConversation with ApiSandbox'],
+          ['OpenHands Cloud', 'Fully managed Cloud workspace', 'Use RemoteConversation with CloudWorkspace'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        content: '⚠️ The local workspace runs commands directly on your machine. Use a sandboxed backend for untrusted code.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Local workspace',
+        code: `# Simplest — just pass a path
+conv = Conversation(agent=agent, workspace="/tmp/my-project")`,
+      },
+      {
+        language: 'python',
+        label: 'Docker sandbox',
+        code: `from openhands.sdk.remote import RemoteConversation, DockerSandbox
+
+sandbox = DockerSandbox(image="ubuntu:24.04")
+conv = RemoteConversation(agent=agent, sandbox=sandbox)
+conv.send_message("Install numpy and create a data analysis script")
+conv.run()`,
+      },
+    ],
+  },
+
+  '/sdk/guides/custom-tools': {
+    title: 'Custom Tools',
+    description: 'Tools define what agents can do. Learn how to build custom tools for specialized needs.',
+    route: '/sdk/guides/custom-tools',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The SDK lets you define custom tools that give agents new capabilities. A tool is a callable with a JSON Schema definition that the LLM uses to decide when and how to invoke it.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Tool Anatomy',
+      },
+      {
+        type: 'list',
+        items: [
+          'name — unique identifier for the tool',
+          'description — tells the LLM when to use this tool',
+          'parameters — JSON Schema defining expected inputs',
+          'handler — Python callable that executes the tool logic',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Best Practices',
+      },
+      {
+        type: 'list',
+        items: [
+          'Write clear, specific descriptions — the LLM reads these to decide when to call your tool',
+          'Mark all required parameters in the JSON Schema',
+          'Return structured strings the agent can parse and act on',
+          'Keep tools focused — one capability per tool',
+          'Handle errors gracefully and return helpful error messages',
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'custom_tool.py',
+        code: `import httpx
+from openhands.sdk import LLM, Agent, Conversation, Tool, ToolDefinition
+from openhands.tools.terminal import TerminalTool
+
+# 1. Define the tool
+class GitHubIssueTool:
+    name = "get_github_issue"
+
+    definition = ToolDefinition(
+        name="get_github_issue",
+        description="Fetch details of a GitHub issue by number",
+        parameters={
+            "type": "object",
+            "properties": {
+                "owner": {"type": "string", "description": "Repository owner"},
+                "repo":  {"type": "string", "description": "Repository name"},
+                "issue": {"type": "integer", "description": "Issue number"},
+            },
+            "required": ["owner", "repo", "issue"],
+        },
+    )
+
+    def __call__(self, owner: str, repo: str, issue: int) -> str:
+        resp = httpx.get(f"https://api.github.com/repos/{owner}/{repo}/issues/{issue}")
+        data = resp.json()
+        return f"#{data['number']}: {data['title']}\\n{data['body']}"
+
+# 2. Register with agent
+tool = GitHubIssueTool()
+agent = Agent(
+    llm=LLM(model="gpt-4o", api_key="sk-..."),
+    tools=[
+        Tool(name=TerminalTool.name),
+        Tool(definition=tool.definition, handler=tool),
+    ],
+)
+
+# 3. Use it
+conv = Conversation(agent=agent, workspace="/tmp")
+conv.send_message("Look at issue #42 in OpenHands/OpenHands and summarize it")
+conv.run()`,
+      },
+    ],
+  },
+
+  '/sdk/guides/agent-delegation': {
+    title: 'Sub-Agent Delegation',
+    description: 'Enable parallel task execution by delegating work to multiple sub-agents.',
+    route: '/sdk/guides/agent-delegation',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Agent delegation lets a parent agent spin up independent sub-agents to run tasks in parallel. Each sub-agent gets its own LLM, tool set, and workspace. The parent collects results from all sub-agents when they complete.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'When to use delegation',
+      },
+      {
+        type: 'list',
+        items: [
+          'Tasks that can be split into independent subtasks',
+          'Running tests and writing code simultaneously',
+          'Multi-file refactoring across separate modules',
+          'Processing large datasets in parallel batches',
+          'Research tasks requiring multiple concurrent searches',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Sub-agents run in isolated workspaces. Use shared filesystem mounts or explicit file passing to share results.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'delegation.py',
+        code: `from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.sdk.delegation import delegate_tasks
+from openhands.tools.terminal import TerminalTool
+from openhands.tools.file_editor import FileEditorTool
+
+llm = LLM(model="gpt-4o", api_key="sk-...")
+
+def make_agent():
+    return Agent(
+        llm=llm,
+        tools=[Tool(name=TerminalTool.name), Tool(name=FileEditorTool.name)],
+    )
+
+# Define parallel subtasks
+tasks = [
+    {"agent": make_agent(), "message": "Write unit tests for auth.py", "workspace": "/tmp/proj"},
+    {"agent": make_agent(), "message": "Write unit tests for db.py",   "workspace": "/tmp/proj"},
+    {"agent": make_agent(), "message": "Write unit tests for api.py",  "workspace": "/tmp/proj"},
+]
+
+# Run all sub-agents in parallel and collect results
+results = delegate_tasks(tasks)
+for r in results:
+    print(r.summary)`,
+      },
+    ],
+  },
+
+  '/sdk/guides/convo-persistence': {
+    title: 'Persistence',
+    description: 'Save and restore conversation state for multi-session workflows.',
+    route: '/sdk/guides/convo-persistence',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Conversations can be saved to disk and restored in a later session. This enables long-running multi-day workflows, resuming after crashes, and sharing agent state across processes.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What is persisted',
+      },
+      {
+        type: 'list',
+        items: [
+          'Full event stream (all actions and observations)',
+          'Agent configuration (LLM, tools, system prompt)',
+          'Workspace metadata',
+          'Session ID for lookup',
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Save & restore',
+        code: `from openhands.sdk import Conversation
+
+# Session 1 — start and save
+conv = Conversation(agent=agent, workspace="/tmp/project", sid="my-session-1")
+conv.send_message("Start refactoring the authentication module")
+conv.run()
+conv.save()
+print(f"Saved session: {conv.sid}")
+
+# Session 2 — restore and continue
+conv2 = Conversation.load(sid="my-session-1", agent=agent)
+conv2.send_message("Now add comprehensive error handling to the auth module")
+conv2.run()`,
+      },
+    ],
+  },
+
+  '/sdk/guides/mcp': {
+    title: 'Model Context Protocol (MCP)',
+    description: 'Integrate external MCP servers to dynamically extend agent tool sets.',
+    route: '/sdk/guides/mcp',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Model Context Protocol (MCP) enables agents to discover and use tools provided by external servers — databases, APIs, file systems, and more — without hardcoding them into the agent.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'How it works',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Connect to MCP server', content: 'Provide the server URL or command in MCPConfig' },
+          { title: 'Tools are discovered', content: 'The SDK fetches available tools from the server at startup' },
+          { title: 'Agent uses MCP tools', content: 'MCP tools appear alongside built-in tools in the agent\'s tool set' },
+          { title: 'Calls are proxied', content: 'Tool invocations are forwarded to the MCP server and results returned' },
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Popular MCP Servers',
+      },
+      {
+        type: 'table',
+        headers: ['Server', 'Capability'],
+        rows: [
+          ['filesystem', 'Read/write local files via MCP protocol'],
+          ['github', 'GitHub issues, PRs, and repo operations'],
+          ['postgres', 'Query PostgreSQL databases'],
+          ['slack', 'Read and send Slack messages'],
+          ['puppeteer', 'Browser automation'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'mcp_integration.py',
+        code: `from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.sdk.mcp import MCPConfig
+from openhands.tools.terminal import TerminalTool
+
+llm = LLM(model="gpt-4o", api_key="sk-...")
+
+# Connect to a GitHub MCP server
+mcp_config = MCPConfig(
+    servers=[
+        {"name": "github", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"]},
+    ]
+)
+
+agent = Agent(
+    llm=llm,
+    tools=[Tool(name=TerminalTool.name)],
+    mcp_config=mcp_config,
+)
+
+conv = Conversation(agent=agent, workspace="/tmp")
+conv.send_message("List all open PRs in OpenHands/OpenHands and summarize the top 3")
+conv.run()`,
+      },
+    ],
+  },
+
+  '/sdk/guides/observability': {
+    title: 'Observability & Tracing',
+    description: 'Enable OpenTelemetry tracing to monitor and debug agent execution.',
+    route: '/sdk/guides/observability',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The SDK emits OpenTelemetry traces for every agent loop iteration, LLM call, and tool execution. Connect any OTLP-compatible backend to get full visibility into your agents in production.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Supported Backends',
+      },
+      {
+        type: 'table',
+        headers: ['Backend', 'Type'],
+        rows: [
+          ['Laminar', 'AI-native observability platform'],
+          ['MLflow', 'ML experiment tracking'],
+          ['Honeycomb', 'Distributed tracing'],
+          ['Jaeger', 'Open source tracing'],
+          ['Any OTLP endpoint', 'Standard OpenTelemetry protocol'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What is traced',
+      },
+      {
+        type: 'list',
+        items: [
+          'Each agent loop iteration (spans)',
+          'LLM calls — model, tokens, latency, cost',
+          'Tool invocations — name, inputs, outputs, duration',
+          'Errors and retries',
+          'Custom hooks and events',
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'observability.py',
+        code: `import os
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.tools.terminal import TerminalTool
+
+# Configure OpenTelemetry
+provider = TracerProvider()
+exporter = OTLPSpanExporter(endpoint=os.getenv("OTLP_ENDPOINT", "http://localhost:4318/v1/traces"))
+provider.add_span_processor(BatchSpanProcessor(exporter))
+trace.set_tracer_provider(provider)
+
+# Agent runs normally — tracing is automatic
+llm = LLM(model="gpt-4o", api_key=os.getenv("LLM_API_KEY"))
+agent = Agent(llm=llm, tools=[Tool(name=TerminalTool.name)])
+conv = Conversation(agent=agent, workspace="/tmp")
+conv.send_message("Run the test suite and report any failures")
+conv.run()`,
+      },
+    ],
+  },
+
+  '/sdk/api': {
+    title: 'API Reference Overview',
+    description: 'Complete API reference for all openhands.sdk modules.',
+    route: '/sdk/api',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The SDK API reference covers all public classes, methods, and types. The primary entry point is the openhands.sdk module which exports all core classes.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Modules',
+      },
+      {
+        type: 'table',
+        headers: ['Module', 'Key Exports'],
+        rows: [
+          ['openhands.sdk.agent', 'Agent, AgentSettings'],
+          ['openhands.sdk.conversation', 'Conversation, RemoteConversation'],
+          ['openhands.sdk.llm', 'LLM, LLMConfig, LLMRegistry'],
+          ['openhands.sdk.tool', 'Tool, ToolDefinition, ToolCall, ToolResult'],
+          ['openhands.sdk.event', 'Event, ActionEvent, ObservationEvent, MessageEvent'],
+          ['openhands.sdk.workspace', 'Workspace, LocalWorkspace, RemoteWorkspace'],
+          ['openhands.sdk.security', 'SecurityAnalyzer, ConfirmationPolicy'],
+          ['openhands.sdk.utils', 'Utility helpers for events, tokens, formatting'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📖 Full auto-generated API docs are available at docs.openhands.dev/sdk',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'All main imports',
+        code: `# Core SDK classes
+from openhands.sdk import (
+    LLM,
+    Agent,
+    Conversation,
+    Tool,
+    ToolDefinition,
+)
+
+# Built-in tools
+from openhands.tools.terminal import TerminalTool
+from openhands.tools.file_editor import FileEditorTool
+from openhands.tools.task_tracker import TaskTrackerTool
+from openhands.tools.browser import BrowserTool
+
+# Advanced
+from openhands.sdk.security import SecurityAnalyzer, ConfirmationPolicy
+from openhands.sdk.llm import LLMRegistry, LLMProfileStore`,
+      },
+    ],
+  },
+
+  '/sdk/examples/standalone': {
+    title: 'Standalone SDK Examples',
+    description: 'Complete runnable examples for the OpenHands SDK standalone mode.',
+    route: '/sdk/examples/standalone',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'These examples demonstrate the full breadth of SDK capabilities, from basic hello world to advanced multi-agent delegation and observability. All examples run locally with a standard pip install.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📦 Source code: github.com/OpenHands/software-agent-sdk/tree/main/examples/01_standalone_sdk',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Prerequisites',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Setup',
+        code: `git clone https://github.com/OpenHands/software-agent-sdk.git
+cd software-agent-sdk
+pip install openhands-sdk openhands-tools
+
+export LLM_MODEL=gpt-4o
+export LLM_API_KEY=sk-...`,
+      },
+      {
+        language: 'bash',
+        label: 'Run an example',
+        code: `cd examples/01_standalone_sdk
+python 01_hello_world.py`,
+      },
+    ],
+  },
+
+  // ── Agent Canvas Pages ────────────────────────────────────────────────────
+
+  '/agent-canvas': {
+    title: 'What is Agent Canvas?',
+    description: 'A self-hostable AI coding platform. Prompt agents manually, run them on a schedule, or trigger them from Slack, GitHub, or Datadog.',
+    route: '/agent-canvas',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '🧪 Agent Canvas is currently in **Beta**. It is part of the OpenHands incubator program.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What is Agent Canvas?',
+      },
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas is a self-hostable AI coding platform built on the OpenHands Agent Server. It gives you a visual interface to run, monitor, and automate coding agents — whether they\'re running on your laptop, a dedicated VM, or in the cloud.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Three Ways to Use Agents',
+      },
+      {
+        type: 'table',
+        headers: ['Mode', 'Description'],
+        rows: [
+          ['⌨️ Manual', 'Prompt agents directly in the chat interface'],
+          ['🕐 Scheduled', 'Run agents on a cron schedule (e.g. nightly dependency updates)'],
+          ['⚡ Event-triggered', 'Trigger agents from Slack messages, GitHub webhooks, or Datadog alerts'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Run Agents Anywhere',
+      },
+      {
+        type: 'list',
+        items: [
+          '🧑‍💻 On your laptop (with or without Docker sandbox)',
+          '🖥️ On a remote virtual machine (DigitalOcean, AWS, GCP, Mac Mini)',
+          '☁️ In OpenHands hosted cloud',
+          '🏢 Inside your company\'s infrastructure',
+        ],
+      },
+      {
+        type: 'paragraph',
+        content: 'The same Agent Canvas frontend can connect to multiple backends and switch between them from the UI — so you can see all your agents in one place.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Works with Any Model',
+      },
+      {
+        type: 'table',
+        headers: ['Category', 'Examples'],
+        rows: [
+          ['Agent Harnesses', 'Claude Code, Codex CLI, OpenHands Agent Server'],
+          ['LLM Providers', 'Anthropic, OpenAI, Google Gemini, Mistral, Minimax, Kimi'],
+          ['Local Models', 'Ollama (llama3, mistral, etc.)'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'npx (quickest)',
+        code: `npm install -g @openhands/agent-canvas
+agent-canvas`,
+      },
+      {
+        language: 'bash',
+        label: 'Docker (sandboxed)',
+        code: `docker pull ghcr.io/openhands/agent-canvas:latest
+
+export PROJECTS_PATH=~/projects
+
+docker run -it --rm \\
+  -p 8000:8000 \\
+  -v ~/.openhands:/home/openhands/.openhands \\
+  -v \${PROJECTS_PATH}:/projects \\
+  ghcr.io/openhands/agent-canvas:latest`,
+      },
+    ],
+  },
+
+  '/agent-canvas/architecture': {
+    title: 'Architecture Overview',
+    description: 'System boundaries, runtime services, and how Agent Canvas fits together.',
+    route: '/agent-canvas/architecture',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas is a React and TypeScript frontend for the OpenHands Agent Server. It does not execute agent actions directly — it translates UI interactions into Agent Server API calls and renders the results.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'System Boundaries',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Agent Canvas is responsible for',
+      },
+      {
+        type: 'list',
+        items: [
+          'Rendering conversation, terminal, browser, files, settings, and automation UI',
+          'Managing frontend state for conversations, backend selection, settings, profiles, and local metadata',
+          'Translating UI actions into OpenHands Agent Server API calls',
+          'Packaging the UI as a standalone app and as library entrypoints for host applications',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Agent Canvas is NOT responsible for',
+      },
+      {
+        type: 'list',
+        items: [
+          'Executing agent actions directly',
+          'Providing sandbox or workspace isolation',
+          'Hosting LLM provider credentials outside the configured backend',
+          'Running scheduled or event-triggered automations without an automation backend',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Runtime Services',
+      },
+      {
+        type: 'table',
+        headers: ['Service', 'Required?', 'Role'],
+        rows: [
+          ['OpenHands Agent Server', 'Yes', 'Primary backend — runs agents, manages conversations'],
+          ['Ingress proxy (127.0.0.1:8000)', 'Yes (auto-started)', 'Routes frontend, Agent Server, and automation traffic to one origin'],
+          ['Automation Server', 'Optional', 'Handles scheduled and event-triggered agent runs'],
+          ['OpenHands Cloud APIs', 'Optional', 'Hosted sandbox and organization workflows'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Multi-Backend Architecture',
+      },
+      {
+        type: 'paragraph',
+        content: 'A single Agent Canvas frontend can connect to multiple Agent Server instances simultaneously — your laptop, a team VM, and OpenHands Cloud — and switch between them from the backend switcher in the UI.',
+      },
+    ],
+  },
+
+  '/agent-canvas/runtime-modes': {
+    title: 'Runtime Modes',
+    description: 'All dev and production run modes for Agent Canvas.',
+    route: '/agent-canvas/runtime-modes',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Development Modes',
+      },
+      {
+        type: 'table',
+        headers: ['Command', 'What it does'],
+        rows: [
+          ['npm run dev', 'Full stack: UI + Agent Server + Automation backend + ingress proxy (recommended)'],
+          ['npm run dev:docker', 'UI with Agent Server running inside a Docker sandbox (safer for laptops)'],
+          ['npm run dev:minimal', 'UI + Agent Server only, no automation backend'],
+          ['npm run dev:static', 'UI pointing at a separately managed backend on 127.0.0.1:8000'],
+          ['npm run dev:automation', 'Full stack including automation backend'],
+          ['npm run dev:mock', 'Frontend only, using MSW mocks (for UI development and tests)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Production / Distribution',
+      },
+      {
+        type: 'table',
+        headers: ['Command', 'What it does'],
+        rows: [
+          ['npm run build', 'Build the standalone application'],
+          ['npm run build:lib', 'Build library entrypoints for embedding Agent Canvas components'],
+          ['npx @openhands/agent-canvas', 'Run via npx — no install required (no sandbox)'],
+          ['docker run ghcr.io/openhands/agent-canvas', 'Run in Docker with sandbox isolation'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        content: '⚠️ Modes without Docker give the agent full access to the host filesystem. Use Docker sandbox mode for shared machines.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Dev (recommended)',
+        code: 'npm run dev',
+      },
+      {
+        language: 'bash',
+        label: 'Dev with Docker sandbox',
+        code: 'npm run dev:docker',
+      },
+    ],
+  },
+
+  '/agent-canvas/getting-started/npx': {
+    title: 'Quickstart — npx',
+    description: 'Run Agent Canvas locally in seconds with no Docker required.',
+    route: '/agent-canvas/getting-started/npx',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'warning',
+        content: '⚠️ This mode runs the agent server directly on your machine — the agent has full access to your filesystem. Use Docker mode for a safer setup.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Prerequisites',
+      },
+      {
+        type: 'list',
+        items: [
+          'Node.js 22.12.x or later',
+          '`uv` — install from astral.sh/uv',
+          'An API key for a supported LLM provider',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Install and Run',
+      },
+      {
+        type: 'paragraph',
+        content: 'After startup, open http://localhost:8000 in your browser. The onboarding flow will walk you through connecting an LLM and starting your first conversation.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Global install',
+        code: `npm install -g @openhands/agent-canvas
+agent-canvas`,
+      },
+      {
+        language: 'bash',
+        label: 'Without install (npx)',
+        code: 'npx @openhands/agent-canvas',
+      },
+    ],
+  },
+
+  '/agent-canvas/getting-started/docker': {
+    title: 'Quickstart — Docker',
+    description: 'Run Agent Canvas with a Docker sandbox for isolated, safer agent execution.',
+    route: '/agent-canvas/getting-started/docker',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The Docker mode runs the Agent Server inside a container. The agent can only access files under your configured PROJECTS_PATH — your host filesystem is otherwise protected.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Prerequisites',
+      },
+      {
+        type: 'list',
+        items: [
+          'Docker Desktop (macOS/Windows) or Docker Engine (Linux)',
+          'An API key for a supported LLM provider',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Run',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Configuration',
+      },
+      {
+        type: 'table',
+        headers: ['Volume', 'Purpose'],
+        rows: [
+          ['~/.openhands:/home/openhands/.openhands', 'Persists conversation history, settings, and secrets across restarts'],
+          ['${PROJECTS_PATH}:/projects', 'The directory of projects the agent can access'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Docker run',
+        code: `docker pull ghcr.io/openhands/agent-canvas:latest
+
+export PROJECTS_PATH=~/projects
+
+docker run -it --rm \\
+  -p 8000:8000 \\
+  -v ~/.openhands:/home/openhands/.openhands \\
+  -v \${PROJECTS_PATH}:/projects \\
+  ghcr.io/openhands/agent-canvas:latest`,
+      },
+    ],
+  },
+
+  '/agent-canvas/getting-started/from-source': {
+    title: 'Quickstart — From Source',
+    description: 'Clone and run Agent Canvas from the GitHub repository.',
+    route: '/agent-canvas/getting-started/from-source',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Prerequisites',
+      },
+      {
+        type: 'list',
+        items: [
+          'Node.js 22.12.x or later',
+          '`npm`',
+          '`uv` — for running the agent server via uvx',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Clone and Start',
+      },
+      {
+        type: 'paragraph',
+        content: 'This starts the full stack: UI (port 3001), Agent Server (port 18000), Automation backend (port 18001), and an ingress proxy on port 8000. Open http://localhost:8000 to access the UI.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Setup',
+        code: `git clone https://github.com/OpenHands/agent-canvas.git
+cd agent-canvas
+npm install
+npm run dev`,
+      },
+    ],
+  },
+
+  '/agent-canvas/getting-started/first-backend': {
+    title: 'Connecting Your First Backend',
+    description: 'Add and configure an Agent Server backend from the Agent Canvas UI.',
+    route: '/agent-canvas/getting-started/first-backend',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas supports multiple concurrent backends. Each backend is an OpenHands Agent Server running somewhere — your laptop, a remote VM, or OpenHands Cloud.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'From the UI',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Open the Backend panel', content: 'Click the backend selector in the top navigation bar' },
+          { title: 'Click Add Backend', content: 'Enter the Agent Server URL (e.g. http://localhost:18000)' },
+          { title: 'Set the API key', content: 'If your Agent Server requires a SESSION_API_KEY, enter it here' },
+          { title: 'Save and switch', content: 'Select the new backend — the UI will immediately start using it' },
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Backend Types',
+      },
+      {
+        type: 'table',
+        headers: ['Backend', 'URL pattern', 'Notes'],
+        rows: [
+          ['Local (npm run dev)', 'http://localhost:8000', 'Auto-configured when using dev scripts'],
+          ['Remote VM', 'http://your-vm-ip:8000', 'Requires firewall rules + SESSION_API_KEY'],
+          ['OpenHands Cloud', 'app.all-hands.dev', 'Sign in with your account'],
+        ],
+      },
+    ],
+  },
+
+  '/agent-canvas/automations': {
+    title: 'What are Automations?',
+    description: 'Scheduled and event-triggered agent runs — run agents without manual prompting.',
+    route: '/agent-canvas/automations',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Automations let you configure agents to run automatically — either on a schedule or in response to external events like a Slack message, a GitHub push, or a Datadog alert. They are powered by the Automation Server, which runs alongside the Agent Server.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Automation Types',
+      },
+      {
+        type: 'table',
+        headers: ['Type', 'Trigger', 'Example use case'],
+        rows: [
+          ['Scheduled', 'Cron expression', 'Run dependency updates every Monday at 9am'],
+          ['Slack trigger', 'Message in a Slack channel', 'Agent responds to @openhands mentions'],
+          ['GitHub trigger', 'PR opened / issue created', 'Auto-review every new pull request'],
+          ['Datadog trigger', 'Alert fired', 'Agent investigates anomalous metrics'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Requirements',
+      },
+      {
+        type: 'list',
+        items: [
+          'An Automation Server must be running (included in `npm run dev` and `npm run dev:automation`)',
+          'Webhooks from external services must be routable to the Automation Server',
+          'For production: deploy behind nginx with TLS (see Self-Hosting guide)',
+        ],
+      },
+    ],
+  },
+
+  '/agent-canvas/automations/create': {
+    title: 'Creating an Automation',
+    description: 'Step-by-step guide to creating your first automation in Agent Canvas.',
+    route: '/agent-canvas/automations/create',
+    sections: [
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Open Automations', content: 'Click "Automations" in the left sidebar' },
+          { title: 'Click Create Automation', content: 'Opens the automation creation modal' },
+          { title: 'Choose a trigger type', content: 'Select: Schedule, Slack, GitHub, or Datadog' },
+          { title: 'Write the agent instructions', content: 'Describe what the agent should do when triggered — this becomes the conversation prompt' },
+          { title: 'Select workspace', content: 'Choose which project directory the agent will work in' },
+          { title: 'Save and enable', content: 'Toggle the automation to active — it will start running on its trigger schedule' },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Write clear, specific instructions. The automation prompt is sent to the agent exactly as written — treat it like a well-crafted user message.',
+      },
+    ],
+  },
+
+  '/agent-canvas/automations/triggers': {
+    title: 'Event Triggers',
+    description: 'Trigger agents automatically from Slack, GitHub, or Datadog.',
+    route: '/agent-canvas/automations/triggers',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Slack Trigger',
+      },
+      {
+        type: 'paragraph',
+        content: 'Configure a Slack webhook to fire the automation when a message is posted to a specific channel or when a keyword is mentioned.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'GitHub Trigger',
+      },
+      {
+        type: 'paragraph',
+        content: 'Set up a GitHub webhook pointing at your Automation Server. The agent can be triggered on pull_request, issues, push, or release events.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Datadog Trigger',
+      },
+      {
+        type: 'paragraph',
+        content: 'Configure a Datadog webhook monitor to POST to the automation endpoint when a metric alert fires. The agent receives the alert payload and investigates.',
+      },
+      {
+        type: 'table',
+        headers: ['Trigger', 'Webhook URL pattern', 'Payload format'],
+        rows: [
+          ['Slack', '/api/automation/slack', 'Slack Events API JSON'],
+          ['GitHub', '/api/automation/github', 'GitHub webhook JSON'],
+          ['Datadog', '/api/automation/datadog', 'Datadog monitor webhook JSON'],
+        ],
+      },
+    ],
+  },
+
+  '/agent-canvas/self-hosting': {
+    title: 'Self-Hosting Overview',
+    description: 'Run Agent Canvas on a virtual machine so you can reach it from anywhere.',
+    route: '/agent-canvas/self-hosting',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'danger',
+        content: '🔒 Agent Canvas drives an agent that can read and write the filesystem, execute shell commands, and reach the network. Lock down the VM before exposing it to the internet.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Deployment Model',
+      },
+      {
+        type: 'paragraph',
+        content: 'The recommended self-hosted setup runs all services on a single VM, fronted by nginx with TLS and HTTP Basic Auth. All backend services bind to 127.0.0.1 — nginx is the only internet-facing entry point.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Setup Steps',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Provision a machine', content: 'Any Linux VM: DigitalOcean, AWS EC2, GCP, Hetzner, or dedicated hardware like a Mac Mini. Ubuntu 24.04 LTS recommended.' },
+          { title: 'Secure the machine', content: 'Lock down inbound traffic at the firewall. Only allow SSH from your IP. Block everything else.' },
+          { title: 'Run the server', content: 'Clone the repo, npm install, npm run dev. All services bind to 127.0.0.1.' },
+          { title: 'Add a domain (optional)', content: 'Point a domain at the VM, set up nginx + TLS + Basic Auth for access without SSH tunneling.' },
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Layered Security',
+      },
+      {
+        type: 'table',
+        headers: ['Layer', 'What it does'],
+        rows: [
+          ['Cloud/network firewall', 'Blocks all inbound except SSH from your IP by default'],
+          ['SESSION_API_KEY on Agent Server', 'Every /api/* call must carry the matching X-Session-API-Key header — auto-generated on first run'],
+          ['nginx HTTP Basic Auth (optional)', 'Username + password before any request reaches the app'],
+        ],
+      },
+    ],
+  },
+
+  '/agent-canvas/self-hosting/nginx-tls': {
+    title: '4 · Domain, nginx & TLS',
+    description: 'Put nginx, Let\'s Encrypt TLS, and HTTP Basic Auth in front of Agent Canvas.',
+    route: '/agent-canvas/self-hosting/nginx-tls',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'If you want to reach the UI from a browser without an SSH tunnel, point a domain at the VM and front it with nginx + TLS + HTTP Basic Auth.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Steps',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Point a domain', content: 'Create an A record pointing to the VM\'s public IPv4 (e.g. canvas.example.com)' },
+          { title: 'Open ports 80 and 443', content: 'Port 80 must be world-open for Let\'s Encrypt HTTP-01 challenges. Port 443 should be restricted to your IP if possible.' },
+          { title: 'Install nginx + certbot', content: 'apt-get install -y nginx certbot python3-certbot-nginx apache2-utils acl' },
+          { title: 'Create Basic Auth user', content: 'htpasswd -c /root/.openhands/.htpasswd <username>' },
+          { title: 'Add nginx config', content: 'Proxy all traffic to 127.0.0.1:8000 with auth_basic and WebSocket headers' },
+          { title: 'Issue certificate', content: 'certbot --nginx -d canvas.example.com — auto-renews via systemd timer' },
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'nginx',
+        label: 'nginx site config',
+        code: `server {
+    listen 80;
+    server_name canvas.example.com;
+
+    location /.well-known/acme-challenge/ {
+        auth_basic off;
+        root /var/www/html;
+    }
+
+    location / {
+        auth_basic "Restricted";
+        auth_basic_user_file /root/.openhands/.htpasswd;
+
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;
+    }
+}`,
+      },
+      {
+        language: 'bash',
+        label: 'Issue cert',
+        code: `certbot --nginx -d canvas.example.com \\
+    --non-interactive --agree-tos \\
+    --email you@example.com \\
+    --redirect`,
+      },
+    ],
+  },
+
+  '/agent-canvas/embedding': {
+    title: 'Embedding Agent Canvas',
+    description: 'Use @openhands/agent-canvas as a component library in your own React app.',
+    route: '/agent-canvas/embedding',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas ships as an npm library with 7 embeddable subpath exports. You can embed individual UI panels — conversation view, file browser, terminal, settings, sidebar — directly into your own React application.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Available Exports',
+      },
+      {
+        type: 'table',
+        headers: ['Subpath', 'What it provides'],
+        rows: [
+          ['@openhands/agent-canvas/conversation', 'Full agent conversation UI with chat, event stream, and task tracking'],
+          ['@openhands/agent-canvas/browser', 'Browser tab component showing live agent browser sessions'],
+          ['@openhands/agent-canvas/files', 'File explorer and editor for the agent\'s workspace'],
+          ['@openhands/agent-canvas/settings', 'LLM, agent, MCP, and secrets settings panels'],
+          ['@openhands/agent-canvas/sidebar', 'Conversation list sidebar'],
+          ['@openhands/agent-canvas/terminal', 'Terminal output tab'],
+          ['@openhands/agent-canvas/i18n', 'Internationalization resources and generated bundles'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Build',
+      },
+      {
+        type: 'paragraph',
+        content: 'The library build is generated with `npm run build:lib`. TypeScript declarations are included.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Install',
+        code: 'npm install @openhands/agent-canvas',
+      },
+      {
+        language: 'tsx',
+        label: 'Embed conversation',
+        code: `import { ConversationPanel } from '@openhands/agent-canvas/conversation';
+
+export function MyApp() {
+  return (
+    <ConversationPanel
+      backendUrl="http://localhost:18000"
+      sessionApiKey={process.env.SESSION_API_KEY}
+    />
+  );
+}`,
+      },
+    ],
+  },
+
+  '/agent-canvas/configuration': {
+    title: 'Environment Variables',
+    description: 'All VITE_* and OH_* environment variables for configuring Agent Canvas.',
+    route: '/agent-canvas/configuration',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Copy .env.sample to .env and customize for your environment. Variables prefixed with VITE_ are compiled into the frontend bundle. Variables prefixed with OH_ control the dev launcher scripts.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Frontend Variables (VITE_*)',
+      },
+      {
+        type: 'table',
+        headers: ['Variable', 'Default', 'Description'],
+        rows: [
+          ['VITE_BACKEND_HOST', '127.0.0.1:8000', 'Host:port for the Vite dev proxy'],
+          ['VITE_BACKEND_BASE_URL', 'http://127.0.0.1:8000', 'Base URL for browser-side direct requests'],
+          ['VITE_SESSION_API_KEY', '(unset)', 'Must match SESSION_API_KEY / OH_SESSION_API_KEYS_0 on the backend'],
+          ['VITE_WORKING_DIR', '(auto)', 'Base dir for per-conversation working directories'],
+          ['VITE_FRONTEND_PORT', '3001', 'Port the Vite dev server listens on'],
+          ['VITE_WORKER_URLS', '(unset)', 'Comma-separated worker URLs for the Browser tab'],
+          ['VITE_ENABLE_BROWSER_TOOLS', 'true', 'Set to false to omit BrowserToolSet from new conversations'],
+          ['VITE_LOAD_PUBLIC_SKILLS', 'true', 'Load public skills from github.com/OpenHands/extensions'],
+          ['VITE_MOCK_API', 'false', 'Enable MSW mock API (for development and testing)'],
+          ['VITE_USE_TLS', 'false', 'Use HTTPS/WSS for proxied backend connections'],
+          ['VITE_INSECURE_SKIP_VERIFY', 'false', 'Skip TLS certificate verification'],
+          ['VITE_APP_ENV', '(unset)', 'Set to "production" or "staging" only in real deployments'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Dev Launcher Variables (OH_*)',
+      },
+      {
+        type: 'table',
+        headers: ['Variable', 'Default', 'Description'],
+        rows: [
+          ['OH_CANVAS_SAFE_BACKEND_PORT', '18000', 'Port the Agent Server listens on'],
+          ['OH_CANVAS_SAFE_VSCODE_PORT', '18001', 'Port forwarded to the embedded VS Code'],
+          ['OH_CANVAS_SAFE_STATE_DIR', '~/.openhands/agent-canvas', 'Where conversations and bash events are stored'],
+          ['OH_AGENT_SERVER_LOCAL_PATH', '(unset)', 'Absolute path to a local software-agent-sdk checkout'],
+          ['OH_AGENT_SERVER_GIT_REF', '(unset)', 'Git commit SHA or branch to use for the Agent Server'],
+          ['OH_AGENT_SERVER_VERSION', '(unset)', 'Specific PyPI version of the Agent Server'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: '.env',
+        code: `# Copy .env.sample and customize
+cp .env.sample .env
+
+# Minimal setup for local dev
+VITE_BACKEND_HOST="127.0.0.1:8000"
+VITE_BACKEND_BASE_URL="http://127.0.0.1:8000"
+VITE_FRONTEND_PORT="3001"`,
+      },
+    ],
+  },
+
+  '/agent-canvas/configuration/run-modes': {
+    title: 'Run Mode Reference',
+    description: 'All npm run scripts and what each one starts.',
+    route: '/agent-canvas/configuration/run-modes',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Script', 'Services started', 'Use case'],
+        rows: [
+          ['npm run dev', 'UI + Agent Server + Automation backend + ingress proxy', 'Default full-stack local development'],
+          ['npm run dev:docker', 'UI + Docker-sandboxed Agent Server', 'Safer laptop development (agent isolated in Docker)'],
+          ['npm run dev:minimal', 'UI + Agent Server only', 'Development without automation features'],
+          ['npm run dev:static', 'UI only (points at external backend)', 'UI development against a separately managed backend'],
+          ['npm run dev:automation', 'Full stack with automation backend', 'Testing automation triggers locally'],
+          ['npm run dev:mock', 'UI only with MSW mocks', 'UI-only development, no backend needed'],
+          ['npm run build', 'n/a', 'Production standalone app build'],
+          ['npm run build:lib', 'n/a', 'Library build for embedding'],
+          ['npm run test', 'n/a', 'Unit and component tests (Vitest)'],
+          ['npm run test:e2e', 'n/a', 'End-to-end tests (Playwright)'],
+          ['npm run test:e2e:snapshots', 'n/a', 'Visual snapshot tests'],
+        ],
+      },
+    ],
+  },
+
+  '/agent-canvas/integrations/defenseclaw': {
+    title: 'DefenseClaw Security Governance',
+    description: 'Integrate DefenseClaw to scan skills, inspect LLM traffic, and audit agent actions.',
+    route: '/agent-canvas/integrations/defenseclaw',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'DefenseClaw is a security governance layer for agentic AI runtimes. It scans skills and MCP servers, inspects LLM traffic at runtime, and produces durable audit evidence. The integration requires no code changes to Agent Canvas.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Integration Points',
+      },
+      {
+        type: 'table',
+        headers: ['Goal', 'Mechanism', 'Config change?'],
+        rows: [
+          ['Agent writes secure code by default', 'CodeGuard skill in .agents/skills/', 'Drop-in file — no'],
+          ['Inspect all LLM prompts and responses', 'Guardrail proxy at localhost:4000 — set base_url', 'Yes — set LLM base_url'],
+          ['Vet skills before loading', 'defenseclaw skill scan in CI/workflow', 'No'],
+          ['Scan agent-generated code', 'defenseclaw codeguard scan <workspace>', 'No'],
+          ['Audit trail and alerting', 'DefenseClaw TUI, OTLP, Splunk, webhooks', 'DefenseClaw config only'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quick Setup',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Install DefenseClaw', content: 'curl -LsSf https://raw.githubusercontent.com/cisco-ai-defense/defenseclaw/main/scripts/install.sh | bash' },
+          { title: 'Enable the guardrail proxy', content: 'defenseclaw init --enable-guardrail' },
+          { title: 'Start the gateway sidecar', content: 'defenseclaw-gateway start' },
+          { title: 'Point LLM base URL at the proxy', content: 'In Agent Canvas Settings → LLM → Base URL: http://localhost:4000' },
+          { title: 'Load the CodeGuard skill', content: 'Copy skills/codeguard/SKILL.md into ~/.agents/skills/codeguard/SKILL.md' },
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Install DefenseClaw',
+        code: `curl -LsSf https://raw.githubusercontent.com/cisco-ai-defense/defenseclaw/main/scripts/install.sh | bash
+defenseclaw init --enable-guardrail
+defenseclaw-gateway start`,
+      },
+      {
+        language: 'bash',
+        label: 'Load CodeGuard skill',
+        code: `mkdir -p ~/.agents/skills/codeguard
+curl -fsSL https://raw.githubusercontent.com/cisco-ai-defense/defenseclaw/main/skills/codeguard/SKILL.md \\
+  -o ~/.agents/skills/codeguard/SKILL.md`,
+      },
+    ],
+  },
+
+  '/agent-canvas/contributing/dev-guide': {
+    title: 'Development Guide',
+    description: 'Set up a local Agent Canvas development environment from source.',
+    route: '/agent-canvas/contributing/dev-guide',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Prerequisites',
+      },
+      {
+        type: 'list',
+        items: [
+          'Node.js 22.12.x or later',
+          'npm',
+          'uv — python package manager used for the Agent Server (uvx)',
+          'Docker (optional — required for dev:docker mode)',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Clone and Install',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quality Gates',
+      },
+      {
+        type: 'table',
+        headers: ['Check', 'Command'],
+        rows: [
+          ['TypeScript', 'npm run typecheck'],
+          ['ESLint + Prettier', 'npm run lint'],
+          ['Unit tests (Vitest)', 'npm test'],
+          ['E2E tests (Playwright)', 'npm run test:e2e'],
+          ['Visual snapshots', 'npm run test:e2e:snapshots'],
+          ['App build', 'npm run build'],
+          ['Library build', 'npm run build:lib'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Run npm run lint before pushing — CI will fail on typecheck, ESLint, or Prettier violations.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Setup',
+        code: `git clone https://github.com/OpenHands/agent-canvas.git
+cd agent-canvas
+npm install
+npm run dev`,
+      },
+      {
+        language: 'bash',
+        label: 'Test',
+        code: `npm run lint     # typecheck + eslint + prettier
+npm test         # vitest unit + component tests
+npm run test:e2e # playwright E2E`,
+      },
+    ],
+  },
+
+  '/agent-canvas/contributing/architecture': {
+    title: 'Code Architecture',
+    description: 'Key source directories and their responsibilities in the Agent Canvas codebase.',
+    route: '/agent-canvas/contributing/architecture',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Source Tree',
+      },
+      {
+        type: 'table',
+        headers: ['Directory', 'Responsibility'],
+        rows: [
+          ['src/api/', 'Service adapters for Agent Server, cloud APIs, settings, git, skills, automations, and backend registry'],
+          ['src/components/', 'Route and feature UI — conversation, chat, browser, files, settings, backend, automation, onboarding'],
+          ['src/routes/', 'React Router route components (one file per page/view)'],
+          ['src/hooks/', 'Reusable React Query, state, and feature hooks'],
+          ['src/stores/', 'Zustand state stores for conversation and UI state'],
+          ['src/i18n/', 'Translation resources and generated bundles'],
+          ['src/mocks/', 'MSW (Mock Service Worker) handlers for development and tests'],
+          ['src/types/', 'Shared TypeScript type definitions'],
+          ['bin/', 'CLI entry point (agent-canvas binary)'],
+          ['scripts/', 'Dev stack launchers and build helpers'],
+          ['__tests__/', 'Unit and component tests (mirrors src/ structure)'],
+          ['tests/e2e/', 'Playwright end-to-end test suites'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Route Components',
+      },
+      {
+        type: 'paragraph',
+        content: 'Each view in the app corresponds to a route component in src/routes/. The main routes are: conversation (agent chat), automations-list, automation-detail, settings (llm, agent, mcp, secrets, condenser, verification, skills), and home.',
+      },
+    ],
+  },
+
+  '/agent-canvas/changelog': {
+    title: 'Agent Canvas Changelog',
+    description: 'Release history and notable changes for @openhands/agent-canvas.',
+    route: '/agent-canvas/changelog',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📋 Full release notes: github.com/OpenHands/agent-canvas/releases',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'v1.0.0-alpha.2 — 2025-05-11',
+      },
+      {
+        type: 'list',
+        items: [
+          'Initial npm package release of @openhands/agent-canvas',
+          'CLI entry point (npx @openhands/agent-canvas) to run full stack locally',
+          'Library build mode with component barrel exports',
+          'Subpath exports: /browser, /conversation, /files, /settings, /sidebar, /terminal, /i18n',
+          'TypeScript type declarations',
+          'GitHub Actions workflow for automated npm publishing (OIDC trusted publishing)',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Versioning Policy',
+      },
+      {
+        type: 'table',
+        headers: ['Version bump', 'When'],
+        rows: [
+          ['MAJOR (x.0.0)', 'Breaking API or embedding interface changes'],
+          ['MINOR (0.x.0)', 'New features, new exports, backwards-compatible'],
+          ['PATCH (0.0.x)', 'Bug fixes, security patches, dependency updates'],
+        ],
+      },
+    ],
+  },
+
+  '/sdk/changelog': {
+    title: 'SDK Changelog',
+    description: 'Release history and breaking changes for the OpenHands SDK.',
+    route: '/sdk/changelog',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '📋 For the full release history see github.com/OpenHands/software-agent-sdk/releases',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Latest Release',
+      },
+      {
+        type: 'paragraph',
+        content: 'Check the GitHub releases page for the most up-to-date changelog. The SDK follows semantic versioning — breaking changes only occur in major versions.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Versioning Policy',
+      },
+      {
+        type: 'table',
+        headers: ['Version bump', 'When'],
+        rows: [
+          ['MAJOR (x.0.0)', 'Breaking API changes'],
+          ['MINOR (0.x.0)', 'New features, backwards-compatible'],
+          ['PATCH (0.0.x)', 'Bug fixes, documentation updates'],
+        ],
+      },
+    ],
+  },
 };
 
 // Generate stub pages for routes not explicitly defined
