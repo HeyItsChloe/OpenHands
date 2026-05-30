@@ -2666,34 +2666,34 @@ docker run -it --rm -p 8000:8000 \\
         caption: 'Diagram 1 — C4 Container diagram: all repos and their connections',
         content: `flowchart TB
   subgraph OSS["Open Source"]
-    OH["OpenHands App\\nPython + React"]
-    SDK["software-agent-sdk\\nPython + Agent Server"]
-    AC["Agent Canvas\\nTypeScript / React"]
-    EXT["Extensions\\nMarkdown skills"]
+    OH["OpenHands App"]
+    SDK["software-agent-sdk + Agent Server"]
+    AC["Agent Canvas"]
+    EXT["Extensions"]
   end
-  subgraph Internal["Internal"]
-    AUTO["Automation Service\\nPython / FastAPI"]
-    ARCH["Architecture Repo\\nMarkdown ADRs + PDs"]
+  subgraph INT["Internal"]
+    AUTO["Automation Service"]
+    ARCH["Architecture Repo"]
   end
-  subgraph SaaS["OpenHands Cloud"]
-    CLOUD["Cloud APIs\\nsandboxes, keys, orgs"]
+  subgraph CLOUD["OpenHands Cloud"]
+    CAPI["Cloud APIs"]
   end
-  subgraph External["External"]
-    LLM["LLM Providers\\nOpenAI, Anthropic, Gemini"]
+  subgraph EXT2["External"]
+    LLM["LLM Providers"]
     GH["GitHub / Slack / Datadog"]
   end
 
-  OH -->|pip install openhands-sdk| SDK
-  AC -->|HTTP REST + WebSocket| SDK
-  AUTO -->|HTTP REST| SDK
-  AUTO -->|sandbox + key APIs| CLOUD
-  AC -. optional cloud workspace .-> CLOUD
-  SDK -->|LiteLLM| LLM
-  GH -->|webhooks via SaaS proxy| AUTO
-  EXT -. SKILL.md at runtime .-> SDK
-  EXT -. SKILL.md at startup .-> AC
-  ARCH -. ADRs inform .-> OH
-  ARCH -. ADRs inform .-> SDK`,
+  OH -->|"pip install openhands-sdk"| SDK
+  AC -->|"HTTP REST + WebSocket"| SDK
+  AUTO -->|"HTTP REST"| SDK
+  AUTO -->|"sandbox + key APIs"| CAPI
+  AC -.->|"cloud workspace optional"| CAPI
+  SDK -->|"LiteLLM"| LLM
+  GH -->|"webhooks"| AUTO
+  EXT -.->|"SKILL.md runtime"| SDK
+  EXT -.->|"SKILL.md startup"| AC
+  ARCH -.->|"ADRs inform"| OH
+  ARCH -.->|"ADRs inform"| SDK`,
       },
       {
         type: 'heading',
