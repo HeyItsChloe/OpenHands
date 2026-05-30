@@ -2168,6 +2168,1321 @@ python 01_hello_world.py`,
     ],
   },
 
+  // ── All Repos Pages ───────────────────────────────────────────────────────
+
+  '/all-repos': {
+    title: 'Ecosystem Map',
+    description: 'Every repository in the OpenHands platform — what each does, who owns it, and how they fit together.',
+    route: '/all-repos',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'OpenHands is a platform made up of multiple focused repositories. Each repo has a clear responsibility. Together they form a complete stack — from the agent reasoning loop to the UI, automations, and internal decision records.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Repos at a Glance',
+      },
+      {
+        type: 'table',
+        headers: ['Repo', 'Language', 'Status', 'Purpose'],
+        rows: [
+          ['OpenHands/OpenHands', 'Python + TypeScript', 'OSS ✅', 'Main open-source app — agent loop, sandbox runtime, OSS frontend'],
+          ['OpenHands/software-agent-sdk', 'Python', 'OSS ✅', 'SDK + Agent Server — the programmable agent API'],
+          ['OpenHands/agent-canvas', 'TypeScript / React', 'Beta 🧪', 'Self-hostable UI frontend for Agent Server'],
+          ['OpenHands/automation', 'Python / FastAPI', 'Internal 🔒', 'Scheduled and event-driven agent automation service'],
+          ['OpenHands/architecture', 'Markdown', 'Internal 🔒', 'ADRs, Product Design docs, Research projects'],
+          ['OpenHands/extensions', 'Markdown', 'OSS ✅', 'Public skills and plugins marketplace'],
+          ['OpenHands Cloud', 'Private SaaS', 'Cloud ☁️', 'Hosted multi-tenant platform — sandboxes, billing, org management'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Dependency Hierarchy',
+      },
+      {
+        type: 'list',
+        items: [
+          '**software-agent-sdk** is the foundation — all other services depend on it',
+          '**OpenHands (app)** uses the SDK internally for its agent loop',
+          '**Agent Server** (inside the SDK repo) is the REST/WebSocket API used by Agent Canvas and Automation',
+          '**Agent Canvas** is a pure frontend — it calls Agent Server and has no agent logic of its own',
+          '**Automation Service** orchestrates Agent Server to run scheduled/event-driven agents',
+          '**Architecture repo** informs all repos via ADRs and Product Design documents',
+          '**Extensions** provides skills consumed by Agent Canvas, Agent Server, and OpenHands',
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'SDK (any use case)',
+        code: 'pip install openhands-sdk openhands-tools',
+      },
+      {
+        language: 'bash',
+        label: 'Agent Canvas (UI)',
+        code: 'npx @openhands/agent-canvas',
+      },
+    ],
+  },
+
+  '/all-repos/overview/openhands': {
+    title: 'OpenHands (the App)',
+    description: 'The main open-source repository — autonomous coding agent with sandbox runtime and OSS web UI.',
+    route: '/all-repos/overview/openhands',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/All-Hands-AI/OpenHands'],
+          ['Status', 'Open Source ✅'],
+          ['Primary language', 'Python (backend) + TypeScript/React (frontend)'],
+          ['Package', 'pip install openhands'],
+          ['Benchmark', '77.6% on SWE-bench'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'The OpenHands app is the main open-source product. It runs an LLM-backed agent inside an isolated Docker sandbox, exposes a REST + WebSocket API, and ships its own React frontend. It is the reference implementation of everything the SDK enables.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key components',
+      },
+      {
+        type: 'table',
+        headers: ['Component', 'Location', 'Description'],
+        rows: [
+          ['Agent loop', 'openhands/core/', 'Reasoning-action loop using openhands-sdk internals'],
+          ['Runtime sandbox', 'openhands/runtime/', 'Docker / Kubernetes container management'],
+          ['App server', 'openhands/server/', 'FastAPI REST + WebSocket API'],
+          ['OSS frontend', 'frontend/', 'React + TypeScript UI (different from Agent Canvas)'],
+          ['Event system', 'openhands/events/', 'Typed action/observation bus'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Relationship to other repos',
+      },
+      {
+        type: 'list',
+        items: [
+          'Uses **software-agent-sdk** for the agent, LLM, tool, and condenser abstractions',
+          'The OSS frontend is separate from **Agent Canvas** (which targets the Agent Server API, not the OpenHands app API)',
+          '**OpenHands Cloud** runs OpenHands at scale with multi-tenancy, billing, and org management on top',
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Docker Quickstart',
+        code: `docker pull ghcr.io/all-handsmachinelearning/openhands:latest
+docker run -it --rm \\
+  -e SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.all-hands.dev/all-hands-ai/runtime:latest \\
+  -e LOG_ALL_EVENTS=true \\
+  -v /var/run/docker.sock:/var/run/docker.sock \\
+  -v ~/.openhands:/home/openhands/.openhands \\
+  -p 3000:3000 \\
+  ghcr.io/all-handsmachinelearning/openhands:latest`,
+      },
+    ],
+  },
+
+  '/all-repos/overview/sdk': {
+    title: 'software-agent-sdk',
+    description: 'The programmable Python SDK and Agent Server — the foundation every other service builds on.',
+    route: '/all-repos/overview/sdk',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/software-agent-sdk'],
+          ['Status', 'Open Source ✅'],
+          ['Primary language', 'Python'],
+          ['Package', 'pip install openhands-sdk openhands-tools'],
+          ['Docs', 'docs.openhands.dev/sdk'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'The SDK is a clean, modular Python library for building AI agents that autonomously write, edit, and execute code. It ships two things: the importable openhands-sdk package and the openhands-agent-server — a FastAPI REST/WebSocket API that wraps the SDK for multi-client use.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Core classes',
+      },
+      {
+        type: 'table',
+        headers: ['Class', 'Purpose'],
+        rows: [
+          ['Agent', 'Reasoning-action loop'],
+          ['Conversation', 'Orchestrates a session — sends messages, runs the loop'],
+          ['LLM', 'Provider-agnostic language model interface (LiteLLM)'],
+          ['Tool / ToolDefinition', 'Action-observation tool framework'],
+          ['Workspace', 'Execution environment abstraction (local, Docker, Apptainer, Cloud)'],
+          ['Condenser', 'Conversation history compression system'],
+          ['SecurityAnalyzer', 'Action security analysis and validation'],
+          ['Skill', 'Reusable prompt system'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Also ships: Agent Server',
+      },
+      {
+        type: 'paragraph',
+        content: 'The openhands-agent-server (in openhands-agent-server/ subdirectory) is a production REST/WebSocket server. Agent Canvas and the Automation Service communicate exclusively through the Agent Server — they never import the SDK directly.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'python',
+        label: 'Hello World',
+        code: `from openhands.sdk import LLM, Agent, Conversation, Tool
+from openhands.tools.terminal import TerminalTool
+
+llm = LLM(model="gpt-4o", api_key="...")
+agent = Agent(llm=llm, tools=[Tool(name=TerminalTool.name)])
+conversation = Conversation(agent=agent, workspace=".")
+conversation.send_message("List the files in this directory.")
+conversation.run()`,
+      },
+    ],
+  },
+
+  '/all-repos/overview/agent-canvas': {
+    title: 'Agent Canvas',
+    description: 'Self-hostable React/TypeScript frontend for the OpenHands Agent Server.',
+    route: '/all-repos/overview/agent-canvas',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/agent-canvas'],
+          ['Status', 'Beta 🧪 (Incubator)'],
+          ['Primary language', 'TypeScript / React'],
+          ['npm package', '@openhands/agent-canvas'],
+          ['Homepage', 'agent-server-gui.vercel.app'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas is the visual interface for running, monitoring, and automating OpenHands agents. It connects to one or more Agent Servers (from the SDK repo), lets you switch between them, and provides a full UI for conversations, automations, settings, file browser, terminal, and browser sessions.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key distinction from the OSS frontend',
+      },
+      {
+        type: 'table',
+        headers: ['', 'Agent Canvas', 'OpenHands OSS frontend'],
+        rows: [
+          ['Targets', 'Agent Server REST API', 'OpenHands app API'],
+          ['Repo', 'OpenHands/agent-canvas', 'All-Hands-AI/OpenHands (frontend/)'],
+          ['Ships as', 'npm package + Docker image', 'Bundled with OpenHands app'],
+          ['Multi-backend', 'Yes — connect to multiple Agent Servers', 'No'],
+          ['Automations UI', 'Yes', 'No'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Run',
+        code: `# No Docker (direct host access)
+npx @openhands/agent-canvas
+
+# With Docker sandbox (safer)
+docker run -it --rm -p 8000:8000 \\
+  -v ~/.openhands:/home/openhands/.openhands \\
+  -v ~/projects:/projects \\
+  ghcr.io/openhands/agent-canvas:latest`,
+      },
+    ],
+  },
+
+  '/all-repos/overview/automation': {
+    title: 'Automation Service',
+    description: 'Scheduled and event-driven agent runs — the backend that fires agents without manual prompting.',
+    route: '/all-repos/overview/automation',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/automation'],
+          ['Status', 'Internal 🔒'],
+          ['Primary language', 'Python / FastAPI'],
+          ['ADR', 'ADR-0002 in architecture repo'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'The Automation Service is a FastAPI backend that runs agents automatically — on a cron schedule or in response to external events (Slack messages, GitHub webhooks, Datadog alerts). It dispatches runs to the Agent Server via OpenHands Cloud sandboxes.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key components',
+      },
+      {
+        type: 'table',
+        headers: ['Component', 'Description'],
+        rows: [
+          ['Scheduler', 'Polls DB every 60s for due cron automations (FOR UPDATE SKIP LOCKED)'],
+          ['Dispatcher', 'Picks up PENDING runs, creates sandboxes, fires entrypoints'],
+          ['Watchdog', 'Detects and resolves stuck runs via sandbox exit code query'],
+          ['Preset generator', 'Generates SDK boilerplate tarballs for prompt + plugin presets'],
+          ['Event ingestion', 'Single endpoint POST /api/automation/v1/events/{org_id}/{integration_id}'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Trigger types',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Cron** — standard cron schedule (e.g. 0 9 * * 1 = every Monday at 9am)',
+          '**Slack** — message in a configured channel',
+          '**GitHub** — PR opened, issue created, push (via SaaS proxy)',
+          '**Datadog** — alert fired',
+          '**Generic webhook** — any HMAC-signed HTTP POST',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/overview/architecture': {
+    title: 'Architecture Repo',
+    description: 'Internal decision records, product design specs, and research projects.',
+    route: '/all-repos/overview/architecture',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/architecture (private)'],
+          ['Status', 'Internal 🔒'],
+          ['Primary language', 'Markdown'],
+          ['Tooling', 'madr-tools (bun x madr)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'The architecture repo captures technical design decisions using three document types: ADRs for accepted/rejected decisions, Product Design (PD-XXX) for implementation-ready designs, and Research (PR-XXX) for open-ended exploration.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Current ADRs',
+      },
+      {
+        type: 'table',
+        headers: ['ADR', 'Title', 'Status'],
+        rows: [
+          ['ADR-0000', 'Developer Workstation Setup', 'Accepted'],
+          ['ADR-0001', 'Runtime API Next Steps', 'Accepted'],
+          ['ADR-0002', 'Automations Service Architecture', 'Accepted'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/overview/cloud': {
+    title: 'OpenHands Cloud (SaaS)',
+    description: 'The hosted multi-tenant platform that runs OpenHands at scale.',
+    route: '/all-repos/overview/cloud',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['URL', 'app.all-hands.dev'],
+          ['Status', 'Hosted SaaS ☁️'],
+          ['Source', 'Private'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'OpenHands Cloud is the commercial hosted offering. It adds multi-tenancy, organization management, billing, per-user API key management, and managed sandbox infrastructure on top of the open-source core. Both Agent Canvas and the Automation Service integrate with Cloud APIs for sandbox creation and credential management.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Cloud APIs used by other repos',
+      },
+      {
+        type: 'table',
+        headers: ['Caller', 'Cloud API used'],
+        rows: [
+          ['Automation Service', 'POST /api/v1/sandboxes — creates sandbox per run'],
+          ['Automation Service', 'POST /api/service/users/{id}/orgs/{id}/api-keys — per-user key on demand'],
+          ['Automation Service', 'GET /api/keys/current — validates incoming API key (20s TTL cache)'],
+          ['Agent Canvas', 'Cloud workspace APIs for hosted sandbox sessions'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/overview/extensions': {
+    title: 'Extensions / Skills Marketplace',
+    description: 'Public skills and plugins that any agent, canvas, or SDK user can install.',
+    route: '/all-repos/overview/extensions',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/extensions'],
+          ['Status', 'Open Source ✅'],
+          ['Primary language', 'Markdown (SKILL.md files)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What it does',
+      },
+      {
+        type: 'paragraph',
+        content: 'The extensions repo is a public marketplace of skills and plugins. A skill is a Markdown file that adds domain knowledge, triggers, and behaviors to an agent\'s system prompt. Agent Canvas loads public skills from this repo at startup (controlled by VITE_LOAD_PUBLIC_SKILLS).',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'How skills are consumed',
+      },
+      {
+        type: 'table',
+        headers: ['Consumer', 'How'],
+        rows: [
+          ['Agent Canvas', 'Loaded at conversation start from ~/.agents/skills/ and public extensions repo'],
+          ['Agent Server', 'Reads skills from workspace .agents/skills/ directory'],
+          ['OpenHands (app)', 'Reads skills from ~/.openhands/skills/ and project .agents/skills/'],
+          ['Automation Service', 'Entry point scripts can load skills via SDK Plugin API'],
+        ],
+      },
+    ],
+  },
+
+  // How They Connect pages
+
+  '/all-repos/connections': {
+    title: 'Dependency Graph',
+    description: 'Which repos depend on which — the full dependency and communication map.',
+    route: '/all-repos/connections',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Dependency Direction',
+      },
+      {
+        type: 'table',
+        headers: ['Repo', 'Depends on', 'Via'],
+        rows: [
+          ['OpenHands (app)', 'software-agent-sdk', 'pip install openhands-sdk'],
+          ['Agent Canvas', 'Agent Server (SDK repo)', 'HTTP REST + WebSocket'],
+          ['Automation Service', 'Agent Server (SDK repo)', 'HTTP REST'],
+          ['Automation Service', 'OpenHands Cloud', 'HTTP REST (sandbox + key APIs)'],
+          ['Agent Canvas', 'OpenHands Cloud', 'HTTP REST (optional — cloud workspace)'],
+          ['Extensions skills', 'Agent Server / OpenHands', 'File system (SKILL.md loaded at runtime)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'What does NOT depend on what',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Agent Canvas** does not import openhands-sdk directly — all agent logic is in the Agent Server',
+          '**Automation Service** does not import openhands-sdk directly — it creates sandboxes and starts Agent Server entrypoints',
+          '**Architecture repo** has no runtime dependencies — it is documentation only',
+          '**OpenHands Cloud** is not open source — other repos call its REST API but do not import it',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/connections/data-flow': {
+    title: 'End-to-End Data Flow',
+    description: 'How a user request flows from UI through Agent Server to sandbox execution and back.',
+    route: '/all-repos/connections/data-flow',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Manual Conversation Flow',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'User types a message', content: 'In Agent Canvas (browser) or directly via SDK/API' },
+          { title: 'Agent Canvas → Agent Server', content: 'POST /api/conversations — creates a new conversation. WebSocket connection opened for live event streaming.' },
+          { title: 'Agent Server → SDK Agent', content: 'Agent receives the message as a MessageAction event. LLM is called with the full conversation history.' },
+          { title: 'Agent → Tool calls', content: 'Agent emits typed action events: CmdRunAction, FileWriteAction, BrowseInteractiveAction, etc.' },
+          { title: 'Agent Server → Sandbox', content: 'Actions dispatched to the isolated sandbox (Docker, Apptainer, or Cloud). Observations returned.' },
+          { title: 'Sandbox → Agent Server → Canvas', content: 'Observation events streamed back over WebSocket. UI updates in real time.' },
+          { title: 'Loop continues', content: 'Agent processes observations, decides next actions. Continues until task is complete or max iterations.' },
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Automated Run Flow (Automation Service)',
+      },
+      {
+        type: 'steps',
+        steps: [
+          { title: 'Trigger fires', content: 'Cron tick, GitHub webhook, Slack message, or Datadog alert reaches the Automation Service.' },
+          { title: 'Automation Service → Cloud', content: 'Fetches per-user API key on demand (POST /api/service/users/{id}/orgs/{id}/api-keys). Creates sandbox (POST /api/v1/sandboxes).' },
+          { title: 'Automation Service → Agent Server', content: 'Starts entrypoint script via POST /api/bash/start_bash_command with OPENHANDS_API_KEY in env.' },
+          { title: 'Entrypoint → SDK', content: 'The entrypoint script runs openhands-sdk: fetches LLM config + secrets + MCP config, creates a Conversation, sends the automation prompt.' },
+          { title: 'Completion callback', content: 'On exit, SDK calls POST /api/automation/v1/runs/<id>/complete. Run marked COMPLETED. Sandbox deleted.' },
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/connections/openhands-sdk': {
+    title: 'OpenHands ↔ SDK',
+    description: 'How the main OpenHands app uses the software-agent-sdk internally.',
+    route: '/all-repos/connections/openhands-sdk',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The OpenHands app uses openhands-sdk as its agent core. The SDK provides the Agent, Conversation, LLM, Tool, and Condenser classes that the app\'s agent loop is built around.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Integration points',
+      },
+      {
+        type: 'table',
+        headers: ['OpenHands component', 'SDK class / module used'],
+        rows: [
+          ['Agent reasoning loop', 'openhands.sdk.Agent'],
+          ['LLM calls', 'openhands.sdk.LLM (via LiteLLM)'],
+          ['Tool dispatch', 'openhands.sdk.Tool, ToolDefinition'],
+          ['History compression', 'openhands.sdk.Condenser'],
+          ['Action security', 'openhands.sdk.SecurityAnalyzer'],
+          ['Sandbox abstraction', 'openhands.sdk.Workspace'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 The OpenHands app is the reference integration for the SDK. Features built in OpenHands often graduate to the SDK as standalone classes.',
+      },
+    ],
+  },
+
+  '/all-repos/connections/canvas-agent-server': {
+    title: 'Agent Canvas ↔ Agent Server',
+    description: 'How the Agent Canvas frontend communicates with the Agent Server backend.',
+    route: '/all-repos/connections/canvas-agent-server',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Agent Canvas is a pure frontend — it has no agent logic. All agent execution happens in the Agent Server (part of the software-agent-sdk repo). Canvas communicates exclusively via HTTP REST and WebSocket.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key APIs',
+      },
+      {
+        type: 'table',
+        headers: ['Operation', 'API call'],
+        rows: [
+          ['Create conversation', 'POST /api/conversations'],
+          ['Send message', 'POST /api/conversations/{id}/messages'],
+          ['Stream events', 'WebSocket /ws/conversations/{id}'],
+          ['List conversations', 'GET /api/conversations'],
+          ['Get settings', 'GET /api/settings'],
+          ['Update LLM config', 'PUT /api/settings'],
+          ['Bash events', 'GET /api/bash/bash_events/search'],
+          ['MCP servers', 'GET/PUT /api/mcp'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Multi-backend switching',
+      },
+      {
+        type: 'paragraph',
+        content: 'A single Agent Canvas instance can connect to multiple Agent Servers simultaneously — laptop, remote VM, OpenHands Cloud — and switch between them from the backend picker in the UI. Each backend has its own SESSION_API_KEY stored client-side.',
+      },
+    ],
+  },
+
+  '/all-repos/connections/automation-agent-server': {
+    title: 'Automation ↔ Agent Server',
+    description: 'How the Automation Service dispatches agent runs to the Agent Server.',
+    route: '/all-repos/connections/automation-agent-server',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'The Automation Service never runs agent logic itself. It creates a sandbox via OpenHands Cloud, uploads the automation tarball, and starts an entrypoint script on the Agent Server inside that sandbox. The entrypoint script uses the SDK to create and run a Conversation.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Dispatch sequence',
+      },
+      {
+        type: 'table',
+        headers: ['Step', 'API call', 'Target'],
+        rows: [
+          ['1. Validate API key', 'GET /api/keys/current', 'OpenHands Cloud'],
+          ['2. Create sandbox', 'POST /api/v1/sandboxes', 'OpenHands Cloud'],
+          ['3. Upload tarball', 'Agent Server file API', 'Agent Server (in sandbox)'],
+          ['4. Start entrypoint', 'POST /api/bash/start_bash_command', 'Agent Server (in sandbox)'],
+          ['5. Completion callback', 'POST /api/automation/v1/runs/<id>/complete', 'Automation Service'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 The OPENHANDS_API_KEY passed into the sandbox serves double duty — it lets the SDK create conversations AND authenticates the completion callback. No separate callback token is needed.',
+      },
+    ],
+  },
+
+  '/all-repos/connections/api-contracts': {
+    title: 'API Contracts Between Repos',
+    description: 'The key REST API boundaries and shared contracts across the OpenHands repo ecosystem.',
+    route: '/all-repos/connections/api-contracts',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Agent Server REST API (software-agent-sdk)',
+      },
+      {
+        type: 'table',
+        headers: ['Caller', 'Key endpoints'],
+        rows: [
+          ['Agent Canvas', 'POST /api/conversations, GET /api/settings, PUT /api/settings, WebSocket /ws/conversations/{id}'],
+          ['Automation Service', 'POST /api/bash/start_bash_command, GET /api/bash/bash_events/search'],
+          ['SDK entrypoints', 'POST /api/conversations/{id}/messages (via openhands.sdk.Conversation)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'OpenHands Cloud REST API',
+      },
+      {
+        type: 'table',
+        headers: ['Caller', 'Key endpoints'],
+        rows: [
+          ['Automation Service', 'GET /api/keys/current — key validation (20s TTL cache)'],
+          ['Automation Service', 'POST /api/v1/sandboxes — sandbox creation'],
+          ['Automation Service', 'POST /api/service/users/{uid}/orgs/{oid}/api-keys — per-run key'],
+          ['Agent Canvas', 'Cloud workspace APIs for hosted sessions'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Automation Service REST API',
+      },
+      {
+        type: 'table',
+        headers: ['Caller', 'Key endpoints'],
+        rows: [
+          ['Agent Canvas / users', 'POST /api/automation/v1 — create automation'],
+          ['Agent Canvas / users', 'GET /api/automation/v1 — list automations'],
+          ['SDK entrypoint (in sandbox)', 'POST /api/automation/v1/runs/<id>/complete — completion callback'],
+          ['OpenHands Cloud (SaaS proxy)', 'POST /api/automation/v1/events/{org_id}/{integration_id} — event ingestion'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/connections/cloud': {
+    title: 'Cloud ↔ All Repos',
+    description: 'How OpenHands Cloud interacts with each repository in the ecosystem.',
+    route: '/all-repos/connections/cloud',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'OpenHands Cloud is the hosted SaaS platform. It acts as the sandbox provider, key manager, and event proxy for the entire ecosystem. Other repos call Cloud REST APIs but never import its code.',
+      },
+      {
+        type: 'table',
+        headers: ['Repo', 'How it uses Cloud', 'Direction'],
+        rows: [
+          ['Automation Service', 'Sandbox lifecycle, per-user API keys, org resolution for webhooks', 'Automation → Cloud'],
+          ['Agent Canvas', 'Cloud workspace sessions, org management, credential sharing', 'Canvas → Cloud'],
+          ['OpenHands (app)', 'Cloud is a deployment target — SaaS runs OpenHands at scale', 'Cloud wraps OpenHands'],
+          ['software-agent-sdk', 'OpenHandsCloudWorkspace class connects SDK conversations to Cloud sandboxes', 'SDK → Cloud'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Cloud acts as an event proxy for GitHub webhooks — it resolves org mappings and enriches the payload before forwarding to the Automation Service, keeping the Automation Service org-agnostic.',
+      },
+    ],
+  },
+
+  // Repo Reference pages
+
+  '/all-repos/repos': {
+    title: 'OpenHands/OpenHands',
+    description: 'Quick reference card for the main OpenHands open-source repository.',
+    route: '/all-repos/repos',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/All-Hands-AI/OpenHands'],
+          ['Status', 'Open Source ✅'],
+          ['Language', 'Python + TypeScript'],
+          ['Install', 'pip install openhands — or Docker pull'],
+          ['Docs tab', 'OpenHands'],
+          ['SWE-bench', '77.6%'],
+          ['Key deps', 'openhands-sdk, Docker, LiteLLM'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Fix a bug in the agent\'s reasoning or planning behavior',
+          'Improve the Docker/Kubernetes sandbox runtime',
+          'Enhance the OSS web UI (React frontend in frontend/)',
+          'Add or modify the OpenHands REST API',
+          'Write integration tests against the full stack',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/repos/sdk': {
+    title: 'OpenHands/software-agent-sdk',
+    description: 'Quick reference card for the software-agent-sdk repository.',
+    route: '/all-repos/repos/sdk',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/software-agent-sdk'],
+          ['Status', 'Open Source ✅'],
+          ['Language', 'Python'],
+          ['Install', 'pip install openhands-sdk openhands-tools'],
+          ['Agent Server', 'pip install openhands-agent-server (or uvx)'],
+          ['Docs tab', 'SDK'],
+          ['Key exports', 'Agent, Conversation, LLM, Tool, Workspace, Condenser, Skill'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Add a new built-in tool (terminal, file editor, browser, etc.)',
+          'Extend the Agent or Conversation APIs',
+          'Improve LLM provider support (new model, streaming, reasoning)',
+          'Add a new sandbox workspace type',
+          'Build or improve the Agent Server REST API',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/repos/agent-canvas': {
+    title: 'OpenHands/agent-canvas',
+    description: 'Quick reference card for the agent-canvas repository.',
+    route: '/all-repos/repos/agent-canvas',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/agent-canvas'],
+          ['Status', 'Beta 🧪'],
+          ['Language', 'TypeScript / React'],
+          ['npm package', '@openhands/agent-canvas'],
+          ['Run', 'npx @openhands/agent-canvas — or Docker'],
+          ['Docs tab', 'Agent Canvas'],
+          ['Key deps', 'Agent Server (from software-agent-sdk)'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Improve the conversation, chat, or event stream UI',
+          'Add or fix automation creation and management views',
+          'Enhance settings panels (LLM, MCP, skills, secrets)',
+          'Fix backend switching or multi-server management',
+          'Add i18n translations',
+          'Write Playwright E2E or Vitest component tests',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/repos/automation': {
+    title: 'OpenHands/automation',
+    description: 'Quick reference card for the automation service repository.',
+    route: '/all-repos/repos/automation',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/automation'],
+          ['Status', 'Internal 🔒'],
+          ['Language', 'Python / FastAPI'],
+          ['Run', 'uvicorn automation.app:app'],
+          ['Docs tab', 'Architecture → ADR-0002'],
+          ['Key deps', 'Agent Server, OpenHands Cloud, PostgreSQL'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Add a new event trigger type (Slack, GitHub, Datadog, generic webhook)',
+          'Improve scheduler reliability or dispatcher performance',
+          'Add new preset types (beyond prompt and plugin)',
+          'Fix staleness watchdog edge cases',
+          'Add new storage backends (S3, Azure Blob) for tarballs',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/repos/architecture': {
+    title: 'OpenHands/architecture',
+    description: 'Quick reference card for the architecture decisions repository.',
+    route: '/all-repos/repos/architecture',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/architecture (private)'],
+          ['Status', 'Internal 🔒'],
+          ['Language', 'Markdown'],
+          ['Tooling', 'bun install && bun x madr new "Title"'],
+          ['Docs tab', 'Architecture'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Record a significant technical decision that affects multiple repos (new ADR)',
+          'Propose an approved implementation plan (new PD-XXX Product Design)',
+          'Explore an open technical question before committing to a design (new PR-XXX Research)',
+          'Document an engineering process or team workflow (docs/process/)',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/repos/extensions': {
+    title: 'OpenHands/extensions',
+    description: 'Quick reference card for the public skills and plugins marketplace.',
+    route: '/all-repos/repos/extensions',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Field', 'Value'],
+        rows: [
+          ['GitHub', 'github.com/OpenHands/extensions'],
+          ['Status', 'Open Source ✅'],
+          ['Language', 'Markdown (SKILL.md)'],
+          ['Loaded by', 'Agent Canvas, Agent Server, OpenHands (app)'],
+          ['Docs tab', 'SDK → Guides → Agent Skills & Context'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Contribute here when you want to…',
+      },
+      {
+        type: 'list',
+        items: [
+          'Publish a new skill that adds domain knowledge to any agent',
+          'Create a plugin bundle (skills + hooks + MCP servers)',
+          'Add a GitHub Workflows skill for CI/CD automation',
+          'Contribute code review, TODO management, or Datadog debugging skills',
+        ],
+      },
+    ],
+  },
+
+  // Contributing pages
+
+  '/all-repos/contributing': {
+    title: 'Where to Start',
+    description: 'Which repo to contribute to based on what you want to build or fix.',
+    route: '/all-repos/contributing',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Decision Table',
+      },
+      {
+        type: 'table',
+        headers: ['I want to…', 'Repo', 'Docs tab'],
+        rows: [
+          ['Fix agent reasoning, planning, or sandbox behavior', 'OpenHands/OpenHands', 'OpenHands → Contributing'],
+          ['Add a new SDK tool, workspace type, or LLM provider', 'software-agent-sdk', 'SDK → Guides'],
+          ['Improve the conversation, files, or settings UI', 'agent-canvas', 'Agent Canvas → Contributing'],
+          ['Add a new automation trigger type', 'automation', 'Architecture → ADR-0002'],
+          ['Record a technical decision', 'architecture', 'Architecture → Decision Records'],
+          ['Propose a feature design', 'architecture', 'Architecture → Product Design'],
+          ['Explore a technical question', 'architecture', 'Architecture → Research'],
+          ['Publish a skill or plugin', 'extensions', 'SDK → Guides → Skills'],
+          ['Fix docs for a specific repo', 'That repo\'s docs branch', 'This docs-site'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'First-time contributor checklist',
+      },
+      {
+        type: 'list',
+        items: [
+          'Read the target repo\'s CONTRIBUTING.md or AGENTS.md',
+          'Check open issues labeled `good first issue`',
+          'Run the test suite locally before opening a PR',
+          'For cross-repo changes, open PRs in all affected repos and link them to each other',
+          'For significant new features, open an ADR or PD in the architecture repo first',
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/contributing/openhands': {
+    title: 'Contributing to OpenHands',
+    description: 'How to contribute to the main OpenHands open-source repository.',
+    route: '/all-repos/contributing/openhands',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Setup',
+      },
+      {
+        type: 'list',
+        items: [
+          'Python 3.11+, Node.js 18+, Docker',
+          'pip install -e ".[dev]" for Python deps',
+          'cd frontend && npm install for the React UI',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quality gates',
+      },
+      {
+        type: 'table',
+        headers: ['Check', 'Command'],
+        rows: [
+          ['Python lint', 'pre-commit run --all-files'],
+          ['Python tests', 'python -m pytest tests/unit/'],
+          ['Frontend lint', 'cd frontend && npm run lint'],
+          ['Frontend tests', 'cd frontend && npm test'],
+          ['E2E tests', 'python -m pytest tests/integration/'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 The OpenHands AGENTS.md file in the repo root contains guidelines written for AI agents contributing to the repo — useful for humans too.',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Dev setup',
+        code: `git clone https://github.com/All-Hands-AI/OpenHands.git
+cd OpenHands
+pip install -e ".[dev]"
+cd frontend && npm install && cd ..
+make run  # starts the full stack`,
+      },
+    ],
+  },
+
+  '/all-repos/contributing/sdk': {
+    title: 'Contributing to the SDK',
+    description: 'How to contribute to the software-agent-sdk repository.',
+    route: '/all-repos/contributing/sdk',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Setup',
+      },
+      {
+        type: 'list',
+        items: [
+          'Python 3.11+, uv (pip install uv)',
+          'uv sync — installs all deps from uv.lock',
+          'uv run pytest tests/ — runs the test suite',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Repo structure',
+      },
+      {
+        type: 'table',
+        headers: ['Directory', 'Contents'],
+        rows: [
+          ['openhands-sdk/', 'Core SDK — Agent, Conversation, LLM, Tool, etc.'],
+          ['openhands-tools/', 'Built-in tools — TerminalTool, FileEditorTool, BrowserTool, etc.'],
+          ['openhands-workspace/', 'Workspace implementations — local, Docker, Apptainer, Cloud'],
+          ['openhands-agent-server/', 'FastAPI Agent Server — wraps SDK for multi-client use'],
+          ['examples/', '50+ code examples covering every SDK feature'],
+          ['tests/', 'Unit, integration, and E2E tests'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Dev setup',
+        code: `git clone https://github.com/OpenHands/software-agent-sdk.git
+cd software-agent-sdk
+pip install uv
+uv sync
+uv run pytest tests/`,
+      },
+    ],
+  },
+
+  '/all-repos/contributing/agent-canvas': {
+    title: 'Contributing to Agent Canvas',
+    description: 'How to contribute to the agent-canvas repository.',
+    route: '/all-repos/contributing/agent-canvas',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Setup',
+      },
+      {
+        type: 'list',
+        items: [
+          'Node.js 22.12.x or later',
+          'npm install',
+          'npm run dev — starts full stack (UI + Agent Server + Automation backend)',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quality gates',
+      },
+      {
+        type: 'table',
+        headers: ['Check', 'Command'],
+        rows: [
+          ['TypeScript', 'npm run typecheck'],
+          ['ESLint + Prettier', 'npm run lint'],
+          ['Unit + component tests', 'npm test'],
+          ['E2E tests', 'npm run test:e2e'],
+          ['Visual snapshots', 'npm run test:e2e:snapshots'],
+        ],
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'Dev setup',
+        code: `git clone https://github.com/OpenHands/agent-canvas.git
+cd agent-canvas
+npm install
+npm run dev`,
+      },
+    ],
+  },
+
+  '/all-repos/contributing/automation': {
+    title: 'Contributing to Automation',
+    description: 'How to contribute to the automation service repository.',
+    route: '/all-repos/contributing/automation',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Setup',
+      },
+      {
+        type: 'list',
+        items: [
+          'Python 3.11+, uv',
+          'PostgreSQL (local or Docker)',
+          'uv sync — installs deps',
+          'uv run uvicorn automation.app:app --reload — starts the service',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Key files',
+      },
+      {
+        type: 'table',
+        headers: ['File', 'What to edit for…'],
+        rows: [
+          ['automation/router.py', 'New automation CRUD endpoints or callback logic'],
+          ['automation/preset_router.py', 'New preset types'],
+          ['automation/scheduler.py', 'Changes to cron polling behavior'],
+          ['automation/dispatcher.py', 'Dispatch logic, tarball handling, sandbox interaction'],
+          ['automation/watchdog.py', 'Stuck run detection and resolution'],
+          ['automation/models.py', 'Database schema changes'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/contributing/architecture': {
+    title: 'Recording Architecture Decisions',
+    description: 'How to contribute to the architecture repo — ADRs, PDs, and Research projects.',
+    route: '/all-repos/contributing/architecture',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Document type', 'When to use', 'Approval required?'],
+        rows: [
+          ['ADR', 'Significant decision affecting multiple repos', 'Implicit — merged = accepted'],
+          ['Product Design (PD-XXX)', 'Implementation-ready feature design', 'Yes — committers from each impacted repo'],
+          ['Research (PR-XXX)', 'Open-ended exploration before committing to a design', 'No'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Quick commands',
+      },
+    ],
+    codeExamples: [
+      {
+        language: 'bash',
+        label: 'New ADR',
+        code: `bun install
+bun x madr new "Title of the decision"
+# Edit docs/decisions/XXXX-title.md
+bun x madr index`,
+      },
+      {
+        language: 'bash',
+        label: 'New Product Design',
+        code: `# Use the new-design-project OpenHands skill, or:
+mkdir -p docs/product/design/PD-XXX-name
+cp .openhands/templates/design-template.md \\
+   docs/product/design/PD-XXX-name/README.md`,
+      },
+    ],
+  },
+
+  '/all-repos/contributing/cross-repo': {
+    title: 'Cross-Repo Pull Requests',
+    description: 'How to handle changes that span multiple repositories.',
+    route: '/all-repos/contributing/cross-repo',
+    sections: [
+      {
+        type: 'paragraph',
+        content: 'Some features require coordinated changes across multiple repos — for example, adding a new Agent Server API endpoint that both Agent Canvas and the Automation Service need to call.',
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Guidelines',
+      },
+      {
+        type: 'list',
+        items: [
+          'Open a PR in each affected repo. Cross-link all PRs in each PR description.',
+          'Merge in dependency order — the repo being depended on (e.g. SDK) first, then the consumers.',
+          'For significant new APIs, open an ADR or PD in the architecture repo *before* opening code PRs.',
+          'Coordinate reviewers — ping committers from all affected repos in a single GitHub issue.',
+          'If the change touches both an internal and an OSS repo, the OSS PR can be opened without the internal context; add a private → OSS cross-link in the architecture ADR.',
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Common cross-repo change patterns',
+      },
+      {
+        type: 'table',
+        headers: ['Change', 'Repos affected'],
+        rows: [
+          ['New Agent Server API endpoint', 'software-agent-sdk (server) + agent-canvas (client) and/or automation (client)'],
+          ['New SDK Tool', 'software-agent-sdk (tool impl) + OpenHands/OpenHands (if integrated)'],
+          ['New automation trigger type', 'automation (backend) + agent-canvas (UI for new trigger config)'],
+          ['New skill / plugin', 'extensions + any consumer (agent-canvas, SDK examples, OpenHands)'],
+          ['Breaking API change', 'All repos that call the changed API — coordinate version bumps'],
+        ],
+      },
+    ],
+  },
+
+  // Glossary
+
+  '/all-repos/glossary': {
+    title: 'Glossary of Terms',
+    description: 'Shared vocabulary used across all OpenHands repositories.',
+    route: '/all-repos/glossary',
+    sections: [
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Core Concepts',
+      },
+      {
+        type: 'table',
+        headers: ['Term', 'Definition'],
+        rows: [
+          ['Agent', 'An LLM-backed reasoning loop (openhands.sdk.Agent) that plans actions, dispatches tool calls, and processes observations in a loop until the task is complete'],
+          ['Agent Server', 'The FastAPI REST/WebSocket API (in the software-agent-sdk repo) that wraps the SDK for multi-client use — the primary backend for Agent Canvas and the Automation Service'],
+          ['Agent Canvas', 'The self-hostable React/TypeScript frontend (OpenHands/agent-canvas) that connects to one or more Agent Servers'],
+          ['Automation Service', 'The FastAPI backend (OpenHands/automation) that runs agents on a schedule or in response to external events without manual prompting'],
+          ['Conversation', 'One execution session — a user sends a prompt, the agent loop runs, results are returned. Corresponds to openhands.sdk.Conversation.'],
+          ['Sandbox', 'An isolated execution environment (Docker, Apptainer, or OpenHands Cloud) where the agent runs code, edits files, and browses the web'],
+          ['Workspace', 'The SDK abstraction (openhands.sdk.Workspace) over the execution environment — local directory, Docker container, Apptainer, or Cloud'],
+          ['Skill', 'A Markdown SKILL.md file that adds domain knowledge, triggers, and behavior guidelines to an agent\'s system prompt at conversation start'],
+          ['Plugin', 'A bundle of skills, hooks, MCP servers, agents, and commands packaged for reuse — installed via the extensions marketplace or a Git URL'],
+          ['Hook', 'A lifecycle callback (openhands.sdk.hooks) that fires at conversation events (start, tool call, finish) for logging, monitoring, or custom behavior'],
+          ['Condenser', 'A component (openhands.sdk.Condenser) that compresses conversation history to manage context window length and reduce token costs'],
+          ['LLM', 'The provider-agnostic language model interface (openhands.sdk.LLM) backed by LiteLLM — supports OpenAI, Anthropic, Gemini, Mistral, Ollama, and more'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Tools & Protocols',
+      },
+      {
+        type: 'table',
+        headers: ['Term', 'Definition'],
+        rows: [
+          ['Tool / ToolDefinition', 'The SDK action-observation framework — tools define what an agent can do (run bash, edit files, browse web). ToolDefinition is the schema; Tool is the runtime binding.'],
+          ['MCP', 'Model Context Protocol — an open standard for connecting agents to external tool servers. Agent Canvas and the Agent Server support MCP server configuration.'],
+          ['ACP', 'Agent Communication Protocol — allows the SDK to delegate to ACP-compatible agent harnesses (Claude Code, Gemini CLI) instead of calling an LLM directly'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Automation Terms',
+      },
+      {
+        type: 'table',
+        headers: ['Term', 'Definition'],
+        rows: [
+          ['Tarball', 'A .tar.gz archive of an automation\'s SDK entrypoint script, uploaded to GCS/S3 and dispatched into a sandbox by the Automation Service'],
+          ['Preset', 'A pre-built automation template (prompt or plugin) where users provide arguments instead of writing SDK code — the service generates the boilerplate'],
+          ['Dispatcher', 'The Automation Service component that picks up PENDING runs, creates sandboxes, and fires entrypoint scripts'],
+          ['Watchdog', 'The Automation Service component that detects stuck RUNNING runs and resolves them by querying the sandbox exit code'],
+          ['JMESPath', 'The query language used for event trigger condition matching in the Automation Service — evaluates conditions against incoming webhook payloads'],
+          ['integration_id', 'A UUID identifying a specific event source integration (GitHub, Slack, generic webhook) within an org in the Automation Service'],
+        ],
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Architecture Repo Terms',
+      },
+      {
+        type: 'table',
+        headers: ['Term', 'Definition'],
+        rows: [
+          ['ADR', 'Architecture Decision Record — a Markdown file (MADR format) capturing a significant technical decision, its context, options considered, and outcome'],
+          ['PD (Product Design)', 'A PD-XXX numbered document describing an implementation-ready design — includes problem statement, proposed solution, technical design, and milestone plan. Requires committer approval.'],
+          ['PR (Research)', 'A PR-XXX numbered research project capturing open-ended exploration — findings, analysis, and recommendations. Can be merged without formal approval.'],
+          ['MADR', 'Markdown Architectural Decision Records — the lightweight format used for ADRs, tooled by madr-tools (bun x madr new "Title")'],
+        ],
+      },
+    ],
+  },
+
   // ── Architecture Pages ────────────────────────────────────────────────────
 
   '/arch-repo': {

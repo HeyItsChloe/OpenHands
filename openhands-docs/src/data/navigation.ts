@@ -22,6 +22,7 @@ export interface Repo {
 
 // ── Level 1: Repos ──────────────────────────────────────────────────────────
 export const repos: Repo[] = [
+  { id: 'all-repos',    title: 'All Repos',    defaultTab: 'ar-overview' },
   { id: 'openhands', title: 'OpenHands', defaultTab: 'introduction' },
   { id: 'deploy',    title: 'Deploy',    defaultTab: 'deploy-overview' },
   { id: 'sdk',           title: 'SDK',          defaultTab: 'sdk-introduction' },
@@ -31,6 +32,13 @@ export const repos: Repo[] = [
 
 // ── Level 2: Sub-tabs per repo ───────────────────────────────────────────────
 export const tabsByRepo: Record<string, TopTab[]> = {
+  'all-repos': [
+    { id: 'ar-overview',      title: 'Overview',         slug: '/all-repos' },
+    { id: 'ar-how-connected', title: 'How They Connect', slug: '/all-repos/connections' },
+    { id: 'ar-repo-ref',      title: 'Repo Reference',   slug: '/all-repos/repos' },
+    { id: 'ar-contributing',  title: 'Contributing',     slug: '/all-repos/contributing' },
+    { id: 'ar-glossary',      title: 'Glossary',         slug: '/all-repos/glossary' },
+  ],
   openhands: [
     { id: 'introduction',    title: 'Introduction',    slug: '/' },
     { id: 'getting-started', title: 'Getting Started', slug: '/getting-started' },
@@ -1402,5 +1410,51 @@ export const navigationByTab: Record<string, NavItem[]> = {
 
   'arch-diagrams': [
     { id: 'arch-diagrams-overview', title: 'Diagrams Overview', route: '/arch-repo/diagrams' },
+  ],
+
+  // ── All Repos ─────────────────────────────────────────────────────────────
+
+  'ar-overview': [
+    { id: 'ar-ecosystem-map',   title: 'Ecosystem Map',                   route: '/all-repos' },
+    { id: 'ar-ov-openhands',    title: 'OpenHands (the App)',             route: '/all-repos/overview/openhands' },
+    { id: 'ar-ov-sdk',          title: 'software-agent-sdk',              route: '/all-repos/overview/sdk' },
+    { id: 'ar-ov-canvas',       title: 'Agent Canvas',                    route: '/all-repos/overview/agent-canvas' },
+    { id: 'ar-ov-automation',   title: 'Automation Service',              route: '/all-repos/overview/automation' },
+    { id: 'ar-ov-architecture', title: 'Architecture Repo',               route: '/all-repos/overview/architecture' },
+    { id: 'ar-ov-cloud',        title: 'OpenHands Cloud (SaaS)',          route: '/all-repos/overview/cloud' },
+    { id: 'ar-ov-extensions',   title: 'Extensions / Skills Marketplace', route: '/all-repos/overview/extensions' },
+  ],
+
+  'ar-how-connected': [
+    { id: 'ar-dep-graph',     title: 'Dependency Graph',            route: '/all-repos/connections' },
+    { id: 'ar-data-flow',     title: 'End-to-End Data Flow',        route: '/all-repos/connections/data-flow' },
+    { id: 'ar-oh-sdk',        title: 'OpenHands ↔ SDK',             route: '/all-repos/connections/openhands-sdk' },
+    { id: 'ar-canvas-server', title: 'Agent Canvas ↔ Agent Server', route: '/all-repos/connections/canvas-agent-server' },
+    { id: 'ar-auto-server',   title: 'Automation ↔ Agent Server',   route: '/all-repos/connections/automation-agent-server' },
+    { id: 'ar-api-contracts', title: 'API Contracts Between Repos', route: '/all-repos/connections/api-contracts' },
+    { id: 'ar-cloud-all',     title: 'Cloud ↔ All Repos',           route: '/all-repos/connections/cloud' },
+  ],
+
+  'ar-repo-ref': [
+    { id: 'ar-ref-openhands',  title: 'OpenHands/OpenHands',          route: '/all-repos/repos' },
+    { id: 'ar-ref-sdk',        title: 'OpenHands/software-agent-sdk', route: '/all-repos/repos/sdk' },
+    { id: 'ar-ref-canvas',     title: 'OpenHands/agent-canvas',       route: '/all-repos/repos/agent-canvas' },
+    { id: 'ar-ref-automation', title: 'OpenHands/automation',         route: '/all-repos/repos/automation' },
+    { id: 'ar-ref-arch',       title: 'OpenHands/architecture',       route: '/all-repos/repos/architecture' },
+    { id: 'ar-ref-extensions', title: 'OpenHands/extensions',         route: '/all-repos/repos/extensions' },
+  ],
+
+  'ar-contributing': [
+    { id: 'ar-con-start',      title: 'Where to Start',                   route: '/all-repos/contributing' },
+    { id: 'ar-con-openhands',  title: 'Contributing to OpenHands',        route: '/all-repos/contributing/openhands' },
+    { id: 'ar-con-sdk',        title: 'Contributing to the SDK',          route: '/all-repos/contributing/sdk' },
+    { id: 'ar-con-canvas',     title: 'Contributing to Agent Canvas',     route: '/all-repos/contributing/agent-canvas' },
+    { id: 'ar-con-automation', title: 'Contributing to Automation',       route: '/all-repos/contributing/automation' },
+    { id: 'ar-con-arch',       title: 'Recording Architecture Decisions', route: '/all-repos/contributing/architecture' },
+    { id: 'ar-con-cross',      title: 'Cross-Repo Pull Requests',         route: '/all-repos/contributing/cross-repo' },
+  ],
+
+  'ar-glossary': [
+    { id: 'ar-glossary-page', title: 'Glossary of Terms', route: '/all-repos/glossary' },
   ],
 };
