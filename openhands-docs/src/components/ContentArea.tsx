@@ -23,27 +23,33 @@ mermaid.initialize({
   },
 });
 
-let diagramCounter = 0;
-
 function MermaidDiagram({ content, caption }: { content: string; caption?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const id = useRef(`mermaid-${++diagramCounter}`);
+  // Use a stable unique ID per component instance (survives HMR)
+  const id = useRef(`md-${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`);
 
   useEffect(() => {
     if (!ref.current) return;
+    let active = true;
     const el = ref.current;
+    const diagramId = `${id.current}-${Date.now()}`;
     el.innerHTML = '';
-    mermaid.render(id.current, content).then(({ svg }) => {
-      el.innerHTML = svg;
-      // make SVG responsive
-      const svgEl = el.querySelector('svg');
-      if (svgEl) {
-        svgEl.style.maxWidth = '100%';
-        svgEl.style.height = 'auto';
-      }
-    }).catch(() => {
-      el.innerHTML = `<pre style="color:var(--text-muted);font-size:12px;white-space:pre-wrap">${content}</pre>`;
-    });
+    mermaid.render(diagramId, content)
+      .then(({ svg }) => {
+        if (!active) return;
+        el.innerHTML = svg;
+        const svgEl = el.querySelector('svg');
+        if (svgEl) {
+          svgEl.removeAttribute('height');
+          svgEl.style.maxWidth = '100%';
+          svgEl.style.height = 'auto';
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        el.innerHTML = `<pre style="color:var(--text-muted);font-size:12px;white-space:pre-wrap;padding:8px">${content}</pre>`;
+      });
+    return () => { active = false; };
   }, [content]);
 
   return (
