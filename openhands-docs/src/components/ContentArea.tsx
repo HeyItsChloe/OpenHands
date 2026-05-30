@@ -1,5 +1,79 @@
+import { useEffect, useRef } from 'react';
 import { AlertCircle, CheckCircle, Info, AlertTriangle, ArrowRight } from 'lucide-react';
 import type { PageContent, PageSection } from '../data/pages';
+import mermaid from 'mermaid';
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    background: '#1a1a2e',
+    primaryColor: '#4f46e5',
+    primaryTextColor: '#e2e8f0',
+    primaryBorderColor: '#4f46e5',
+    lineColor: '#64748b',
+    secondaryColor: '#1e293b',
+    tertiaryColor: '#0f172a',
+    edgeLabelBackground: '#1e293b',
+    nodeTextColor: '#e2e8f0',
+    clusterBkg: '#1e293b',
+    titleColor: '#e2e8f0',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '13px',
+  },
+});
+
+let diagramCounter = 0;
+
+function MermaidDiagram({ content, caption }: { content: string; caption?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const id = useRef(`mermaid-${++diagramCounter}`);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+    el.innerHTML = '';
+    mermaid.render(id.current, content).then(({ svg }) => {
+      el.innerHTML = svg;
+      // make SVG responsive
+      const svgEl = el.querySelector('svg');
+      if (svgEl) {
+        svgEl.style.maxWidth = '100%';
+        svgEl.style.height = 'auto';
+      }
+    }).catch(() => {
+      el.innerHTML = `<pre style="color:var(--text-muted);font-size:12px;white-space:pre-wrap">${content}</pre>`;
+    });
+  }, [content]);
+
+  return (
+    <div style={{ margin: '16px 0 24px' }}>
+      <div
+        ref={ref}
+        style={{
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border)',
+          borderRadius: 10,
+          padding: '20px 16px',
+          overflowX: 'auto',
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      />
+      {caption && (
+        <p style={{
+          textAlign: 'center',
+          fontSize: 12,
+          color: 'var(--text-muted)',
+          marginTop: 8,
+          fontStyle: 'italic',
+        }}>
+          {caption}
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface ContentAreaProps {
   page: PageContent;
@@ -202,6 +276,9 @@ function Section({ section }: { section: PageSection }) {
 
     case 'steps':
       return <Steps steps={section.steps} />;
+
+    case 'diagram':
+      return <MermaidDiagram content={section.content || ''} caption={section.caption} />;
 
     default:
       return null;

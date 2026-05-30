@@ -5,7 +5,7 @@ export interface CodeExample {
 }
 
 export interface PageSection {
-  type: 'heading' | 'paragraph' | 'code' | 'table' | 'callout' | 'list' | 'steps';
+  type: 'heading' | 'paragraph' | 'code' | 'table' | 'callout' | 'list' | 'steps' | 'diagram';
   level?: number;
   content?: string;
   items?: string[];
@@ -14,6 +14,7 @@ export interface PageSection {
   variant?: 'info' | 'warning' | 'success' | 'danger';
   steps?: { title: string; content: string }[];
   examples?: CodeExample[];
+  caption?: string;
 }
 
 export interface PageContent {
@@ -2203,16 +2204,60 @@ python 01_hello_world.py`,
         content: 'Dependency Hierarchy',
       },
       {
-        type: 'list',
-        items: [
-          '**software-agent-sdk** is the foundation — all other services depend on it',
-          '**OpenHands (app)** uses the SDK internally for its agent loop',
-          '**Agent Server** (inside the SDK repo) is the REST/WebSocket API used by Agent Canvas and Automation',
-          '**Agent Canvas** is a pure frontend — it calls Agent Server and has no agent logic of its own',
-          '**Automation Service** orchestrates Agent Server to run scheduled/event-driven agents',
-          '**Architecture repo** informs all repos via ADRs and Product Design documents',
-          '**Extensions** provides skills consumed by Agent Canvas, Agent Server, and OpenHands',
-        ],
+        type: 'diagram',
+        caption: 'Diagram 13 — Repos organised by dependency layer',
+        content: `flowchart TB
+  subgraph L0["Layer 0 — Knowledge"]
+    ARCH["Architecture Repo\\n(ADRs + PDs)"]
+    EXT["Extensions\\n(Skills + Plugins)"]
+  end
+  subgraph L1["Layer 1 — Foundation"]
+    SDK["software-agent-sdk\\n+ Agent Server"]
+  end
+  subgraph L2["Layer 2 — Application Tier"]
+    OH["OpenHands (app)"]
+    AC["Agent Canvas"]
+    AUTO["Automation Service"]
+  end
+  subgraph L3["Layer 3 — Platform"]
+    CLOUD["OpenHands Cloud"]
+  end
+
+  SDK --> OH
+  SDK --> AC
+  SDK --> AUTO
+  OH --> CLOUD
+  AC -. optional .-> CLOUD
+  AUTO --> CLOUD
+  ARCH -. informs .-> OH
+  ARCH -. informs .-> SDK
+  ARCH -. informs .-> AUTO
+  EXT -. skills .-> AC
+  EXT -. skills .-> SDK`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Repo Positioning',
+      },
+      {
+        type: 'diagram',
+        caption: 'Diagram 12 — Repos by visibility (OSS vs internal) and layer (infra vs app)',
+        content: `quadrantChart
+  title Repos by Visibility and Layer
+  x-axis Internal --> Open Source
+  y-axis Infrastructure --> Application
+  quadrant-1 OSS Application
+  quadrant-2 Internal Application
+  quadrant-3 Internal Infrastructure
+  quadrant-4 OSS Infrastructure
+  OpenHands App: [0.85, 0.85]
+  Agent Canvas: [0.75, 0.90]
+  Extensions: [0.90, 0.50]
+  software-agent-sdk: [0.80, 0.25]
+  Automation Service: [0.25, 0.65]
+  Architecture Repo: [0.20, 0.30]
+  OpenHands Cloud: [0.10, 0.80]`,
       },
     ],
     codeExamples: [
@@ -2617,6 +2662,40 @@ docker run -it --rm -p 8000:8000 \\
     route: '/all-repos/connections',
     sections: [
       {
+        type: 'diagram',
+        caption: 'Diagram 1 — C4 Container diagram: all repos and their connections',
+        content: `flowchart TB
+  subgraph OSS["Open Source"]
+    OH["OpenHands App\\nPython + React\\ngithub.com/All-Hands-AI/OpenHands"]
+    SDK["software-agent-sdk\\nPython\\nopenhands-sdk + agent-server"]
+    AC["Agent Canvas\\nTypeScript / React\\n@openhands/agent-canvas"]
+    EXT["Extensions\\nMarkdown skills"]
+  end
+  subgraph Internal["Internal"]
+    AUTO["Automation Service\\nPython / FastAPI"]
+    ARCH["Architecture Repo\\nMarkdown ADRs / PDs"]
+  end
+  subgraph SaaS["OpenHands Cloud"]
+    CLOUD["Cloud APIs\\nsandboxes · keys · orgs"]
+  end
+  subgraph External["External"]
+    LLM["LLM Providers\\nOpenAI · Anthropic · Gemini"]
+    GH["GitHub / Slack / Datadog"]
+  end
+
+  OH -->|pip install openhands-sdk| SDK
+  AC -->|HTTP REST + WebSocket| SDK
+  AUTO -->|HTTP REST| SDK
+  AUTO -->|sandbox + key APIs| CLOUD
+  AC -. optional cloud workspace .-> CLOUD
+  SDK -->|LiteLLM| LLM
+  GH -->|webhooks via SaaS proxy| AUTO
+  EXT -. SKILL.md at runtime .-> SDK
+  EXT -. SKILL.md at startup .-> AC
+  ARCH -. ADRs inform .-> OH
+  ARCH -. ADRs inform .-> SDK`,
+      },
+      {
         type: 'heading',
         level: 2,
         content: 'Dependency Direction',
@@ -2661,6 +2740,31 @@ docker run -it --rm -p 8000:8000 \\
         content: 'Manual Conversation Flow',
       },
       {
+        type: 'diagram',
+        caption: 'Diagram 2 — Manual conversation: Agent Canvas → Agent Server → SDK Agent → Sandbox',
+        content: `sequenceDiagram
+  actor U as User
+  participant AC as Agent Canvas
+  participant AS as Agent Server
+  participant A as SDK Agent
+  participant SB as Sandbox
+
+  U->>AC: types message
+  AC->>AS: POST /api/conversations
+  AS-->>AC: conversation_id
+  AC->>AS: WebSocket /ws/conversations/{id}
+  AS->>A: MessageAction(content)
+  A->>A: LLM call — plan actions
+  loop agent loop
+    A->>SB: CmdRunAction / FileWriteAction / BrowseAction
+    SB-->>A: CmdOutputObservation / FileReadObservation
+    AS-->>AC: stream ObservationEvent (WebSocket)
+  end
+  A->>AS: AgentFinishAction
+  AS-->>AC: stream FinishEvent
+  AC-->>U: renders result`,
+      },
+      {
         type: 'steps',
         steps: [
           { title: 'User types a message', content: 'In Agent Canvas (browser) or directly via SDK/API' },
@@ -2676,6 +2780,36 @@ docker run -it --rm -p 8000:8000 \\
         type: 'heading',
         level: 2,
         content: 'Automated Run Flow (Automation Service)',
+      },
+      {
+        type: 'diagram',
+        caption: 'Diagram 3 — Automated run: Scheduler → Dispatcher → Cloud → Agent Server → SDK → Callback',
+        content: `sequenceDiagram
+  participant SCH as Scheduler
+  participant DB as PostgreSQL
+  participant DISP as Dispatcher
+  participant CLOUD as OpenHands Cloud
+  participant AS as Agent Server
+  participant SDK as SDK in sandbox
+  participant AUTO as Automation Service
+
+  SCH->>DB: poll cron automations
+  DB-->>SCH: due automations
+  SCH->>DB: INSERT automation_runs PENDING
+  DISP->>DB: poll PENDING runs
+  DISP->>DB: UPDATE status=RUNNING timeout_at=now+max
+  DISP->>CLOUD: POST /api/service/users/{id}/orgs/{id}/api-keys
+  CLOUD-->>DISP: api_key
+  DISP->>CLOUD: POST /api/v1/sandboxes
+  CLOUD-->>DISP: sandbox_id
+  DISP->>AS: upload tarball
+  DISP->>AS: POST /api/bash/start_bash_command
+  Note over AS,SDK: entrypoint runs inside sandbox
+  SDK->>SDK: fetch LLM config + secrets
+  SDK->>SDK: Conversation.run loop
+  SDK->>AUTO: POST /api/automation/v1/runs/{id}/complete
+  AUTO->>DB: UPDATE status=COMPLETED
+  AUTO->>CLOUD: DELETE sandbox fire-and-forget`,
       },
       {
         type: 'steps',
@@ -2769,6 +2903,28 @@ docker run -it --rm -p 8000:8000 \\
     description: 'How the Automation Service dispatches agent runs to the Agent Server.',
     route: '/all-repos/connections/automation-agent-server',
     sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 4 — GitHub webhook event flow: GitHub → SaaS proxy → Automation Service → dispatch',
+        content: `sequenceDiagram
+  participant GH as GitHub App
+  participant SAAS as OpenHands SaaS
+  participant AUTO as Automation Service
+  participant DB as PostgreSQL
+  participant DISP as Dispatcher
+
+  GH->>SAAS: POST webhook PR opened
+  SAAS->>SAAS: resolve github_org_id to org_id
+  SAAS->>SAAS: lookup integration_id for org
+  SAAS->>SAAS: verify PR author is org member
+  SAAS->>AUTO: POST /api/automation/v1/events/{org_id}/{integration_id}
+  AUTO->>AUTO: verify HMAC shared secret
+  AUTO->>DB: query automations WHERE integration_id matches
+  AUTO->>AUTO: evaluate JMESPath conditions against payload
+  AUTO->>DB: INSERT automation_run PENDING for each match
+  Note over DISP: standard dispatch from here same as cron
+  DISP->>DB: poll PENDING and dispatch`,
+      },
       {
         type: 'paragraph',
         content: 'The Automation Service never runs agent logic itself. It creates a sandbox via OpenHands Cloud, uploads the automation tarball, and starts an entrypoint script on the Agent Server inside that sandbox. The entrypoint script uses the SDK to create and run a Conversation.',
@@ -2872,6 +3028,382 @@ docker run -it --rm -p 8000:8000 \\
         type: 'callout',
         variant: 'info',
         content: '💡 Cloud acts as an event proxy for GitHub webhooks — it resolves org mappings and enriches the payload before forwarding to the Automation Service, keeping the Automation Service org-agnostic.',
+      },
+    ],
+  },
+
+  '/all-repos/connections/skills-load-path': {
+    title: 'Skills Load Path',
+    description: 'How skills travel from the extensions repo into every agent\'s system prompt.',
+    route: '/all-repos/connections/skills-load-path',
+    sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 5 — Skills load path: extensions repo → GitHub → local cache → system prompt',
+        content: `flowchart LR
+  EXT["github.com/OpenHands/extensions\\nSKILL.md files"]
+  GH["GitHub API\\nraw content"]
+  FS["~/.agents/skills/\\nlocal filesystem cache"]
+  OH["OpenHands App\\nloads at startup"]
+  AS["Agent Server\\nloads per conversation"]
+  AC["Agent Canvas\\nVITE_LOAD_PUBLIC_SKILLS"]
+  PROMPT["Agent System Prompt\\nskill content appended"]
+
+  EXT -->|HTTPS download| GH
+  GH -->|cached to| FS
+  FS -->|loaded by| OH
+  FS -->|loaded by| AS
+  GH -->|fetched by| AC
+  OH --> PROMPT
+  AS --> PROMPT
+  AC -->|injected via Agent Server| PROMPT`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'How skills are consumed',
+      },
+      {
+        type: 'table',
+        headers: ['Consumer', 'Env var / flag', 'When loaded'],
+        rows: [
+          ['Agent Canvas', 'VITE_LOAD_PUBLIC_SKILLS=true', 'At conversation start, fetched from GitHub CDN'],
+          ['Agent Server', 'reads .agents/skills/ in workspace', 'Each conversation init'],
+          ['OpenHands (app)', 'reads ~/.openhands/skills/ and .agents/skills/', 'Agent loop startup'],
+          ['Automation entrypoint', 'SDK Plugin API in entrypoint script', 'Conversation creation'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/connections/deployment-topology': {
+    title: 'Deployment Topology',
+    description: 'Where each service physically runs — from laptop to OpenHands Cloud.',
+    route: '/all-repos/connections/deployment-topology',
+    sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 6 — Deployment topology: three environments where the stack can run',
+        content: `flowchart TB
+  subgraph Laptop["Developer Laptop (local)"]
+    AC1["Agent Canvas\\nbrowser :5173"]
+    AS1["Agent Server\\n:18000"]
+    AUTO1["Automation Backend\\n:18001"]
+    SB1["Docker Sandbox\\nor dockerless"]
+    AC1 --> AS1
+    AC1 --> AUTO1
+    AS1 --> SB1
+  end
+
+  subgraph VM["Self-Hosted Remote VM"]
+    NGINX["nginx :443\\nTLS + auth"]
+    AS2["Agent Server\\n:18000"]
+    AUTO2["Automation Backend\\n:18001"]
+    PG["PostgreSQL"]
+    NGINX --> AS2
+    NGINX --> AUTO2
+    AUTO2 --> PG
+  end
+
+  subgraph CloudEnv["OpenHands Cloud"]
+    CLOUD["Cloud APIs\\nsandbox + key mgmt"]
+    SB2["Managed Sandboxes\\n(per-run Docker)"]
+    AC2["Agent Canvas\\nbrowser"]
+    AC2 --> CLOUD
+    CLOUD --> SB2
+  end
+
+  Browser1["Browser"] --> AC1
+  Browser2["Browser"] --> NGINX
+  Browser3["Browser"] --> AC2`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Environment comparison',
+      },
+      {
+        type: 'table',
+        headers: ['Environment', 'Who runs it', 'Sandbox type', 'Best for'],
+        rows: [
+          ['Laptop (local)', 'Developer', 'Local Docker or dockerless', 'Development, experimentation'],
+          ['Self-hosted VM', 'Team / DevOps', 'Local Docker in VM', 'Private deployment, cost control'],
+          ['OpenHands Cloud', 'All-Hands AI', 'Managed per-run Docker', 'Production, multi-user, no infra ops'],
+        ],
+      },
+    ],
+  },
+
+  // Databases pages
+
+  '/all-repos/databases': {
+    title: 'Databases Overview',
+    description: 'Which services own a database and what data each stores.',
+    route: '/all-repos/databases',
+    sections: [
+      {
+        type: 'table',
+        headers: ['Service', 'Database', 'Tables / key data'],
+        rows: [
+          ['OpenHands App', 'SQLite (dev) / PostgreSQL (prod)', 'conversations, events (action/observation payloads), workspace files'],
+          ['Automation Service', 'PostgreSQL', 'automations, automation_runs, tarball_uploads, integrations (Phase 2)'],
+          ['OpenHands Cloud', 'PostgreSQL (private)', 'organizations, users, api_keys, sandboxes, billing records'],
+          ['Agent Server (SDK)', 'In-memory / file-backed', 'Conversation state per session — no persistent DB in base mode'],
+          ['Agent Canvas', 'None (browser localStorage)', 'Backend connection URLs, session tokens — never a server DB'],
+          ['Architecture Repo', 'None', 'Documentation only'],
+          ['Extensions', 'None', 'Static Markdown files in git'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        content: '💡 Only three services persist data to a real database: OpenHands App, Automation Service, and OpenHands Cloud. Agent Canvas and the extensions repo have zero server-side storage.',
+      },
+    ],
+  },
+
+  '/all-repos/databases/automation': {
+    title: 'Automation Service DB',
+    description: 'PostgreSQL schema for the Automation Service — automations, runs, state machine, and integrations.',
+    route: '/all-repos/databases/automation',
+    sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 7 — Automation Service ER diagram (PostgreSQL)',
+        content: `erDiagram
+  AUTOMATIONS {
+    uuid id PK
+    uuid user_id
+    uuid org_id
+    string name
+    bool enabled
+    string tarball_path
+    jsonb trigger_config
+    timestamp created_at
+    timestamp last_polled_at
+  }
+  AUTOMATION_RUNS {
+    uuid id PK
+    uuid automation_id FK
+    string status
+    timestamp started_at
+    timestamp timeout_at
+    uuid conversation_id
+    text error_detail
+  }
+  TARBALL_UPLOADS {
+    uuid id PK
+    uuid user_id
+    uuid org_id
+    string storage_url
+    timestamp created_at
+  }
+  INTEGRATIONS {
+    uuid id PK
+    uuid org_id
+    string source_type
+    uuid integration_id
+    string webhook_secret
+  }
+
+  AUTOMATIONS ||--o{ AUTOMATION_RUNS : "has runs"
+  AUTOMATIONS }o--o| INTEGRATIONS : "triggered by Phase 2"`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Automation Run State Machine',
+      },
+      {
+        type: 'diagram',
+        caption: 'Diagram 8 — Run state machine: PENDING → RUNNING → COMPLETED / FAILED (watchdog recovery path shown)',
+        content: `stateDiagram-v2
+  [*] --> PENDING : scheduler inserts run
+
+  PENDING --> RUNNING : dispatcher picks up\\nFOR UPDATE SKIP LOCKED
+
+  RUNNING --> COMPLETED : completion callback\\nexit_code = 0
+  RUNNING --> FAILED : completion callback\\nexit_code != 0
+
+  RUNNING --> COMPLETED : watchdog\\nsandbox exit_code = 0\\ncallback was missed
+  RUNNING --> FAILED : watchdog\\ntimeout_at has passed\\nor sandbox unreachable
+
+  COMPLETED --> [*]
+  FAILED --> [*]`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'trigger_config shapes',
+      },
+      {
+        type: 'table',
+        headers: ['Trigger type', 'Key fields in trigger_config'],
+        rows: [
+          ['cron', '{ "type": "cron", "schedule": "0 9 * * 1", "timezone": "UTC" }'],
+          ['slack (Phase 2)', '{ "type": "slack", "integration_id": "uuid", "condition": "jmespath expr" }'],
+          ['github (Phase 2)', '{ "type": "github", "integration_id": "uuid", "events": ["pull_request.opened"], "condition": "jmespath expr" }'],
+          ['generic webhook', '{ "type": "webhook", "integration_id": "uuid", "condition": "jmespath expr" }'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/databases/openhands': {
+    title: 'OpenHands App DB',
+    description: 'SQLite / PostgreSQL schema for the main OpenHands application.',
+    route: '/all-repos/databases/openhands',
+    sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 9 — OpenHands App ER diagram (SQLite dev / PostgreSQL prod)',
+        content: `erDiagram
+  CONVERSATIONS {
+    string id PK
+    string user_id
+    string title
+    string status
+    timestamp created_at
+    timestamp updated_at
+  }
+  EVENTS {
+    string id PK
+    string conversation_id FK
+    string source
+    string event_type
+    jsonb payload
+    timestamp timestamp
+    int seq_id
+  }
+  FILES {
+    string path PK
+    string conversation_id FK
+    text content
+    timestamp last_modified
+  }
+
+  CONVERSATIONS ||--o{ EVENTS : "contains"
+  CONVERSATIONS ||--o{ FILES : "workspace files"`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'Event types stored',
+      },
+      {
+        type: 'table',
+        headers: ['Source', 'Event type examples'],
+        rows: [
+          ['user', 'MessageAction, ChangeAgentStateAction'],
+          ['agent', 'CmdRunAction, FileWriteAction, BrowseInteractiveAction, AgentFinishAction, AgentThinkAction'],
+          ['environment', 'CmdOutputObservation, FileReadObservation, BrowserOutputObservation, AgentStateChangedObservation'],
+        ],
+      },
+    ],
+  },
+
+  '/all-repos/databases/cloud': {
+    title: 'OpenHands Cloud DB',
+    description: 'High-level schema for the OpenHands Cloud SaaS platform (inferred from public API contracts).',
+    route: '/all-repos/databases/cloud',
+    sections: [
+      {
+        type: 'callout',
+        variant: 'warning',
+        content: '⚠️ The Cloud DB is private. This schema is inferred from the public API contracts used by Automation Service and Agent Canvas — not from source code.',
+      },
+      {
+        type: 'diagram',
+        caption: 'Diagram 10 — OpenHands Cloud ER diagram (simplified, inferred from API contracts)',
+        content: `erDiagram
+  ORGANIZATIONS {
+    uuid id PK
+    string name
+    string github_org_id
+    string plan
+  }
+  USERS {
+    uuid id PK
+    uuid org_id FK
+    string email
+    string github_id
+    string role
+  }
+  API_KEYS {
+    uuid id PK
+    uuid user_id FK
+    uuid org_id FK
+    string key_hash
+    timestamp created_at
+    timestamp expires_at
+  }
+  SANDBOXES {
+    uuid id PK
+    uuid user_id FK
+    uuid org_id FK
+    string status
+    string runtime_id
+    uuid conversation_id
+    timestamp timeout_at
+    timestamp created_at
+  }
+  BILLING_RECORDS {
+    uuid id PK
+    uuid org_id FK
+    string event_type
+    int compute_minutes
+    timestamp recorded_at
+  }
+
+  ORGANIZATIONS ||--o{ USERS : "has"
+  USERS ||--o{ API_KEYS : "owns"
+  USERS ||--o{ SANDBOXES : "runs"
+  ORGANIZATIONS ||--o{ BILLING_RECORDS : "billed for"`,
+      },
+    ],
+  },
+
+  '/all-repos/databases/cross-service-ids': {
+    title: 'Cross-Service ID Flow',
+    description: 'How user_id, org_id, conversation_id, and sandbox_id originate and flow across service boundaries.',
+    route: '/all-repos/databases/cross-service-ids',
+    sections: [
+      {
+        type: 'diagram',
+        caption: 'Diagram 11 — Cross-service ID flow: how critical IDs originate and propagate across all services',
+        content: `flowchart LR
+  CLOUD_CREATE["OpenHands Cloud\\nCREATES user_id + org_id\\nat signup"]
+  AUTO_STORE["Automation Service DB\\nSTORES user_id + org_id\\nwhen automation created"]
+  AUTO_FETCH["Automation Service\\nFETCHES per-run api_key\\nfor user_id + org_id"]
+  SB_ENV["Sandbox ENV\\nOPENHANDS_API_KEY\\n= per-run ephemeral key"]
+  SDK_CONV["SDK Agent Server\\nCREATES conversation_id\\nper Conversation.run"]
+  AUTO_REC["Automation Run record\\nSTORES conversation_id\\nafter completion callback"]
+  CANVAS["Agent Canvas\\nDISPLAYS conversation\\nunder user account"]
+
+  CLOUD_CREATE -->|on automation create| AUTO_STORE
+  AUTO_STORE -->|on dispatch| AUTO_FETCH
+  AUTO_FETCH -->|injected into| SB_ENV
+  SB_ENV -->|authorises| SDK_CONV
+  SDK_CONV -->|in callback POST| AUTO_REC
+  SDK_CONV -->|linked to user| CANVAS`,
+      },
+      {
+        type: 'heading',
+        level: 2,
+        content: 'ID lifetime summary',
+      },
+      {
+        type: 'table',
+        headers: ['ID', 'Created by', 'Lifetime', 'Stored in'],
+        rows: [
+          ['user_id', 'OpenHands Cloud (at signup)', 'Permanent', 'Cloud DB, Automation DB'],
+          ['org_id', 'OpenHands Cloud (org creation)', 'Permanent', 'Cloud DB, Automation DB'],
+          ['api_key (per-run)', 'Cloud API on demand per dispatch', 'Single run duration', 'Automation DB (hash), Sandbox ENV'],
+          ['sandbox_id', 'Cloud API on sandbox create', 'Single run duration', 'Cloud DB, Automation DB (run record)'],
+          ['conversation_id', 'Agent Server per Conversation.run', 'Single conversation', 'Agent Server state, Automation run record'],
+          ['automation_id', 'Automation Service on create', 'Permanent until deleted', 'Automation DB'],
+          ['run_id', 'Automation Service on dispatch', 'Single run', 'Automation DB'],
+        ],
       },
     ],
   },

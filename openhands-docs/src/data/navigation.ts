@@ -35,6 +35,7 @@ export const tabsByRepo: Record<string, TopTab[]> = {
   'all-repos': [
     { id: 'ar-overview',      title: 'Overview',         slug: '/all-repos' },
     { id: 'ar-how-connected', title: 'How They Connect', slug: '/all-repos/connections' },
+    { id: 'ar-databases',     title: 'Databases',        slug: '/all-repos/databases' },
     { id: 'ar-repo-ref',      title: 'Repo Reference',   slug: '/all-repos/repos' },
     { id: 'ar-contributing',  title: 'Contributing',     slug: '/all-repos/contributing' },
     { id: 'ar-glossary',      title: 'Glossary',         slug: '/all-repos/glossary' },
@@ -1433,6 +1434,16 @@ export const navigationByTab: Record<string, NavItem[]> = {
     { id: 'ar-auto-server',   title: 'Automation ↔ Agent Server',   route: '/all-repos/connections/automation-agent-server' },
     { id: 'ar-api-contracts', title: 'API Contracts Between Repos', route: '/all-repos/connections/api-contracts' },
     { id: 'ar-cloud-all',     title: 'Cloud ↔ All Repos',           route: '/all-repos/connections/cloud' },
+    { id: 'ar-skills-path',   title: 'Skills Load Path',            route: '/all-repos/connections/skills-load-path' },
+    { id: 'ar-deploy-topo',   title: 'Deployment Topology',         route: '/all-repos/connections/deployment-topology' },
+  ],
+
+  'ar-databases': [
+    { id: 'ar-db-overview',   title: 'Databases Overview',          route: '/all-repos/databases' },
+    { id: 'ar-db-auto',       title: 'Automation Service DB',       route: '/all-repos/databases/automation' },
+    { id: 'ar-db-oh',         title: 'OpenHands App DB',            route: '/all-repos/databases/openhands' },
+    { id: 'ar-db-cloud',      title: 'OpenHands Cloud DB',          route: '/all-repos/databases/cloud' },
+    { id: 'ar-db-ids',        title: 'Cross-Service ID Flow',       route: '/all-repos/databases/cross-service-ids' },
   ],
 
   'ar-repo-ref': [
