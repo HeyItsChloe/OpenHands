@@ -2666,20 +2666,20 @@ docker run -it --rm -p 8000:8000 \\
         caption: 'Diagram 1 — C4 Container diagram: all repos and their connections',
         content: `flowchart TB
   subgraph OSS["Open Source"]
-    OH["OpenHands App\\nPython + React\\ngithub.com/All-Hands-AI/OpenHands"]
-    SDK["software-agent-sdk\\nPython\\nopenhands-sdk + agent-server"]
-    AC["Agent Canvas\\nTypeScript / React\\n@openhands/agent-canvas"]
+    OH["OpenHands App\\nPython + React"]
+    SDK["software-agent-sdk\\nPython + Agent Server"]
+    AC["Agent Canvas\\nTypeScript / React"]
     EXT["Extensions\\nMarkdown skills"]
   end
   subgraph Internal["Internal"]
     AUTO["Automation Service\\nPython / FastAPI"]
-    ARCH["Architecture Repo\\nMarkdown ADRs / PDs"]
+    ARCH["Architecture Repo\\nMarkdown ADRs + PDs"]
   end
   subgraph SaaS["OpenHands Cloud"]
-    CLOUD["Cloud APIs\\nsandboxes · keys · orgs"]
+    CLOUD["Cloud APIs\\nsandboxes, keys, orgs"]
   end
   subgraph External["External"]
-    LLM["LLM Providers\\nOpenAI · Anthropic · Gemini"]
+    LLM["LLM Providers\\nOpenAI, Anthropic, Gemini"]
     GH["GitHub / Slack / Datadog"]
   end
 
